@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SARD UNDERLINKS</title>
+<meta name="description" content="SARD UNDERGROUNDの情報まとめ。曲名・日付・キーワードで検索できます。"/>
+<link rel="canonical" href="https://sard-under-links.blogspot.com/"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="SARD UNDERLINKS"/>
+<meta property="og:url" content="https://sard-under-links.blogspot.com/"/>
+<style type="text/css">
+/*<![CDATA[*/
+:root{--bg:#0b0b0f;--card:#15151b;--line:#272732;--fg:#e9e7e0;--mut:#8b8b96;--acc:#ff4a2e;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 "Hiragino Sans","Yu Gothic",system-ui,sans-serif}
+a{color:inherit}
+header{position:sticky;top:0;z-index:5;background:rgba(11,11,15,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 16px 10px}
+.wrap{max-width:1100px;margin:0 auto}
+h1{margin:0;font:800 22px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em}
+h1 a{text-decoration:none}h1 b{color:var(--acc)}
+#upd{color:var(--mut);font:11px ui-monospace,monospace;margin-left:10px}
+#q{width:100%;margin:12px 0 8px;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);font-size:16px;outline:none}
+#q:focus{border-color:var(--acc)}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row+.row{margin-top:8px}
+.chip{border:1px solid var(--line);background:none;color:var(--mut);padding:3px 11px;border-radius:99px;font:12px ui-monospace,monospace;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+#sort{margin-left:auto}
+main{max-width:1100px;margin:0 auto;padding:14px 16px 60px}
+#count{color:var(--mut);font:12px ui-monospace,monospace;margin-bottom:10px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--k,var(--mut));border-radius:6px;padding:11px 13px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.card.log{--k:#4aa8ff}.card.song{--k:var(--acc)}.card.set{--k:#f5c542}
+.meta{display:flex;justify-content:space-between;font:11px ui-monospace,monospace;color:var(--mut)}
+.kind{color:var(--k)}
+.ttl{font-weight:700;overflow-wrap:anywhere}
+.sub{color:var(--mut);font-size:12px;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tags span{font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:3px;padding:0 6px;cursor:pointer}
+.act{display:flex;gap:8px;margin-top:4px}
+.act a,.act button{font:11px ui-monospace,monospace;color:var(--fg);background:none;border:1px solid var(--line);border-radius:3px;padding:2px 10px;text-decoration:none;cursor:pointer}
+.act a:hover,.act button:hover{border-color:var(--acc);color:var(--acc)}
+#more,#retry{display:block;margin:20px auto;padding:8px 24px}
+#err,#none{text-align:center;color:var(--mut);padding:40px 0}
+dialog{width:min(480px,92vw);max-height:80vh;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.7)}
+dialog h2{margin:0 0 2px;font-size:16px}
+dialog ol{margin:10px 0;padding:0;list-style:none}
+dialog li{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+dialog li i{color:var(--mut);font:11px ui-monospace,monospace;width:22px;flex:none;padding-top:2px}
+dialog li a{margin-left:auto;color:var(--acc);text-decoration:none}
+/*]]>*/
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1><a id="home" href="#">SARD <b>UNDER</b>LINKS</a><span id="upd"></span></h1>
+  <input id="q" type="search" placeholder="曲名 / 日付 (2024, 202403, 2024.03.15) / キーワード  ※ -語 で除外" autocomplete="off"/>
+  <div class="row" id="tabs">
+    <button class="chip on" data-t="all">ALL</button><button class="chip" data-t="log">INFO</button><button class="chip" data-t="song">SONG</button><button class="chip" data-t="set">LIVE</button>
+    <button class="chip" id="sort">NEW ▼</button>
+  </div>
+  <div class="row" id="years"></div>
+</div></header>
+<main>
+  <div id="count">LOADING...</div>
+  <div id="grid"></div>
+  <div id="none" hidden="hidden">NO RESULT</div>
+  <div id="err" hidden="hidden">データを読み込めませんでした<br/><button class="chip" id="retry">RETRY</button></div>
+  <div id="sentinel"></div>
+</main>
+<dialog id="dlg"><div id="dbody"></div><div class="act"><button id="dclose">CLOSE</button></div></dialog>
+<script type="text/javascript">
+//<![CDATA[
+(() => {
+  // ===== データ元(gllogsと同じ方式:GitHubのJSONをコミットSHA固定のjsDelivrから取得し、IndexedDBにキャッシュ) =====
+  const REPO = 'piscenake52/sulinks';
+  const BRANCH = 'main';
+  const FILES = { logs: 'data/logs/logs.json', songs: 'data/songs/songs.json', setlist: 'data/setlist/setlist.json' };
+  const COOLDOWN = 60 * 1000, PAGE = 40;
+  const DEMO = REPO.indexOf('YOUR_') === 0; // 未設定の間は表示確認用のサンプルを出す
+  const data = { logs: [], songs: [], setlist: [] };
+  if (DEMO) {
+    data.logs = [{ date: '20270101', time: '0000', contents: 'NEWS', title: 'SARD UNDERLINKS 公開', url: 'https://sard-under-links.blogspot.com/', groups: ['SARD'], tags: ['info'], setlistid: '202701011800' }];
+    data.songs = [{ title: 'SAMPLE SONG', artist: 'SARD UNDERGROUND', album: 'SAMPLE', date: '20270101', link: 'https://example.com/', tags: ['sample'] }];
+    data.setlist = [{ setlistid: '202701011800', title: 'SAMPLE LIVE', artist: 'SARD UNDERGROUND', songs: [{ order: 1, title: 'SAMPLE SONG', type: 'song' }, { order: 2, title: 'ENCORE', type: 'encore', notes: 'sample' }] }];
+  }
+
+  const $ = id => document.getElementById(id);
+  const norm = s => String(s == null ? '' : s).normalize('NFKC').toLowerCase();
+  const fmt = d => /^\d{8}$/.test(d) ? d.slice(0, 4) + '.' + d.slice(4, 6) + '.' + d.slice(6, 8) : '----.--.--';
+  const KIND = { log: 'INFO', song: 'SONG', set: 'LIVE' };
+  let items = [], view = [], shown = 0, desc = true, tab = 'all', year = '', qs = '';
+
+  // ===== 検索用アイテムへ統合 =====
+  const rebuild = () => {
+    const seen = new Set(), out = [], used = new Set();
+    const setMap = new Map(data.setlist.map(e => [e.setlistid, e]));
+    const songTitles = sid => ((setMap.get(sid) || {}).songs || []).map(s => s && s.title).filter(Boolean);
+    data.logs.forEach(o => {
+      const k = [o.date, o.time, o.contents, o.title, o.url].join('_');
+      if (seen.has(k)) return; // 日付・時刻・種類・タイトル・URL完全一致は重複扱い
+      seen.add(k);
+      if (o.setlistid) used.add(o.setlistid);
+      const title = o.display_pc || o.title || '';
+      out.push({ kind: 'log', date: o.date || '', title, sub: [o.contents].concat(o.groups || []).filter(Boolean).join(' / '), url: o.url, tags: o.tags || [], sid: o.setlistid,
+        hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.groups || [], o.relations || [], o.setlistid ? songTitles(o.setlistid) : []).join(' ')) });
+    });
+    data.songs.forEach(o => out.push({ kind: 'song', date: o.date || '', title: o.title || '', sub: [o.artist, o.album].filter(Boolean).join(' / '), url: o.link, tags: o.tags || [],
+      hay: norm([o.title, o.artist, o.album, o.date].concat(o.tags || []).join(' ')) }));
+    data.setlist.forEach(o => {
+      if (used.has(o.setlistid)) return; // ログから参照済みのセトリは、そのログのカードから開く
+      const d = String(o.setlistid || '').slice(0, 8);
+      out.push({ kind: 'set', date: d, title: o.title || 'SETLIST', sub: o.artist || '', tags: [], sid: o.setlistid, hay: norm([o.title, o.artist, d].concat(songTitles(o.setlistid)).join(' ')) });
+    });
+    items = out;
+    const ys = Array.from(new Set(items.map(i => i.date.slice(0, 4)).filter(Boolean))).sort().reverse();
+    $('years').innerHTML = '';
+    ys.forEach(y => { const b = document.createElement('button'); b.className = 'chip' + (y === year ? ' on' : ''); b.textContent = y; b.onclick = () => { year = year === y ? '' : y; paintYears(); apply(); }; $('years').appendChild(b); });
+    apply();
+  };
+  const paintYears = () => Array.from($('years').children).forEach(b => b.classList.toggle('on', b.textContent === year));
+
+  // ===== 絞り込み・並び替え =====
+  const test = (it, t) => {
+    const neg = t.length > 1 && t[0] === '-', w = neg ? t.slice(1) : t, dq = w.replace(/[.\/-]/g, '');
+    const hit = /^\d{4}(\d{2}(\d{2})?)?$/.test(dq) ? (it.date.indexOf(dq) === 0 || it.hay.indexOf(w) >= 0) : it.hay.indexOf(w) >= 0; // 年/年月/年月日は日付の前方一致も見る
+    return neg ? !hit : hit;
+  };
+  const apply = () => {
+    const toks = norm(qs).split(/\s+/).filter(Boolean);
+    view = items.filter(it => (tab === 'all' || it.kind === tab) && (!year || it.date.indexOf(year) === 0) && toks.every(t => test(it, t)));
+    view.sort((a, b) => !a.date ? 1 : !b.date ? -1 : (desc ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)));
+    $('grid').innerHTML = ''; shown = 0; more();
+    $('count').textContent = view.length + ' / ' + items.length + ' ITEMS';
+    $('none').hidden = !(items.length && !view.length);
+    const p = new URLSearchParams();
+    if (qs) p.set('q', qs); if (tab !== 'all') p.set('t', tab); if (year) p.set('y', year); if (!desc) p.set('o', 'asc');
+    try { history.replaceState(null, '', location.pathname + location.search + (p.toString() ? '#' + p : '')); } catch (e) {}
+  };
+
+  // ===== 描画(40件ずつ) =====
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const card = it => {
+    const c = el('div', 'card ' + it.kind), m = el('div', 'meta');
+    m.append(el('span', 'kind', KIND[it.kind]), el('span', '', fmt(it.date)));
+    c.append(m, el('div', 'ttl', it.title));
+    if (it.sub) c.append(el('div', 'sub', it.sub));
+    if (it.tags.length) { const t = el('div', 'tags'); it.tags.forEach(x => { const s = el('span', '', '#' + x); s.onclick = () => { $('q').value = qs = x; apply(); scrollTo(0, 0); }; t.append(s); }); c.append(t); }
+    const a = el('div', 'act');
+    if (it.url && /^https?:\/\//i.test(it.url)) { const l = el('a', '', it.kind === 'song' ? '▶ PLAY' : 'OPEN ↗'); l.href = it.url; l.target = '_blank'; l.rel = 'noopener'; a.append(l); }
+    if (it.sid) { const b = el('button', '', 'SETLIST'); b.onclick = () => openSet(it.sid); a.append(b); }
+    if (a.children.length) c.append(a);
+    return c;
+  };
+  const more = () => { const f = document.createDocumentFragment(); view.slice(shown, shown + PAGE).forEach(i => f.append(card(i))); shown += PAGE; $('grid').append(f); };
+  new IntersectionObserver(es => { if (es[0].isIntersecting && shown < view.length) more(); }, { rootMargin: '400px' }).observe($('sentinel'));
+
+  // ===== セトリ表示 =====
+  const openSet = sid => {
+    const e = data.setlist.find(x => x.setlistid === sid), b = $('dbody'); b.innerHTML = '';
+    if (!e) { b.append(el('div', 'sub', 'SETLIST NOT FOUND')); $('dlg').showModal(); return; }
+    b.append(el('h2', '', e.title || 'SETLIST'), el('div', 'sub', fmt(String(sid).slice(0, 8)) + ' ' + (e.artist || '')));
+    const ol = el('ol');
+    (e.songs || []).filter(s => s && s.title).slice().sort((x, y) => (x.order || 0) - (y.order || 0)).forEach((s, i) => {
+      const li = el('li'), w = el('div'), f = data.songs.find(x => norm(x.title) === norm(s.title));
+      w.append(el('div', 'ttl', s.title)); const sub = [s.type && s.type !== 'song' ? s.type : '', s.original, s.notes].filter(Boolean).join(' / ');
+      if (sub) w.append(el('div', 'sub', sub));
+      li.append(el('i', '', String(s.order || i + 1)), w);
+      if (f && f.link) { const l = el('a', '', '▶'); l.href = f.link; l.target = '_blank'; l.rel = 'noopener'; li.append(l); }
+      ol.append(li);
+    });
+    b.append(ol); $('dlg').showModal();
+  };
+  $('dclose').onclick = () => $('dlg').close();
+  $('dlg').onclick = e => { if (e.target === $('dlg')) $('dlg').close(); };
+
+  // ===== 操作 =====
+  let timer = null;
+  $('q').oninput = e => { clearTimeout(timer); timer = setTimeout(() => { qs = e.target.value; apply(); }, 150); };
+  Array.from($('tabs').querySelectorAll('[data-t]')).forEach(b => b.onclick = () => { tab = b.dataset.t; Array.from($('tabs').querySelectorAll('[data-t]')).forEach(x => x.classList.toggle('on', x === b)); apply(); });
+  $('sort').onclick = () => { desc = !desc; $('sort').textContent = desc ? 'NEW ▼' : 'OLD ▲'; apply(); };
+  $('home').onclick = e => { e.preventDefault(); $('q').value = qs = ''; tab = 'all'; year = ''; desc = true; $('sort').textContent = 'NEW ▼'; paintYears(); Array.from($('tabs').querySelectorAll('[data-t]')).forEach(x => x.classList.toggle('on', x.dataset.t === 'all')); apply(); scrollTo(0, 0); syncAll(true); };
+  { // ハッシュから状態を復元
+    const p = new URLSearchParams(location.hash.slice(1));
+    qs = p.get('q') || ''; $('q').value = qs; tab = p.get('t') || 'all'; year = p.get('y') || ''; desc = p.get('o') !== 'asc';
+    $('sort').textContent = desc ? 'NEW ▼' : 'OLD ▲';
+    Array.from($('tabs').querySelectorAll('[data-t]')).forEach(x => x.classList.toggle('on', x.dataset.t === tab));
+  }
+  fetch('/feeds/posts/default?alt=json&max-results=1').then(r => r.json()).then(j => {
+    const e = j.feed.entry; if (e && e.length) { const d = new Date(e[0].updated.$t); $('upd').textContent = 'updated > ' + d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'); }
+  }).catch(() => {});
+
+  // ===== 取得:最新コミットSHAを確認→変更時のみjsDelivrから取得、IndexedDBにキャッシュ =====
+  const idb = (mode, fn) => new Promise((res, rej) => {
+    const r = indexedDB.open('su_cache', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onerror = () => rej(r.error);
+    r.onsuccess = () => { const db = r.result, tx = db.transaction('kv', mode), q = fn(tx.objectStore('kv')); tx.oncomplete = () => { db.close(); res(q && q.result); }; tx.onerror = () => { db.close(); rej(tx.error); }; };
+  });
+  const cget = k => idb('readonly', s => s.get(k)).catch(() => null);
+  const cset = (k, v) => idb('readwrite', s => s.put(v, k)).then(() => true, () => false);
+
+  const sync = async (name, force) => {
+    const f = FILES[name], cached = await cget('d_' + name);
+    if (cached && !data[name].length) { try { data[name] = JSON.parse(cached); rebuild(); } catch (e) {} } // キャッシュを即表示
+    const last = parseInt(localStorage.getItem('su_chk_' + name) || '0', 10);
+    if (!force && cached && Date.now() - last < COOLDOWN) return;
+    let sha = null;
+    try {
+      const r = await fetch('https://api.github.com/repos/' + REPO + '/commits?path=' + f + '&sha=' + BRANCH + '&page=1&per_page=1', { cache: 'no-store' });
+      if (r.ok) { const c = await r.json(); sha = c[0] && c[0].sha; localStorage.setItem('su_chk_' + name, String(Date.now())); }
+    } catch (e) {}
+    if (!force && sha && cached && sha === localStorage.getItem('su_sha_' + name)) return; // 変更なし
+    const url = sha ? 'https://cdn.jsdelivr.net/gh/' + REPO + '@' + sha + '/' + f : 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + f + '?v=' + Date.now();
+    const res = await fetch(url); if (!res.ok) throw new Error('fetch failed');
+    const j = await res.json(); data[name] = Array.isArray(j) ? j : []; rebuild();
+    const ok = await cset('d_' + name, JSON.stringify(j));
+    try { if (sha && ok) localStorage.setItem('su_sha_' + name, sha); else localStorage.removeItem('su_sha_' + name); } catch (e) {}
+  };
+  const syncAll = force => {
+    if (DEMO) { rebuild(); return; }
+    Promise.allSettled(Object.keys(FILES).map(n => sync(n, force))).then(rs => {
+      const bad = rs.some(r => r.status === 'rejected');
+      $('err').hidden = !(bad && !items.length);
+      if (bad && !items.length) $('count').textContent = '';
+    });
+  };
+  $('retry').onclick = () => { $('err').hidden = true; $('count').textContent = 'LOADING...'; syncAll(true); };
+  syncAll(false);
+})();
+//]]>
+</script>
+</body>
+</html>
