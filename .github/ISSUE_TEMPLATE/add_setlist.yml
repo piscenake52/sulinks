@@ -1,0 +1,97 @@
+name: "setlist"
+description: "insert / update / delete"
+title: "[DATA] setlist"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        📅 [日付・開演時刻をカレンダーで選ぶ](https://sard-under-links.blogspot.com/p/issuehelper.html)
+
+  - type: input
+    id: setlistid
+    attributes:
+      label: "setlistid"
+
+  - type: input
+    id: copy_from
+    attributes:
+      label: "COPY / コピー元 setlistid"
+
+  - type: checkboxes
+    id: artist_check
+    attributes:
+      label: "artist / 選択"
+      options:
+        - label: "SARD UNDERGROUND"
+
+  - type: input
+    id: artist_free
+    attributes:
+      label: "artist / 自由入力"
+
+  - type: textarea
+    id: item_title
+    attributes:
+      label: "title"
+
+  - type: dropdown
+    id: member_sd
+    attributes:
+      label: "member / SARD UNDERGROUND"
+      multiple: true
+      options:
+        - SARD
+        - YUA
+        - MIU
+        - IZM
+        - HRM
+
+  - type: input
+    id: member_free
+    attributes:
+      label: "member / 自由入力"
+      description: "SARD,YUA,MIU,IZM,HRM"
+
+
+  - type: input
+    id: venue
+    attributes:
+      label: "venue"
+
+
+  - type: textarea
+    id: songs
+    attributes:
+      label: "曲目 (1行1曲)"
+      description: |
+        書式: `[順番:] 曲名 | type | original | notes`
+      placeholder: |
+        1: TITLE | -
+
+  - type: textarea
+    id: songs_patch
+    attributes:
+      label: "曲目の個別変更 (1行1操作)"
+      placeholder: |
+        +5: 新しい曲
+        -8: 消す曲
+
+
+  - type: checkboxes
+    id: clear
+    attributes:
+      label: "値の削除（更新時）"
+      options:
+        - label: "artist"
+        - label: "title"
+        - label: "member"
+        - label: "venue"
+        - label: "songs"
+
+
+  - type: checkboxes
+    id: delete
+    attributes:
+      label: "DELETE"
+      options:
+        - label: "削除する"
