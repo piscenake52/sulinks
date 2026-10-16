@@ -1,0 +1,1351 @@
+<!-- Blogger の固定ページ(HTMLビュー)に、このままコピー&貼り付けして公開する。<html>/<head>/<body> は含めない。
+     CSSは #glih の中だけに効くようにしてあり、ブログのテーマには影響しない -->
+<style>
+/*<![CDATA[*/
+/* ページ全体の背景も黒にする: helper (#glih) を含む親要素すべて(body / 記事の枠など。テーマが違ってもクラス名に依存しない)の背景を黒にする */
+html:has(#glih), body:has(#glih), :has(> #glih), :has(#glih):not(#glih) { background:#121212 !important; background-image:none !important; color-scheme:dark; }
+/*]]>*/
+</style>
+<div id="glih">
+<style>
+/*<![CDATA[*/
+#glih { --bg:#121212; --card:#1b1b1d; --text:#f4f4f5; --sub:#a1a1aa; --line:#3f3f46; --btn:#27272a; --accent:#3b82f6; --accent-text:#fff; color-scheme:dark;
+  box-sizing:border-box; max-width:520px; margin:0 auto; padding:14px; background:var(--bg); color:var(--text);
+  font:14px/1.5 -apple-system,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; border-radius:12px; text-align:left; }
+#glih *, #glih *::before, #glih *::after { box-sizing:border-box; }
+#glih h1 { font-size:16px; margin:0 0 4px; padding:0; color:var(--text); border:0; }
+#glih .lead { font-size:12px; color:var(--sub); margin:0 0 14px; line-height:1.6; }
+#glih .tabs { display:flex; gap:6px; margin-bottom:12px; }
+#glih .tabs button { flex:1; padding:8px; border-radius:8px; border:1px solid var(--line); background:var(--btn); color:var(--text); font:inherit; font-size:13px; cursor:pointer; box-shadow:none; }
+#glih .tabs button.on { background:var(--accent); border-color:var(--accent); color:var(--accent-text); }
+#glih section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin:0; overflow-x:auto; }
+#glih [hidden] { display:none !important; } /* .field / .out は display:flex なので、hidden属性が効くように明示する(findの検索前はcopy・JSON copyを出さない) */
+#glih .field { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+#glih .field > label { flex:0 0 5.6em; font-size:12px; font-weight:600; color:var(--sub); margin:0; }
+#glih .field input[type=date], #glih .field input[type=time] { flex:1; min-width:0; width:auto; height:auto; margin:0; padding:8px; font:inherit; font-size:16px; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:8px; box-shadow:none; }
+#glih .field input:disabled { opacity:.4; }
+#glih .field.top { align-items:flex-start; }
+#glih .field.top > label { padding-top:4px; }
+#glih .field.top.tl > label { padding-top:9px; } /* find: 1行目の入力欄の文字の高さにラベルをそろえる */
+#glih .chips { flex:1; min-width:236px; display:flex; flex-direction:column; gap:4px; } /* 8列 x 最小26px + 隙間。これより狭い画面ではカードの中を横スクロールする */
+/* 全行を8列のグリッドにそろえる: 全ボタンが同じ幅になり、どの行も折り返さない。ボタン幅は表示幅に合わせて自動で変わる */
+#glih .chips .cr { display:grid; grid-template-columns:repeat(8, minmax(26px, 1fr)); gap:4px; }
+#glih .chip { width:100%; min-width:0; font:inherit; font-size:clamp(9px, 2.8vw, 11px); line-height:1.2; padding:5px 0; margin:0; text-align:center; border-radius:12px; border:1px solid var(--line); background:var(--btn); color:var(--text); cursor:pointer; box-shadow:none; }
+#glih .chip.on, #glih .chip.fold-on, #glih .chip.gh-on { background:var(--accent); border-color:var(--accent); color:var(--accent-text); } /* fold-on / gh-on: the G2 / L2 chip looks ON (members shown) without changing the data */
+#glih .small { font:inherit; font-size:12px; padding:7px 10px; margin:0; border-radius:8px; border:1px solid var(--line); background:var(--btn); color:var(--text); cursor:pointer; white-space:nowrap; box-shadow:none; }
+#glih .chk { font-size:12px; color:var(--sub); display:flex; align-items:center; gap:6px; margin:0 0 0 4px; white-space:nowrap; } /* time の値のすぐ右 */
+#glih .chk input { margin:0; }
+#glih .rad { flex:1; display:flex; gap:18px; align-items:center; }
+#glih .rad .chk { margin:0; font-size:13px; color:var(--text); cursor:pointer; padding:6px 0; }
+#glih .out { font-size:12px; color:var(--sub); margin:12px 0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
+#glih .out > span:first-child { flex:0 0 5.6em; } /* 先頭のラベル(date/time, setlistid)を、上の入力項目のラベル(.field > label: 5.6em)と同じ幅にして、値の左端を入力欄の左端にそろえる */
+#glih .out code { font-size:14px; color:var(--text); background:var(--btn); border:0; border-radius:6px; padding:3px 8px; min-width:6em; text-align:center; }
+#glih a.go { display:block; text-align:center; padding:11px; border-radius:10px; background:var(--accent); color:var(--accent-text) !important; text-decoration:none !important; font-size:14px; font-weight:600; }
+#glih a.go[aria-disabled="true"] { opacity:.4; pointer-events:none; }
+#glih .fin, #glih .fta, #glih .fsel { flex:1; min-width:0; width:auto; margin:0; padding:8px; font:inherit; font-size:16px; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:8px; box-shadow:none; }
+#glih .fta { min-height:4.5em; resize:vertical; font-size:13px; line-height:1.4; }
+#glih .fin { font-size:13px; line-height:1.4; } /* テキストボックスもテキストエリアと同じ文字サイズに */
+#glih #glih-f-songs { min-height:9em; } /* setlist songs: twice as tall */
+#glih #glih-f-sns { min-height:13.5em; } /* snsは複数行になりやすいので縦を3倍に */
+#glih .fin.ch, #glih .fta.ch { border-color:var(--accent); }
+#glih .fin.bad, #glih .field input.bad, #glih .jsonbox.bad { border-color:#d33; }
+#glih .field input[type=date].ch, #glih .field input[type=time].ch { border-color:var(--accent); }
+#glih .fcand { margin:0 0 10px; border:1px solid var(--line); border-radius:8px; max-height:30em; overflow:auto; }
+#glih .fcand button { display:block; width:100%; text-align:left; background:none; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:7px 10px; margin:0; font:inherit; font-size:12px; line-height:1.4; color:var(--text); cursor:pointer; }
+#glih .fcand button:last-child { border-bottom:0; }
+#glih .fcand button:hover { background:var(--btn); }
+#glih .fcand .m { color:var(--sub); font-size:11px; }
+#glih .fcand .m.l2 { display:block; }
+#glih .chipr { flex:1; display:flex; gap:6px; flex-wrap:wrap; }
+#glih .chipr .chip { width:auto; padding:5px 12px; font-size:12px; }
+#glih .chipw { display:inline-flex; align-items:stretch; }
+#glih .chipw .chip { border-top-right-radius:0; border-bottom-right-radius:0; }
+#glih .chipw .lk { display:inline-flex; align-items:center; padding:0 9px; font-size:12px; border:1px solid var(--line); border-left:0; border-radius:0 12px 12px 0; background:var(--btn); color:var(--text) !important; text-decoration:none !important; }
+#glih .tchips { gap:5px; }
+#glih .tchips .chip { padding:5px 8px; }
+#glih .tchips .chip[data-v="mc"], #glih .tchips .chip[data-v="dt"] { box-sizing:border-box; width:40px; padding-left:0; padding-right:0; } /* mc / dt: 40px wide */
+#glih .chipr .chip.rm { text-decoration:line-through; opacity:.55; border-color:#d33; }
+#glih .fdiff { font-size:12px; color:var(--sub); margin:0 0 8px; line-height:1.5; max-height:9em; overflow:auto; word-break:break-all; }
+#glih .fdiff b { color:var(--text); font-weight:600; }
+#glih .fdiff .rmk { color:var(--sub); opacity:.8; }
+#glih .fstat { font-size:12px; color:var(--sub); margin:0 0 10px; min-height:1.4em; }
+#glih .jsonbox { width:100%; box-sizing:border-box; min-height:9em; margin:6px 0 4px; padding:8px; font:12px/1.4 ui-monospace,Menlo,Consolas,monospace; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:8px; resize:vertical; box-shadow:none; }
+#glih .fw { flex:1; min-width:0; position:relative; display:block; }
+#glih .fw > .fin, #glih .fw > .fta { width:100%; padding-right:30px; }
+#glih .fx { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:22px; height:22px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; color:var(--sub); font:inherit; font-size:14px; line-height:22px; text-align:center; cursor:pointer; box-shadow:none; }
+#glih .dtw { position:relative; display:inline-flex; flex:0 0 auto; }
+#glih .dtw > .fin { flex:none; width:9.9em; padding-right:30px; } /* YYYY/MM/DD fits exactly */
+#glih .dtw.t > .fin { width:calc(8em - 20px); } /* the clock icon is outside the box (to its right); the box is 20px narrower so the whole width stays */ /* HH:MM fits exactly */
+#glih .dtb { position:static; flex:none; align-self:center; width:20px; height:20px; margin:0 4px; padding:0; border:0; background:transparent; box-shadow:none; color:var(--sub); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+#glih .dtx { position:absolute; right:34px; top:50%; transform:translateY(-50%); width:20px; height:20px; margin:0; padding:0; border:0; border-radius:50%; background:transparent; box-shadow:none; color:var(--sub); font:inherit; font-size:12px; line-height:20px; text-align:center; cursor:pointer; }
+#glih .dtx:hover { color:var(--text); background:var(--btn); }
+#glih .dtw > .fin:placeholder-shown ~ .dtx { visibility:hidden; }
+#glih #glih-fdprev, #glih #glih-fdnext { flex:0 0 36px; width:36px; padding-left:0; padding-right:0; text-align:center; } /* < > : twice as wide as before */
+#glih .dtb:hover { color:var(--text); }
+#glih .dtb svg { width:16px; height:16px; display:block; }
+#glih .cal-pop { position:fixed; z-index:1100; width:290px; max-width:calc(100vw - 16px); padding:10px; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.45); user-select:none; -webkit-user-select:none; }
+#glih .cal-pop[hidden] { display:none; }
+#glih .cal-head { display:flex; align-items:center; gap:4px; margin-bottom:6px; }
+#glih .cal-pop button { font:inherit; color:inherit; background:none; border:0; padding:0; margin:0; cursor:pointer; border-radius:8px; }
+#glih .cal-nav { flex:0 0 34px; height:34px; font-size:15px; background:var(--btn) !important; border:1px solid var(--line) !important; }
+#glih .cal-title { flex:1 1 auto; height:34px; font-size:14px; font-weight:700; }
+#glih .cal-nav:hover, #glih .cal-title:hover, #glih .cal-foot button:hover, #glih .cal-grid button:hover, #glih .cal-mgrid button:hover { background-color:var(--btn) !important; }
+#glih .cal-grid, #glih .cal-mgrid { display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; }
+#glih .cal-mgrid { grid-template-columns:repeat(3, 1fr); gap:6px; }
+#glih .cal-wd { text-align:center; font-size:11px; color:var(--sub); padding:2px 0 4px; }
+#glih .cal-grid button { height:36px; font-size:14px; }
+#glih .cal-grid button.is-out { color:var(--sub); opacity:.55; }
+#glih .cal-mgrid button { height:44px; font-size:14px; }
+#glih .cal-pop button.is-today { box-shadow:inset 0 0 0 2px var(--accent); }
+#glih .cal-pop button.is-sel { background-color:var(--accent) !important; color:var(--accent-text); font-weight:700; }
+#glih .cal-foot { display:flex; justify-content:flex-end; margin-top:8px; }
+#glih .cal-foot button { height:34px; padding:0 16px; font-size:13px; color:var(--accent); font-weight:700; }
+#glih .fpi { position:absolute; left:0; top:100%; width:1px; height:1px; opacity:0; pointer-events:none; border:0; padding:0; }
+#glih .fx.fr { right:28px; font-size:14px; }
+#glih .fx.fr.ta { top:8px; transform:none; }
+#glih .fx.fp { right:51px; font-size:13px; }
+#glih .fw > .fin, #glih .fw > .fta { padding-right:54px; }
+#glih .fw.hasfp > .fin { padding-right:78px; }
+#glih .fgcol { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+#glih .fgcol .chips { flex:none; }
+#glih .snsh { display:flex; flex-direction:column; gap:6px; }
+#glih .snsh .row { display:flex; gap:6px; align-items:center; }
+#glih .snsh .row.btns { flex-wrap:wrap; }
+#glih .snsh .row.btns .small { flex:1 1 auto; padding:8px 6px; }
+#glih .small:disabled { opacity:.35; cursor:default; }
+#glih .rep { margin:0 0 10px; padding-top:10px; border-top:1px dashed var(--line); }
+#glih .fin.num { flex:0 0 4.5em; width:4.5em; text-align:center; }
+#glih .rep .fsel { flex:0 0 8em; font-size:13px; }
+#glih .chipr.nw { flex-wrap:nowrap; }
+#glih #glih-rpq { gap:4px; }
+#glih #glih-rpq .chip { flex:1 1 auto; width:auto; min-width:0; padding:5px 4px; }
+#glih #glih-frd { flex-wrap:wrap; gap:4px; }
+#glih #glih-frd > label { margin-right:4px; } /* the row gap is 4px (the others 8px): keeps the date box aligned with the id / time boxes */
+#glih #glih-frd .small { padding:7px 4px; }
+#glih #glih-frd #glih-fdtoday { padding-left:13px; padding-right:13px; } /* today: wider (6px more on each side than the other buttons) */ /* narrow screens: the < today > buttons go to the next line instead of widening the card */
+#glih #glih-rpw { gap:4px; }
+#glih #glih-rpw .chip { flex:1 1 0; width:auto; min-width:0; padding:5px 0; font-size:11px; }
+#glih .chipr .chip:disabled { opacity:.35; cursor:default; }
+#glih .dtw:not(.t) > .fin { width:calc(12.6em + 2px - 27px); padding-right:56px; } /* the calendar icon is outside the box (to its right); the box is 20px narrower so the whole width stays */ /* YYYY/MM/DD + the weekday + the calendar icon: the weekday room is always reserved */
+#glih .dtw .wdl { position:absolute; right:55px; top:50%; transform:translateY(-50%); flex:none; font-size:13px; line-height:1; pointer-events:none; }
+#glih .wdl { flex:0 0 2.6em; font-size:12px; color:var(--sub); white-space:nowrap; }
+#glih .rpnote { font-size:11px; color:var(--sub); }
+#glih .rpsrow { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:6px 0; border-bottom:1px solid var(--line); }
+#glih .rpsrow .nm { flex:0 0 3.8em; font-size:12px; color:var(--sub); }
+#glih .rpsrow .rpd { width:9.5em; }
+#glih .rpsrow .rpt { width:5em; }
+#glih .rpsrow .fsel { flex:0 0 8em; }
+#glih .rpsrow .rpf { flex:1 1 8em; min-width:6em; }
+#glih .rprow { display:flex; align-items:baseline; gap:8px; padding:5px 10px; border-bottom:1px solid var(--line); font-size:12px; line-height:1.4; color:var(--text); cursor:pointer; }
+#glih .rprow:last-child { border-bottom:0; }
+#glih .rprow input { margin:0; flex:none; }
+#glih .rprow .m { color:var(--sub); font-size:11px; word-break:break-all; }
+#glih .rprow.off .d, #glih .rprow.off .m { opacity:.45; text-decoration:line-through; }
+#glih .rprow .ex { color:#d33; font-size:11px; flex:none; }
+#glih .snsh .fsel { flex:0 0 7.5em; font-size:13px; }
+#glih .snsh .chips { flex:none; }
+#glih .snsh .row.wrap { flex-wrap:wrap; }
+#glih .snsh .fin.num { flex:0 0 4.2em; width:4.2em; }
+#glih .snsh .fin.mid { flex:1 1 7em; }
+#glih .fcand.fsug { margin:0; max-height:12em; }
+#glih .fsug button.sel { background:var(--btn); }
+#glih a.fx { display:block; text-decoration:none !important; }
+#glih a.fx svg { width:14px; height:14px; vertical-align:middle; margin-top:-2px; }
+#glih .fx.ta { top:8px; transform:none; }
+#glih .fx:hover { background:var(--btn); color:var(--text); }
+#glih .fx[hidden] { display:none; }
+/*]]>*/
+</style>
+
+<div class="tabs"><button type="button" data-tab="logs" class="on">logs</button><button type="button" data-tab="setlist">setlist</button><button type="button" data-tab="songs">songs</button></div>
+
+<div hidden><div class="chips" id="glih-groups"><div class="cr"><button type="button" class="chip" data-v="G2">G2</button><button type="button" class="chip" data-v="L2">L2</button></div><div class="cr"><button type="button" class="chip" data-v="YZH">YZH</button><button type="button" class="chip" data-v="MMK">MMK</button><button type="button" class="chip" data-v="MSK">MSK</button><button type="button" class="chip" data-v="YOK">YOK</button><button type="button" class="chip" data-v="KUR">KUR</button><button type="button" class="chip" data-v="MNM">MNM</button><button type="button" class="chip" data-v="KIR">KIR</button></div><div class="cr"><button type="button" class="chip" data-v="TOA">TOA</button><button type="button" class="chip" data-v="RAN">RAN</button></div><div class="cr"><button type="button" class="chip" data-v="RIN">RIN</button><button type="button" class="chip" data-v="TBK">TBK</button><button type="button" class="chip" data-v="HIR">HIR</button><button type="button" class="chip" data-v="YUW">YUW</button><button type="button" class="chip" data-v="KAN">KAN</button><button type="button" class="chip" data-v="RRK">RRK</button><button type="button" class="chip" data-v="AKR">AKR</button><button type="button" class="chip" data-v="KIK">KIK</button></div><div class="cr"><button type="button" class="chip" data-v="YUR">YUR</button></div></div></div>
+
+<section id="glih-p-songs" hidden>
+  <div class="field"><label for="glih-sa">artist</label><input type="text" id="glih-sa" class="fin" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="field"><label for="glih-st">title</label><input type="text" id="glih-st" class="fin" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="field"><label for="glih-sl">link</label><input type="text" id="glih-sl" class="fin" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://..."></div>
+  <a class="go" id="glih-go-songs" target="_blank" rel="noopener" aria-disabled="true">songs</a>
+</section>
+
+<section id="glih-p-find" hidden>
+  <select id="glih-fkind" hidden><option value="logs">logs</option><option value="setlist">setlist</option></select>
+  <div class="field"><label for="glih-fid">id</label><input type="text" id="glih-fid" class="fin" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" class="small" id="glih-fgo">find</button><button type="button" class="small" id="glih-fnew" hidden>new</button></div>
+  <div class="field" id="glih-frd"><label for="glih-fdd">date</label><input type="text" id="glih-fdd" class="fin" autocomplete="off"><button type="button" class="small" id="glih-fdprev" title="prev day">&lt;</button><button type="button" class="small" id="glih-fdtoday">today</button><button type="button" class="small" id="glih-fdnext" title="next day">&gt;</button></div>
+  <div class="field" id="glih-frt"><label for="glih-fdt">time</label><input type="text" id="glih-fdt" class="fin" autocomplete="off"><label class="chk" id="glih-fanyl" style="margin:0"><input type="checkbox" id="glih-fany">anytime</label></div>
+  <div class="fcand" id="glih-fdl" hidden></div>
+  <div class="fstat" id="glih-fstat" hidden></div>
+  <div class="fcand" id="glih-fcand" hidden></div>
+  <div class="field" id="glih-fcprow" hidden><label for="glih-fcp">copy</label><label class="chk" style="margin:0"><input type="checkbox" id="glih-fcp">copy (new entry)</label></div>
+  <div class="field" id="glih-fcontrow" hidden><label>next</label><div class="chipr" id="glih-fcc"><button type="button" class="small" data-m="repeat" title="new entry on the same date with the repeat entry turned on, next # number">repeat</button><button type="button" class="small" data-m="week" title="new entry: +7 days, next # number">weekly</button><button type="button" class="small" data-m="month" title="new entry: the same day of the next month, next # number">monthly</button><button type="button" class="small" data-m="year" title="new entry: the same day of the next year, next # number">yearly</button></div></div>
+  <div id="glih-ff"></div>
+  <!-- 注記(非表示にした): 変更した項目(青枠)だけがIssueフォームに事前入力されます。tags / sns は更新時に追記、空欄にした値の削除はフォームの【値の削除】チェックで行います。relations は事前入力できません(JSONで確認)。 -->
+  <div class="out" id="glih-fjrow" hidden><button type="button" class="small" id="glih-fjtog" aria-expanded="false">JSON &#9662;</button><button type="button" class="small" id="glih-fcopy">JSON copy</button><button type="button" class="small" id="glih-freset">reset all</button></div>
+  <textarea id="glih-fjson" class="jsonbox" spellcheck="false" hidden></textarea>
+  <div class="fdiff" id="glih-fdiff" hidden></div>
+  <a class="go" id="glih-go-find" target="_blank" rel="noopener" aria-disabled="true">Issue</a>
+</section>
+
+<script>
+//<![CDATA[
+(function () {
+  // Settings: repository and issue template file names (in .github/ISSUE_TEMPLATE/)
+  var REPO = 'piscenake52/gllogs', TPL_LOGS = 'add_logs.yml', TPL_SETLIST = 'add_setlist.yml', TPL_SONGS = 'add_songs.yml';
+  var root = document.getElementById('glih');
+  // NOTE: keep this script ASCII-only. Blogger converts non-ASCII characters into &#NNNN; entities, which are NOT decoded inside <script>.
+  var DASH = '\u2014'; // em dash as an ASCII escape: Blogger turns a literal dash inside <script> into &#8212;, which JS does not decode
+  function $(id) { return document.getElementById('glih-' + id); }
+  function digits(v) { return (v || '').replace(/\D/g, ''); }
+  function okDate(v) { if (!/^\d{8}$/.test(v)) return false; var y = +v.slice(0, 4), m = +v.slice(4, 6), d = +v.slice(6), t = new Date(y, m - 1, d); return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d; }
+  function okTime(v) { return /^\d{4}$/.test(v) && +v.slice(0, 2) < 24 && +v.slice(2) < 60; }
+  function issueUrl(tpl, params) {
+    var q = new URLSearchParams(Object.assign({ template: tpl }, params));
+    return 'https://github.com/' + REPO + '/issues/new?' + q.toString(); // the form field ids (date / time / setlistid) are used as the parameter names
+  }
+  function setLink(a, url) { if (url) { a.href = url; a.setAttribute('aria-disabled', 'false'); } else { a.removeAttribute('href'); a.setAttribute('aria-disabled', 'true'); } }
+  function tab(name) {
+    var isFind = name === 'logs' || name === 'setlist';
+    $('p-find').hidden = !isFind; $('p-songs').hidden = name !== 'songs'; if (name === 'songs') songsInit();
+    if (isFind && $('fkind').value !== name) { $('fkind').value = name; $('fkind').dispatchEvent(new Event('change')); } // logs / setlist share one panel
+    [].forEach.call(root.querySelectorAll('.tabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === name); });
+  }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+
+  [].forEach.call(root.querySelectorAll('.tabs button'), function (b) { b.onclick = function () { var n = b.getAttribute('data-tab'); tab(n); try { history.replaceState(null, '', '#' + n); } catch (e) {} }; });
+
+  // ---- find tab: look up a logid / setlistid in the data file on GitHub (raw, always latest) and prefill the issue form with the changed fields only ----
+  var BRANCH = 'main', DATA = { logs: 'data/logs/logs.json', setlist: 'data/setlist/setlist.json', songs: 'data/songs/songs.json' }, cache = {};
+  var DEFS = {
+    logs: { idKey: 'logid', tpl: TPL_LOGS, fields: [
+      { k: 'date' }, { k: 'time' }, { k: 'contents', p: 'contents_free' }, { k: 'title', p: 'item_title', ta: 1 }, { k: 'display_pc', ta: 1 }, { k: 'display_sp', ta: 1 }, { k: 'url' }, { k: 'map' }, { k: 'setlistid' },
+      { k: 'groups', p: 'groups_free', list: 1 }, { k: 'relations', p: 'relations_free', list: 1 }, { k: 'tags', list: 1 }, { k: 'sns', ta: 1 } ] },
+    setlist: { idKey: 'setlistid', tpl: TPL_SETLIST, fields: [
+      { k: 'title', p: 'item_title', ta: 1 }, { k: 'artist', p: 'artist_free' }, { k: 'member', p: 'member_free', list: 1 }, { k: 'venue' }, { k: 'songs', ta: 1 }, { k: 'songs_patch', lb: 'patch', ta: 1 } ] }
+  };
+  // clear (x) button at the right end of an input: empties the field and fires an input event so the preview and link update
+  function addClear(el) {
+    var wrap = document.createElement('span'); wrap.className = 'fw';
+    el.parentNode.insertBefore(wrap, el); wrap.appendChild(el);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'fx' + (el.tagName === 'TEXTAREA' ? ' ta' : ''); b.textContent = '\u2715'; b.setAttribute('aria-label', 'clear'); b.title = 'clear';
+    var sync = function () { b.hidden = el.value === ''; };
+    b.onclick = function () { el.value = ''; el.dispatchEvent(new Event('input', { bubbles: true })); sync(); el.focus(); };
+    el.addEventListener('input', sync); sync();
+    wrap.appendChild(b);
+  }
+  // open-in-a-new-window icon inside a url input: a plain link that follows the value (shown only for http(s) values). right: distance from the right end in px.
+  var ICON_EXT = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.5h4.5V7M13.5 2.5L7.5 8.5M12 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3"/></svg>';
+  function addOpen(el, right) {
+    var fw = el.parentNode;
+    var a = document.createElement('a'); a.className = 'fx'; a.style.right = right + 'px'; a.innerHTML = ICON_EXT; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.title = 'open'; a.setAttribute('aria-label', 'open in a new window');
+    el.style.paddingRight = (right + 26) + 'px';
+    var sync = function () { var v = el.value.trim(), ok = /^https?:\/\/\S+$/i.test(v); a.hidden = !ok; if (ok) a.href = v; else a.removeAttribute('href'); };
+    el.addEventListener('input', sync); sync();
+    fw.appendChild(a);
+  }
+  // YYYY/MM/DD and HH:MM text inputs for the find tab (shown the same on every device): digits are auto-formatted while typing, and a button opens the native calendar / clock.
+  function fmtDigits(d, type) {
+    d = d.replace(/\D/g, '').slice(0, type === 'date' ? 8 : 4);
+    return type === 'date' ? d.slice(0, 4) + (d.length > 4 ? '/' + d.slice(4, 6) : '') + (d.length > 6 ? '/' + d.slice(6) : '') : d.slice(0, 2) + (d.length > 2 ? ':' + d.slice(2) : '');
+  }
+  function dtText(ti, type) {
+    ti.setAttribute('inputmode', 'numeric'); ti.setAttribute('spellcheck', 'false'); ti.placeholder = type === 'date' ? 'YYYY/MM/DD' : 'HH:MM'; ti.maxLength = type === 'date' ? 10 : 5;
+    ti.addEventListener('input', function () { var f = fmtDigits(ti.value, type); if (ti.value !== f) ti.value = f; });
+  }
+  var ICON_CAL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.8v2.6M11 1.8v2.6"/></svg>';
+  var ICON_CLK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.3 1.6"/></svg>';
+  // wraps the text input in place and puts a plain (no frame) calendar / clock icon inside its right end; the icon opens the native picker
+  // calendar popup shared by all date inputs (date / until / the top date of the find tab). The time input keeps the native picker.
+  var CAL = (function () {
+    var pop = null, vy = 0, vm = 0, mode = 'day', cur = null, anchor = null;
+    var WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], MN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    function pad(n) { return ('0' + n).slice(-2); }
+    function ymd(y, m, d) { return y + pad(m + 1) + pad(d); }
+    function todayD() { var t = new Date(); return ymd(t.getFullYear(), t.getMonth(), t.getDate()); }
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (tag === 'button') e.type = 'button'; return e; }
+    function place() {
+      if (!anchor) return;
+      var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 290, h = pop.offsetHeight || 340;
+      pop.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px';
+      var top = r.bottom + 6; if (top + h > window.innerHeight - 8 && r.top - h - 6 > 8) top = r.top - h - 6; // open upward when there is no room below
+      pop.style.top = top + 'px';
+    }
+    function close() { if (pop) pop.hidden = true; anchor = null; cur = null; }
+    function choose(d) { var f = cur; close(); if (f) f(d); }
+    function render() {
+      pop.textContent = '';
+      var head = el('div', 'cal-head'), sel = cur && cur.sel, td = todayD();
+      function nav(label, aria, fn) { var b = el('button', 'cal-nav', label); b.setAttribute('aria-label', aria); b.onclick = fn; return b; }
+      var grid, i, b;
+      if (mode === 'day') {
+        var ttl = el('button', 'cal-title', vy + ' / ' + pad(vm + 1)); ttl.setAttribute('aria-label', 'pick year and month'); ttl.onclick = function () { mode = 'month'; render(); };
+        head.appendChild(nav('\u00AB', 'previous year', function () { vy--; render(); }));
+        head.appendChild(nav('\u2039', 'previous month', function () { if (--vm < 0) { vm = 11; vy--; } render(); }));
+        head.appendChild(ttl);
+        head.appendChild(nav('\u203A', 'next month', function () { if (++vm > 11) { vm = 0; vy++; } render(); }));
+        head.appendChild(nav('\u00BB', 'next year', function () { vy++; render(); }));
+        pop.appendChild(head);
+        grid = el('div', 'cal-grid');
+        WD.forEach(function (w) { grid.appendChild(el('div', 'cal-wd', w)); });
+        var start = new Date(vy, vm, 1 - new Date(vy, vm, 1).getDay());
+        for (i = 0; i < 42; i++) {
+          (function () {
+            var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), s = ymd(d.getFullYear(), d.getMonth(), d.getDate());
+            var c = el('button', 'cal-day' + (d.getMonth() !== vm ? ' is-out' : '') + (s === td ? ' is-today' : '') + (s === sel ? ' is-sel' : ''), String(d.getDate()));
+            c.onclick = function () { choose(s); };
+            grid.appendChild(c);
+          })();
+        }
+        pop.appendChild(grid);
+        var foot = el('div', 'cal-foot'), tb = el('button', '', 'today'); tb.onclick = function () { choose(td); };
+        foot.appendChild(tb); pop.appendChild(foot);
+      } else {
+        head.appendChild(nav('\u2039', 'previous year', function () { vy--; render(); }));
+        var yb = el('button', 'cal-title', String(vy)); yb.onclick = function () { mode = 'day'; render(); }; head.appendChild(yb);
+        head.appendChild(nav('\u203A', 'next year', function () { vy++; render(); }));
+        pop.appendChild(head);
+        grid = el('div', 'cal-mgrid'); var tn = new Date();
+        for (i = 0; i < 12; i++) {
+          (function (m) {
+            var c = el('button', 'cal-month' + (vy === tn.getFullYear() && m === tn.getMonth() ? ' is-today' : '') + (sel && +sel.slice(0, 4) === vy && +sel.slice(4, 6) - 1 === m ? ' is-sel' : ''), MN[m]);
+            c.onclick = function () { vm = m; mode = 'day'; render(); };
+            grid.appendChild(c);
+          })(i);
+        }
+        pop.appendChild(grid);
+      }
+      place();
+    }
+    function init() {
+      pop = el('div', 'cal-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'calendar'); root.appendChild(pop);
+      document.addEventListener('click', function (e) { var path = e.composedPath ? e.composedPath() : []; if (!pop.hidden && path.indexOf(pop) < 0 && path.indexOf(anchor) < 0) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !pop.hidden) close(); });
+      window.addEventListener('resize', function () { if (!pop.hidden) place(); });
+      window.addEventListener('scroll', function () { if (!pop.hidden) place(); }, true);
+    }
+    // open(button, 'yyyymmdd' or '', callback(yyyymmdd)); clicking the same button again closes it
+    return { open: function (btn, digits, cb) {
+      if (!pop) init();
+      if (!pop.hidden && anchor === btn) { close(); return; }
+      anchor = btn; var s = /^\d{8}$/.test(digits) ? digits : '', b0 = s || todayD();
+      cur = cb; cur.sel = s; vy = +b0.slice(0, 4); vm = +b0.slice(4, 6) - 1; mode = 'day'; pop.hidden = false; render();
+    } };
+  })();
+  function dtPicker(ti, type, onOpen) {
+    var w = document.createElement('span'); w.className = 'dtw' + (type === 'time' ? ' t' : '');
+    ti.parentNode.insertBefore(w, ti); w.appendChild(ti);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'dtb'; b.innerHTML = type === 'date' ? ICON_CAL : ICON_CLK; b.title = type; b.setAttribute('aria-label', type + ' picker');
+    var pi = document.createElement('input'); pi.type = type; pi.className = 'fpi'; pi.tabIndex = -1; pi.setAttribute('aria-hidden', 'true'); if (type === 'time') pi.step = '60';
+    b.onclick = function () {
+      if (onOpen) onOpen(); // e.g. list the candidates of the current value even if the calendar selection will not change it
+      var v = ti.value.replace(/\D/g, '');
+      if (type === 'date') pi.value = v.length === 8 ? v.slice(0, 4) + '-' + v.slice(4, 6) + '-' + v.slice(6) : '';
+      else pi.value = v.length === 4 ? v.slice(0, 2) + ':' + v.slice(2) : '';
+      if (type === 'date') { // the calendar popup (the native one is kept for time)
+        CAL.open(b, v.length === 8 ? v : '', function (d) { ti.value = fmtDigits(d, 'date'); ti.dispatchEvent(new Event('input', { bubbles: true })); });
+        return;
+      }
+      try { pi.showPicker(); } catch (e) { try { pi.focus(); pi.click(); } catch (e2) {} }
+    };
+    pi.addEventListener('change', function () { if (!pi.value) return; ti.value = fmtDigits(pi.value, type); ti.dispatchEvent(new Event('input', { bubbles: true })); });
+    w.appendChild(b); w.appendChild(pi);
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'dtx'; x.textContent = '\u2715'; x.title = 'clear'; x.setAttribute('aria-label', 'clear ' + type); x.tabIndex = -1; // the clear button at the right end of the box (hidden while empty; the room is kept)
+    x.onclick = function () { ti.value = ''; ti.dispatchEvent(new Event('input', { bubbles: true })); ti.dispatchEvent(new Event('change', { bubbles: true })); ti.focus(); };
+    w.appendChild(x);
+    return w;
+  }
+  // weekday label (Sun, Mon, ...) right after a date input (after its calendar wrapper). Returns the function that refreshes it.
+  function addWeekday(ti) {
+    var sp = document.createElement('span'); sp.className = 'wdl'; var w = ti.parentNode && ti.parentNode.className === 'dtw' ? ti.parentNode : ti;
+    if (w === ti) w.parentNode.insertBefore(sp, w.nextSibling); else w.appendChild(sp); // inside the date box (the room is always kept; the text only shows when the date is complete)
+    return function () { var d = ti.value.replace(/\D/g, ''); sp.textContent = okDate(d) ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8)).getDay()] : ''; };
+  }
+  // date / time of the find tab (logs): YYYY/MM/DD and HH:MM text inputs + calendar / clock buttons. The hidden text input keeps the form format (yyyymmdd / hhmm) and the rest of the code reads it.
+  function useNative(el, type, key) {
+    var fw = el.parentNode, field = fw.parentNode;
+    fw.hidden = true;
+    var ti = document.createElement('input'); ti.type = 'text'; ti.className = 'fin'; ti.id = 'glih-n-' + key; ti.setAttribute('autocomplete', 'off');
+    dtText(ti, type);
+    var lb = field.querySelector('label'); if (lb) lb.setAttribute('for', ti.id);
+    function digitsOf(v) { return v.replace(/\D/g, ''); }
+    function toTi() {
+      if (digitsOf(ti.value) !== digitsOf(el.value)) ti.value = fmtDigits(el.value, type);
+      ti.classList.toggle('ch', el.classList.contains('ch')); ti.classList.toggle('bad', el.classList.contains('bad'));
+      if (typeof wdu === 'function') wdu();
+    }
+    function fromTi() { el.value = digitsOf(ti.value); el.dispatchEvent(new Event('input', { bubbles: true })); }
+    ti.addEventListener('input', fromTi);
+    el.addEventListener('input', toTi); ti.value = fmtDigits(el.value, type); toTi();
+    field.appendChild(ti); dtPicker(ti, type);
+    var wdu = type === 'date' ? addWeekday(ti) : null; if (wdu) { ti.addEventListener('input', wdu); wdu(); }
+    function mk(text, title, fn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'small'; b.textContent = text; b.title = title; b.onclick = fn; field.appendChild(b); return b; }
+    if (type === 'date') mk('today', 'today', function () { ti.value = fmtDigits(today().replace(/\D/g, ''), 'date'); fromTi(); });
+    var rv = mk('\u21BA', 'revert', function () { el.value = orig[key]; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    var sync = function () { rv.hidden = el.value === orig[key]; };
+    el.addEventListener('input', sync); sync();
+  }
+  // G2 / L2 chips are always shown; the member rows of a group show only while the group is ON (or one of its members is selected). Turning the group OFF also turns its members OFF.
+  // uiOnly: the G2 / L2 chips of member-only fields (setlist member / song member): they only show / hide the rows and never go into the value ('gh-on' is their state).
+  var FOLD_G2 = ['YZH', 'MMK', 'MSK', 'YOK', 'KUR', 'MNM', 'KIR', 'TOA', 'RAN'], FOLD_L2 = ['RIN', 'TBK', 'HIR', 'YUW', 'KAN', 'RRK', 'AKR', 'KIK', 'YUR'];
+  function foldGroups(chips, uiOnly) {
+    var cls = uiOnly ? 'gh-on' : 'on', lists = { G2: FOLD_G2, L2: FOLD_L2 }, head = {}, mem = { G2: [], L2: [] }, rows = { G2: [], L2: [] };
+    [].forEach.call(chips.querySelectorAll('.chip'), function (b) {
+      var v = b.getAttribute('data-v');
+      if (v === 'G2' || v === 'L2') { head[v] = b; if (uiOnly) b.classList.add('gh'); }
+      else for (var g in lists) if (lists[g].indexOf(v) >= 0) { mem[g].push(b); if (rows[g].indexOf(b.parentNode) < 0) rows[g].push(b.parentNode); }
+    });
+    function sel(g) { return mem[g].some(function (b) { return b.classList.contains('on'); }); }
+    function offMembers(g) { mem[g].forEach(function (b) { if (b.classList.contains('on')) b.click(); }); }
+    var busy = false;
+    function refresh() {
+      if (busy) return; busy = true;
+      ['G2', 'L2'].forEach(function (g) {
+        var h = head[g]; if (!h) return;
+        var real = h.classList.contains(cls), s = sel(g), vis = real || s;
+        h.classList.toggle('fold-on', !real && s);
+        rows[g].forEach(function (r) { r.style.display = vis ? '' : 'none'; });
+      });
+      busy = false;
+    }
+    ['G2', 'L2'].forEach(function (g) {
+      var h = head[g]; if (!h) return;
+      h.addEventListener('click', function (e) { // capture-phase work: a chip that only looks ON (members selected, data not ON) turns the group OFF at once
+        if (h.classList.contains('fold-on') && !h.classList.contains(cls)) { e.stopImmediatePropagation(); h.classList.remove('fold-on'); offMembers(g); refresh(); }
+      }, true);
+      h.addEventListener('click', function () { // runs after the chip's own handler (data chips) / toggles the state (ui-only chips)
+        if (uiOnly) h.classList.toggle('gh-on');
+        if (!h.classList.contains(cls)) offMembers(g);
+        refresh();
+      });
+    });
+    new MutationObserver(refresh).observe(chips, { attributes: true, attributeFilter: ['class'], subtree: true });
+    refresh();
+  }
+  // member chips under the groups input of the find tab (same chips as the logs tab): two-way synced with the comma-separated text
+  function addGroupChips(el, membersOnly) {
+    var fw = el.parentNode, col = document.createElement('div'); col.className = 'fgcol';
+    fw.parentNode.classList.add('top', 'tl'); // label aligned to the top (the input is the first row of the column)
+    fw.parentNode.insertBefore(col, fw); col.appendChild(fw);
+    var chips = $('groups').cloneNode(true); chips.removeAttribute('id'); col.appendChild(chips);
+    var btns = [].slice.call(chips.querySelectorAll('.chip'));
+    if (membersOnly) btns = btns.filter(function (b) { var v = b.getAttribute('data-v'); return v !== 'G2' && v !== 'L2'; }); // setlist member: G2 / L2 only show / hide the member rows
+    function tokens() { return el.value.split(/[,\u3001\s]+/).filter(Boolean); }
+    function sync() { var t = tokens().map(function (x) { return x.toUpperCase(); }); btns.forEach(function (b) { b.classList.toggle('on', t.indexOf(b.getAttribute('data-v')) !== -1); }); }
+    btns.forEach(function (b) {
+      b.onclick = function () {
+        var v = b.getAttribute('data-v'), t = tokens(), has = t.some(function (x) { return x.toUpperCase() === v; });
+        t = has ? t.filter(function (x) { return x.toUpperCase() !== v; }) : t.concat(v);
+        el.value = t.join(','); el.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+    });
+    el.addEventListener('input', sync); sync();
+    foldGroups(chips, !!membersOnly);
+  }
+  // setlist artist chips (Girls2 / Laki): toggle the name in the text (both on = joined with ' x ' as the form does). The members of the artist's group are switched on in the member field.
+  var G2_MEM = ['YZH', 'MMK', 'MSK', 'YOK', 'KUR', 'MNM', 'KIR'], L2_MEM = ['RIN', 'TBK', 'HIR', 'YUW', 'KAN', 'RRK', 'AKR', 'KIK'], AJOIN = ' \u00D7 ';
+  var ART_G2 = 'Girls\u00B2', ART_L2 = 'Laki', autoMember = '';
+  function artistTokens(t) { return String(t || '').split('\u00D7').map(function (x) { return x.trim(); }).filter(Boolean); }
+  function membersOfArtist(t) { var a = artistTokens(t); return (a.indexOf(ART_G2) >= 0 ? G2_MEM : []).concat(a.indexOf(ART_L2) >= 0 ? L2_MEM : []).join(','); }
+  function autoFillMember(artistEl) {
+    var m = $('f-member'); if (!m) return;
+    var next = membersOfArtist(artistEl.value);
+    if (m.value === '' || m.value === autoMember) { // only an empty member or the value set automatically before is replaced (a hand-edited member is kept)
+      autoMember = next;
+      if (m.value !== next) { m.value = next; m.dispatchEvent(new Event('input', { bubbles: true })); }
+    }
+  }
+  function addArtistChips(el) {
+    autoMember = '';
+    var fw = el.parentNode, col = fw.parentNode, row = document.createElement('div'); row.className = 'chipr'; row.style.margin = '0 0 4px';
+    if (!col.classList.contains('fgcol')) { var gc = document.createElement('div'); gc.className = 'fgcol'; col.insertBefore(gc, fw); gc.appendChild(fw); col = gc; }
+    if (col.parentNode && col.parentNode.classList.contains('field')) col.parentNode.style.alignItems = 'flex-start'; // a column: the input above, the chips below
+    [ART_G2, ART_L2].forEach(function (v) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = v; b.setAttribute('data-v', v);
+      b.onclick = function () {
+        var t = artistTokens(el.value), i = t.indexOf(v);
+        if (i >= 0) t.splice(i, 1); else t.push(v);
+        t.sort(function (a, c) { return (a === ART_G2 ? 0 : a === ART_L2 ? 1 : 2) - (c === ART_G2 ? 0 : c === ART_L2 ? 1 : 2); });
+        el.value = t.join(AJOIN); el.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      row.appendChild(b);
+    });
+    col.insertBefore(row, fw.nextSibling);
+    function sync() { var t = artistTokens(el.value); [].forEach.call(row.children, function (b) { b.classList.toggle('on', t.indexOf(b.getAttribute('data-v')) >= 0); }); }
+    el.addEventListener('input', function () { sync(); autoFillMember(el); }); sync();
+  }
+  // revert (undo) button in each find field: appears when the value differs from the loaded one
+  function addRevert(el, key) {
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'fx fr' + (el.tagName === 'TEXTAREA' ? ' ta' : ''); b.textContent = '\u21BA'; b.title = 'revert'; b.setAttribute('aria-label', 'revert');
+    var sync = function () { b.hidden = el.value === orig[key]; };
+    b.onclick = function () { el.value = orig[key]; el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); };
+    el.addEventListener('input', sync); sync();
+    el.parentNode.appendChild(b);
+  }
+  var jumpSeed = null; // values of the logs row the setlist tab was opened from (title / groups / tags): used to prefill a new setlist
+  // arrow button in the setlistid field of a logs row: opens that setlist in this tab
+  function addJump(el) {
+    var wrap = el.parentNode; wrap.classList.add('hasfp');
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'fx fp'; b.textContent = '\u2192'; b.title = 'open setlist'; b.setAttribute('aria-label', 'open setlist');
+    var sync = function () { b.hidden = !/^\d{12}$/.test(el.value.trim()); };
+    b.onclick = function () { var sid = el.value.trim(); var gv = function (k) { var e = $('f-' + k); return e ? e.value : ''; }; jumpSeed = { sid: sid, title: gv('title'), groups: gv('groups'), tags: gv('tags') }; tab('setlist'); try { history.replaceState(null, '', '#setlist'); } catch (e) {} $('fid').value = sid; $('fid').dispatchEvent(new Event('input', { bubbles: true })); doFind(); };
+    el.addEventListener('input', sync); sync();
+    wrap.appendChild(b);
+  }
+  // sns input helper (find tab, logs): a url box + type + member chips. 'add' appends one line (type | url | member) to the sns textarea, which stays as it is.
+  function addSnsHelper(el) {
+    var fw = el.parentNode, col = document.createElement('div'); col.className = 'fgcol';
+    fw.parentNode.insertBefore(col, fw); col.appendChild(fw);
+    var box = document.createElement('div'); box.className = 'snsh'; col.insertBefore(box, fw); // the input helper goes above the textarea
+    var row = document.createElement('div'); row.className = 'row'; box.appendChild(row);
+    var sel = document.createElement('select'); sel.className = 'fsel'; sel.title = 'type';
+    ['auto', 'x', 'instagram', 'youtube', 'tiktok', 'gl2family', 'cl', 'threads', 'line', 'etc'].forEach(function (t) { var o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o); });
+    var url = document.createElement('input'); url.type = 'text'; url.className = 'fin'; url.placeholder = 'https://...'; url.setAttribute('autocomplete', 'off'); url.setAttribute('autocapitalize', 'off'); url.setAttribute('spellcheck', 'false');
+    var add = document.createElement('button'); add.type = 'button'; add.className = 'small'; add.textContent = 'add';
+    var uw = document.createElement('span'); uw.className = 'fw'; uw.appendChild(url);
+    row.appendChild(sel); row.appendChild(uw); row.appendChild(add);
+    addOpen(url, 5);
+    var chips = $('groups').cloneNode(true); chips.removeAttribute('id'); box.appendChild(chips);
+    [].forEach.call(chips.querySelectorAll('.chip'), function (b) { var v = b.getAttribute('data-v'); if (v === 'G2' || v === 'L2') return; b.onclick = function () { b.classList.toggle('on'); }; }); // G2 / L2 only show / hide the member rows (never written to sns)
+    foldGroups(chips, true);
+    function urlOf(line) { var m = line.match(/https?:\/\/[^\s|]+/i); return m ? m[0] : ''; }
+    function doAdd() {
+      var u = url.value.trim();
+      if (!/^https?:\/\/\S+$/i.test(u)) { url.classList.add('bad'); url.focus(); return; }
+      url.classList.remove('bad');
+      var mem = [].map.call(chips.querySelectorAll('.chip.on'), function (b) { return b.getAttribute('data-v'); });
+      ['G2', 'L2'].forEach(function (g) { var h = chips.querySelector('.chip[data-v=' + g + ']'), fl = g === 'G2' ? FOLD_G2 : FOLD_L2; if (h && h.classList.contains('gh-on') && !mem.some(function (v) { return fl.indexOf(v) >= 0; })) mem.unshift(g); }); // a group alone = all its members (the server expands it); with members picked, only the members
+      mem = mem.join(',');
+      var lines = el.value.split('\n').filter(function (l) { return l.trim() !== ''; }), hit = -1;
+      lines.forEach(function (l, i) { if (hit < 0 && urlOf(l) === u) hit = i; });
+      var t = sel.value !== 'auto' ? sel.value : (hit >= 0 && !/^\s*https?:/i.test(lines[hit]) ? lines[hit].split('|')[0].trim() : ''); // keep the existing type of a replaced line
+      var parts = []; if (t) parts.push(t); parts.push(u); if (mem) parts.push(mem);
+      var line = parts.join(' | ');
+      if (hit >= 0) lines[hit] = line; else lines.push(line);
+      el.value = lines.join('\n'); el.dispatchEvent(new Event('input', { bubbles: true }));
+      url.value = ''; [].forEach.call(chips.querySelectorAll('.chip.on'), function (b) { b.classList.remove('on'); }); [].forEach.call(chips.querySelectorAll('.chip.gh-on'), function (b) { b.click(); });
+    }
+    add.onclick = doAdd;
+    url.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doAdd(); } });
+    url.addEventListener('input', function () { url.classList.remove('bad'); });
+  }
+  // prefix suggestions (find tab): values already used in the data files (most used first). Click / Up / Down + Enter picks one, Esc closes.
+  var optMemo = {};
+  function makeOpts(name, needs, collect) {
+    return function () {
+      if (optMemo[name]) return optMemo[name];
+      var m = {}; collect(m);
+      var list = Object.keys(m).sort(function (a, b) { return m[b] - m[a] || (a < b ? -1 : a > b ? 1 : 0); }).map(function (c) { return { v: c, n: m[c], k: normQ(c) }; });
+      if (needs.every(function (k) { return ix[k] || cache[k]; })) optMemo[name] = list; // keep the result only when every source is loaded
+      return list;
+    };
+  }
+  function addTo(m, v) { v = typeof v === 'string' ? v.trim() : ''; if (v) m[v] = (m[v] || 0) + 1; }
+  var CONTENTS_LIST = ['ANNIVERSARY','BIRTHDAY','DEBUT','FORMATION','CL','COLUMN','COOKING','DIARY','ETC','CAMPAIGN','CLOSE','MESSAGE','PLAYING','RESULT','EVENT','FANMEETING','RELEASEEVENT','FANCLUB','TELEPHONE','GLRADIO','GTUBE','LIVE','MAGAZINE','MEDIA','BOOK','NEWSPAPER','MODEL','MOVIE','RADIO','RELEASE','BD','CD','DIGITAL','DVD','MUSICCARD','SALES','GOODS','SNS','STAGE','STREAMING','TICKET','TV','WEB','PODCAST','YOUTUBE'];
+  function lxContents() { // values already used in logs.json (most used first) + the choices of the issue form
+    var base = contentsOptions(), seen = {};
+    base.forEach(function (o) { seen[o.v] = 1; });
+    return base.concat(CONTENTS_LIST.filter(function (c) { return !seen[c]; }).map(function (c) { return { v: c, k: normQ(c) }; }));
+  }
+  var contentsOptions = makeOpts('contents', ['logs'], function (m) { rowsOf('logs').forEach(function (r) { if (r) addTo(m, r.contents); }); });
+  var venueOptions = makeOpts('venue', ['setlist'], function (m) { rowsOf('setlist').forEach(function (r) { if (r) addTo(m, r.venue); }); });
+  var artistOptions = makeOpts('artist', ['setlist', 'songs'], function (m) { rowsOf('setlist').forEach(function (r) { if (r) addTo(m, r.artist); }); (cache.songs || []).forEach(function (r) { if (r) addTo(m, r.artist); }); });
+  var songOptions = makeOpts('song', ['setlist', 'songs'], function (m) {
+    (cache.songs || []).forEach(function (r) { if (r) addTo(m, r.title); });
+    rowsOf('setlist').forEach(function (r) { ((r && r.songs) || []).forEach(function (x) { if (x) addTo(m, typeof x === 'string' ? x : x.title); }); }); // the index keeps only the song titles (strings)
+  });
+  // el: the input. optsFn: returns [{v, n, k}]. after: (optional) node the list is placed after; without it the input is wrapped (.fw) and the list goes under it.
+  // partial: also match the typed text anywhere inside a value (prefix matches come first)
+  function addSuggest(el, optsFn, after, partial) {
+    var box = document.createElement('div'); box.className = 'fcand fsug'; box.hidden = true;
+    if (after) { after.parentNode.insertBefore(box, after.nextSibling); }
+    else {
+      var fw = el.parentNode, col = document.createElement('div'); col.className = 'fgcol';
+      fw.parentNode.classList.add('top', 'tl');
+      fw.parentNode.insertBefore(col, fw); col.appendChild(fw); col.appendChild(box);
+    }
+    var items = [], idx = -1;
+    function hide() { box.hidden = true; box.innerHTML = ''; items = []; idx = -1; }
+    function mark() { [].forEach.call(box.children, function (b, i) { b.classList.toggle('sel', i === idx); }); }
+    function pick(i) { el.value = items[i].v; hide(); el.dispatchEvent(new Event('input', { bubbles: true })); }
+    function show() {
+      var v = el.value.trim(), q = normQ(v);
+      if (!q) { hide(); return; }
+      var all = optsFn().filter(function (o) { return o.v !== v; });
+      var pre = all.filter(function (o) { return o.k.indexOf(q) === 0; });
+      items = (partial ? pre.concat(all.filter(function (o) { return o.k.indexOf(q) > 0; })) : pre).slice(0, 8); idx = -1;
+      box.innerHTML = '';
+      items.forEach(function (o, i) {
+        var b = document.createElement('button'); b.type = 'button'; b.appendChild(document.createTextNode(o.v));
+        if (o.n != null) { var m = document.createElement('span'); m.className = 'm'; m.textContent = '  x' + o.n; b.appendChild(m); }
+        b.onmousedown = function (e) { e.preventDefault(); pick(i); };
+        box.appendChild(b);
+      });
+      box.hidden = !items.length;
+    }
+    el.addEventListener('input', show);
+    el.addEventListener('blur', hide);
+    el.addEventListener('keydown', function (e) {
+      if (box.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); idx = (idx + 1) % items.length; mark(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); idx = (idx - 1 + items.length) % items.length; mark(); }
+      else if (e.key === 'Enter' && idx >= 0) { e.preventDefault(); pick(idx); }
+      else if (e.key === 'Escape') { hide(); }
+    });
+  }
+  // songs input helper (find tab, setlist): builds one line  [order:] title | type | original | notes  and appends it to the songs textarea (which stays as it is).
+  function addSongsHelper(el, row, isNew) {
+    fetchData('songs').catch(function () {}); // song titles for the suggestions (songs.json)
+    var fw = el.parentNode, col = document.createElement('div'); col.className = 'fgcol';
+    fw.parentNode.insertBefore(col, fw); col.appendChild(fw);
+    var box = document.createElement('div'); box.className = 'snsh'; col.appendChild(box);
+    function mkInput(cls, ph) { var i = document.createElement('input'); i.type = 'text'; i.className = 'fin ' + cls; i.placeholder = ph; i.setAttribute('autocomplete', 'off'); i.setAttribute('spellcheck', 'false'); return i; }
+    var r1 = document.createElement('div'); r1.className = 'row'; box.appendChild(r1); // row 1: order + title
+    var num = mkInput('num', '#'); num.inputMode = 'numeric';
+    var title = mkInput('mid', 'title'); var add = document.createElement('button'); add.type = 'button'; add.className = 'small'; add.textContent = 'add';
+    var edit = !isNew && row && typeof row === 'object', ops = {};
+    r1.appendChild(num); r1.appendChild(title);
+    var rB = document.createElement('div'); rB.className = 'row btns'; rB.appendChild(add); // the last row: add / insert / update / delete / up / down side by side (the ones that cannot be used are disabled)
+    { // loaded setlist: when # is an order that already exists, insert / update / delete / move buttons are enabled (the line goes to the patch box) and add is disabled; otherwise only add works
+      [['insert', 'insert'], ['update', 'update'], ['delete', 'delete'], ['up', '\u2191'], ['down', '\u2193']].forEach(function (m) { var b = document.createElement('button'); b.type = 'button'; b.className = 'small'; b.textContent = m[1]; if (m[0] === 'up') b.title = 'move up'; if (m[0] === 'down') b.title = 'move down'; b.disabled = true; ops[m[0]] = b; rB.appendChild(b); });
+    }
+    var rT = document.createElement('div'); rT.className = 'row'; box.appendChild(rT); // row 2: type chips
+    var r2 = document.createElement('div'); r2.className = 'row'; box.appendChild(r2); // row 3: original + notes
+    box.appendChild(rB);
+    var sel = document.createElement('div'); sel.className = 'chipr tchips'; sel.title = 'type (multiple allowed; none = song)'; // type chips: several can be ON (sent as allow,medley)
+    ['arrange', 'medley', 'mc', 'dt', 'encore', 'allow', 'cover'].forEach(function (t) { var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.setAttribute('data-v', t); b.textContent = t; b.onclick = function () { b.classList.toggle('on'); sel.dispatchEvent(new Event('change')); }; sel.appendChild(b); });
+    Object.defineProperty(sel, 'value', { get: function () { return [].map.call(sel.querySelectorAll('.chip.on'), function (b) { return b.getAttribute('data-v'); }).join(','); }, set: function () { [].forEach.call(sel.querySelectorAll('.chip.on'), function (b) { b.classList.remove('on'); }); } });
+    var orig2 = mkInput('mid', 'original'), notes = mkInput('mid', 'notes');
+    rT.appendChild(sel); r2.appendChild(orig2); r2.appendChild(notes);
+    var mch = $('groups').cloneNode(true); mch.removeAttribute('id'); mch.title = 'singing members (none = all)'; // member chips of the song (G2 / L2 row removed): sent as {YZH,MMK} after the title
+    r1.parentNode.insertBefore(mch, rT.nextSibling);
+    var mTouched = false;
+    function getM() { // picked members; a G2 / L2 chip that is ON with none of its members picked = that group alone (the server expands it to all members)
+      var r = [].map.call(mch.querySelectorAll('.chip.on'), function (b) { return b.getAttribute('data-v'); });
+      ['G2', 'L2'].forEach(function (g) { var h = mch.querySelector('.chip[data-v=' + g + ']'), fl = g === 'G2' ? FOLD_G2 : FOLD_L2; if (h && h.classList.contains('gh-on') && !r.some(function (v) { return fl.indexOf(v) >= 0; })) r.unshift(g); });
+      return r;
+    }
+    function setM(a) { [].forEach.call(mch.querySelectorAll('.chip.gh-on'), function (b) { b.click(); }); [].forEach.call(mch.querySelectorAll('.chip[data-v]:not(.gh)'), function (b) { b.classList.toggle('on', a.indexOf(b.getAttribute('data-v')) >= 0); }); }
+    [].forEach.call(mch.querySelectorAll('.chip[data-v]'), function (b) { var v = b.getAttribute('data-v'); if (v === 'G2' || v === 'L2') { b.addEventListener('click', function () { mTouched = true; }); return; } b.onclick = function () { b.classList.toggle('on'); mTouched = true; }; });
+    foldGroups(mch, true);
+    function memOf(sg) { var m = sg && sg.member; return Array.isArray(m) ? m : (typeof m === 'string' && m ? m.split(/[,\s]+/) : []); }
+    function withM(ti, a) { return a.length ? (ti ? ti + ' ' : '') + '{' + a.join(',') + '}' : ti; }
+    addSuggest(title, songOptions, r1);
+    function rowSong(n) { var a = (row && row.songs) || [], i; for (i = 0; i < a.length; i++) if (a[i] && a[i].order === n) return a[i]; return null; }
+    function nextOrder() {
+      var last = 0;
+      el.value.split('\n').forEach(function (l) { l = l.trim(); if (!l || l.charAt(0) === '#') return; var m = l.match(/^(\d+)\s*[:\uff1a]/); last = m ? +m[1] : last + 1; });
+      return last + 1;
+    }
+    function syncNum() { num.placeholder = String(nextOrder()); }
+    el.addEventListener('input', syncNum); syncNum();
+    function hit() { var n = +num.value.replace(/\D/g, ''); return edit && n ? rowSong(n) : null; } // the existing song of the typed order
+    var touched = false, pre = 0; // touched: the type chips were changed by hand. pre: the order whose type is shown on the chips
+    sel.addEventListener('change', function () { touched = true; });
+    function setChips(types) { [].forEach.call(sel.querySelectorAll('.chip'), function (b) { b.classList.toggle('on', types.indexOf(b.getAttribute('data-v')) >= 0); }); }
+    function syncMode() { // an existing order: show insert / update / delete (instead of add) and the current values as the placeholders (empty input = keep it)
+      if (!edit) return;
+      var sg = hit(), has = !!sg, cn0 = +num.value.replace(/\D/g, '');
+      if (has && pre !== cn0) { setChips(String(sg.type || '').split(/[,\s]+/)); touched = false; setM(memOf(sg)); mTouched = false; pre = cn0; } // the type chips show the current type of that song
+      else if (!has && pre) { if (!touched) setChips([]); if (!mTouched) setM([]); pre = 0; }
+      add.disabled = has; ops.insert.disabled = ops.update.disabled = ops.delete.disabled = !has;
+      var cn = +num.value.replace(/\D/g, ''); ops.up.disabled = !has || !rowSong(cn - 1); ops.down.disabled = !has || !rowSong(cn + 1); // no move beyond the first / last song
+      title.placeholder = sg ? sg.title || 'title' : 'title';
+      orig2.placeholder = sg && sg.original ? sg.original : 'original';
+      notes.placeholder = sg && sg.notes ? sg.notes : 'notes';
+    }
+    if (edit) { num.addEventListener('input', syncMode); syncMode(); }
+    function doPatch(md) {
+      var n = num.value.replace(/\D/g, ''), t = title.value.trim(), bad = null;
+      if (md === 'up' || md === 'down') { // move: `N>M: title` (the song of order N goes to order M, the others shift)
+        var to = +n + (md === 'up' ? -1 : 1), pe0 = $('f-songs_patch'); if (!pe0 || !rowSong(+n) || !rowSong(to)) return;
+        var c0 = pe0.value.replace(/\s+$/, ''); pe0.value = (c0 ? c0 + '\n' : '') + n + '>' + to + ': ' + (rowSong(+n).title || ''); pe0.dispatchEvent(new Event('input', { bubbles: true }));
+        num.value = ''; syncMode(); num.focus(); return;
+      }
+      if (/[|\uff5c]/.test(t)) bad = title;
+      else if (md === 'insert' && !t) bad = title;
+      if (bad) { bad.classList.add('bad'); bad.focus(); return; }
+      var line;
+      if (md === 'delete') line = '-' + n + ': ' + (rowSong(+n).title || '');
+      else {
+        var rest = [md === 'update' ? (sel.value || 'song') : (touched || !pre ? sel.value : ''), orig2.value.trim(), notes.value.trim()]; // update: no chip selected = song
+        while (rest.length && rest[rest.length - 1] === '') rest.pop();
+        var mc = getM(), mt = t;
+        if (md === 'insert') { if (mTouched && mc.length) mt = withM(t, mc); }
+        else { var m0 = memOf(rowSong(+n)); if (mc.join(',') !== m0.join(',')) mt = mc.length ? withM(t, mc) : (t ? t + ' {-}' : '{-}'); else mt = t; } // update: a changed member set is sent ({-} = clear), an unchanged one is not
+        line = (md === 'insert' ? '+' : '') + n + ': ' + [mt].concat(rest).join(' | ');
+      }
+      var pe = $('f-songs_patch'); if (!pe) return;
+      var cur = pe.value.replace(/\s+$/, '');
+      pe.value = (cur ? cur + '\n' : '') + line; pe.dispatchEvent(new Event('input', { bubbles: true }));
+      title.value = ''; num.value = ''; orig2.value = ''; notes.value = ''; sel.value = ''; touched = false; pre = 0; setM([]); mTouched = false; syncMode(); num.focus();
+    }
+    if (edit) ['insert', 'update', 'delete', 'up', 'down'].forEach(function (m) { ops[m].onclick = function () { doPatch(m); }; });
+    function doAdd() {
+      if (hit()) return; // an existing order: use insert / update / delete
+      var t = title.value.trim();
+      if (!t || /[|\uff5c]/.test(t)) { title.classList.add('bad'); title.focus(); return; }
+      title.classList.remove('bad');
+      var no = num.value.replace(/\D/g, '') || String(nextOrder());
+      var rest = [sel.value, orig2.value.trim(), notes.value.trim()];
+      while (rest.length && (rest[rest.length - 1] === '' || (rest.length === 1 && rest[0] === 'song'))) rest.pop();
+      var line = no + ': ' + [withM(t, getM())].concat(rest).join(' | ');
+      var cur = el.value.replace(/\s+$/, '');
+      el.value = (cur ? cur + '\n' : '') + line; el.dispatchEvent(new Event('input', { bubbles: true }));
+      title.value = ''; num.value = ''; orig2.value = ''; notes.value = ''; sel.value = ''; setM([]); mTouched = false; title.focus();
+    }
+    add.onclick = doAdd;
+    [title, num, orig2, notes].forEach(function (i) { i.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.defaultPrevented) { e.preventDefault(); doAdd(); } }); i.addEventListener('input', function () { i.classList.remove('bad'); }); });
+  }
+  var found = null, orig = {};
+  function fmtSns(a) {
+    var out = [];
+    (a || []).forEach(function (e) {
+      var us = e.urls || (e.url ? [e.url] : []);
+      us.forEach(function (u) { var url = typeof u === 'string' ? u : (u && u.url) || '', mem = typeof u === 'string' ? '' : (u && u.member) || ''; if (Array.isArray(mem)) mem = mem.join(','); out.push(e.type + ' | ' + url + (mem ? ' | ' + mem : '')); });
+    });
+    return out.join('\n');
+  }
+  function fmtSongs(a) {
+    return (a || []).map(function (x) {
+      var t = x.type == null ? '' : x.type, mm = Array.isArray(x.member) ? x.member : [], parts = [(x.title || '') + (mm.length ? ' {' + mm.join(',') + '}' : '')];
+      var rest = [t === '' ? '-' : t, x.original || '', x.notes || ''];
+      while (rest.length && (rest[rest.length - 1] === '' || (rest.length === 1 && rest[0] === 'song'))) rest.pop();
+      return (x.order != null ? x.order + ': ' : '') + parts.concat(rest).join(' | ');
+    }).join('\n');
+  }
+  function toText(kind, f, row) {
+    var v = row[f.k];
+    if (f.k === 'sns') return fmtSns(v);
+    if (f.k === 'songs') return fmtSongs(v);
+    if (Array.isArray(v)) return v.join(',');
+    return v == null ? '' : String(v);
+  }
+  function fetchData(kind) {
+    if (cache[kind]) return Promise.resolve(cache[kind]);
+    var url = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + DATA[kind] + '?v=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(function (d) { cache[kind] = d; return d; });
+  }
+  // light index files (written next to the data files by merge_json.py): only the fields the search / candidate lists need. Falls back to the full data file when the index does not exist yet.
+  var INDEX = { logs: 'data/logs/logs_index.json', setlist: 'data/setlist/setlist_index.json' }, ix = {};
+  function rowsOf(kind) { return ix[kind] || cache[kind] || []; }
+  function fetchIndex(kind) {
+    if (ix[kind]) return Promise.resolve(ix[kind]);
+    if (cache[kind]) { ix[kind] = cache[kind]; return Promise.resolve(ix[kind]); } // the full data is already loaded
+    var url = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + INDEX[kind] + '?v=' + Date.now();
+    return fetch(url, { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { if (!Array.isArray(d)) throw new Error('bad index'); ix[kind] = d; return d; })
+      .catch(function () { return fetchData(kind).then(function (d) { ix[kind] = d; return d; }); });
+  }
+  function fstat() {} // the status line of the find tab is not shown (kept as a no-op so the callers stay simple)
+  // input check for date (yyyymmdd), time (hhmm) and setlistid (12 digits) of the find tab. Empty is allowed. Invalid fields get a red border and the Issue link is disabled.
+  function validateFind(kind) {
+    var errs = [];
+    function chk(key, ok, msg) { var el = $('f-' + key); if (!el) return; var v = el.value.trim(), bad = v !== '' && !ok(v); el.classList.toggle('bad', bad); if (bad) errs.push(msg); }
+    chk('date', function (v) { if (!/^\d{8}$/.test(v)) return false; var y = +v.slice(0, 4), m = +v.slice(4, 6), d = +v.slice(6), t = new Date(y, m - 1, d); return t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === d; }, 'date: 8 digits (yyyymmdd)');
+    chk('time', function (v) { return /^\d{4}$/.test(v) && +v.slice(0, 2) < 24 && +v.slice(2) < 60; }, 'time: 4 digits (hhmm)');
+    chk('setlistid', function (v) { return /^\d{12}$/.test(v); }, 'setlistid: 12 digits');
+    return errs;
+  }
+  // tags / sns: individual delete. Values removed from the text are sent as `-tag` / `-URL` (the form script removes only those); only added / changed ones are sent besides.
+  function tagTokens(t) { return String(t || '').split(/[,\u3001\n]/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function snsLines(t) { return String(t || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean); }
+  function urlOfLine(l) { var m = l.match(/https?:\/\/[^\s|]+/i); return m ? m[0] : ''; }
+  function normLine(l) { return l.replace(/\s*\|\s*/g, ' | ').replace(/\s+/g, ' '); }
+  function listDiff(key, o, c) {
+    var out = [];
+    if (key === 'tags') {
+      var ot = tagTokens(o), ct = tagTokens(c);
+      ct.forEach(function (t) { if (ot.indexOf(t) < 0 && out.indexOf(t) < 0) out.push(t); });
+      ot.forEach(function (t) { if (ct.indexOf(t) < 0 && out.indexOf('-' + t) < 0) out.push('-' + t); });
+      return out.join(',');
+    }
+    var om = {}, cu = {};
+    snsLines(o).forEach(function (l) { var u = urlOfLine(l); if (u) om[u] = normLine(l); });
+    snsLines(c).forEach(function (l) { var u = urlOfLine(l); if (u) cu[u] = 1; if (!u || om[u] !== normLine(l)) out.push(l); });
+    snsLines(o).forEach(function (l) { var u = urlOfLine(l); if (u && !cu[u] && out.indexOf('-' + u) < 0) out.push('-' + u); });
+    return out.join('\n');
+  }
+  // one toggle chip per existing tag / sns url under the field: click = remove it from the text (struck through), click again = restore it
+  function addOrigToggles(el, key) {
+    var items = [];
+    if (key === 'tags') tagTokens(orig.tags).forEach(function (t) { items.push({ k: t, label: t, line: t }); });
+    else snsLines(orig.sns).forEach(function (l) {
+      var u = urlOfLine(l); if (!u) return;
+      var ps = l.split('|').map(function (x) { return x.trim(); }), ui = -1; ps.forEach(function (x, i) { if (ui < 0 && x.indexOf(u) >= 0) ui = i; });
+      var mem = ui >= 0 && ps[ui + 1] ? ps[ui + 1].replace(/\s*,\s*/g, ',') : ''; // the members of the url (the type is not shown; it stays in the tooltip)
+      items.push({ k: u, label: u.replace(/^https?:\/\/(www\.)?/, '').slice(0, 30) + (mem ? ' [' + mem + ']' : ''), line: l });
+    });
+    if (!items.length) return;
+    var field = el.closest('.field'), row = document.createElement('div'); row.className = 'field';
+    row.appendChild(document.createElement('label'));
+    var box = document.createElement('div'); box.className = 'chipr'; row.appendChild(box);
+    field.parentNode.insertBefore(row, field.nextSibling);
+    function present(it) { return key === 'tags' ? tagTokens(el.value).indexOf(it.k) >= 0 : snsLines(el.value).some(function (l) { return urlOfLine(l) === it.k; }); }
+    var btns = items.map(function (it) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = it.label; b.title = it.line;
+      b.onclick = function () {
+        var on = present(it);
+        if (key === 'tags') { var t = tagTokens(el.value).filter(function (x) { return x !== it.k; }); if (!on) t.push(it.k); el.value = t.join(','); }
+        else { var ls = snsLines(el.value).filter(function (l) { return urlOfLine(l) !== it.k; }); if (!on) ls.push(it.line); el.value = ls.join('\n'); }
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+      if (key === 'sns') { // each url gets its own link at the right end of the chip (opens the url in a new tab)
+        var w = document.createElement('span'); w.className = 'chipw'; w.appendChild(b);
+        var a = document.createElement('a'); a.className = 'lk'; a.href = it.k; a.target = '_blank'; a.rel = 'noopener'; a.textContent = '\u2197'; a.title = 'open'; a.setAttribute('aria-label', 'open ' + it.k);
+        w.appendChild(a); box.appendChild(w);
+      } else box.appendChild(b);
+      return { it: it, b: b };
+    });
+    function sync() { btns.forEach(function (x) { x.b.classList.toggle('rm', !present(x.it)); }); }
+    el.addEventListener('input', sync); sync();
+  }
+  // the change summary right above the Issue button: one line per changed field (field: old -> new, long values shortened)
+  function one(v) { v = String(v == null ? '' : v).replace(/\s*\n\s*/g, ' / ').trim(); return v === '' ? '(empty)' : v.length > 36 ? v.slice(0, 35) + '\u2026' : v; }
+  function showDiff(list) {
+    var box = $('fdiff'); box.innerHTML = ''; box.hidden = !list.length;
+    list.forEach(function (d) {
+      var row = document.createElement('div'), b = document.createElement('b'); b.textContent = d[0];
+      row.appendChild(b);
+      row.appendChild(document.createTextNode(': ' + (d[2] != null ? d[2] + ' \u2192 ' : '') + (d[1].length > 90 ? d[1].slice(0, 89) + '\u2026' : d[1])));
+      if (d[3]) { var r = document.createElement('span'); r.className = 'rmk'; r.textContent = ' (' + d[3] + ')'; row.appendChild(r); }
+      box.appendChild(row);
+    });
+  }
+  function updateFind() {
+    if (!found) { setLink($('go-find'), ''); showDiff([]); return; }
+    var def = DEFS[found.kind], p = {}, n = 0, dl = [];
+    if (found.id) p[def.idKey] = found.id;
+    if (found.kind === 'logs' && !found.isNew && $('fcp').checked) p.copy_text = 'copy';
+    def.fields.forEach(function (f) {
+      var el = $('f-' + f.k), cur = el.value, ch = cur !== orig[f.k];
+      el.classList.toggle('ch', ch);
+      if (found.kind === 'logs' && (f.k === 'tags' || f.k === 'sns')) { var dv = ch ? listDiff(f.k, orig[f.k], cur) : ''; if (dv) { p[f.p || f.k] = dv; n++; dl.push([f.k, dv.replace(/\n/g, ' / ')]); } }
+      else if (ch && cur.trim() !== '') { p[f.p || f.k] = cur; n++; dl.push(f.k === 'songs_patch' ? [f.lb, cur.trim().replace(/\n/g, ' / ')] : [f.k, one(cur), found.isNew ? null : one(orig[f.k])]); }
+      else if (ch) dl.push([f.k, '(empty)', one(orig[f.k]), 'not sent - use the delete check of the form']);
+    });
+    var errs = validateFind(found.kind);
+    if (found.kind === 'logs' && found.isNew && rep) { // repeat registration: the checked dates go to the repeat field (the first one is also the date)
+      var rs = rep.refresh();
+      if (rs) {
+        if (rs.rows.length) { p.repeat = (rs.lines || rs.rows).join('\n'); p.date = rs.rows[0]; n++; dl.push(['repeat', rs.rows.length + ' rows: ' + fmtD(rs.rows[0], '') + (rs.rows.length > 1 ? ' ... ' + fmtD(rs.rows[rs.rows.length - 1], '') : '')]); }
+        else errs.push('repeat: no dates');
+      }
+    }
+    if (found.kind === 'setlist' && !found.isNew && $('fcp').checked) { // copy: setlistid = the new date + time, copy_from = the loaded one
+      var nr = topReady('setlist');
+      if (!nr || nr.d + nr.t === found.id) errs.push('copy: enter a new date and time');
+      else { p.setlistid = nr.d + nr.t; p.copy_from = found.id; dl.push(['copy', found.id + ' \u2192 ' + p.setlistid]); }
+    }
+    showDiff(dl);
+    var url = issueUrl(def.tpl, p);
+    setLink($('go-find'), errs.length ? '' : url);
+    $('go-find').textContent = n ? 'Issue (' + n + ')' : 'Issue';
+    if (errs.length) fstat('Check: ' + errs.join(' / '));
+    else if (url.length > 7000) fstat('Warning: the URL is long (' + url.length + ' chars). GitHub may reject it; shorten the changed fields.');
+    else fstat('Found: ' + found.id);
+  }
+  function renderFound(kind, id, row, isNew) {
+    found = { kind: kind, id: id, isNew: !!isNew, row: row }; orig = {}; rep = null;
+    var box = $('ff'); box.innerHTML = '';
+    DEFS[kind].fields.forEach(function (f) {
+      var wrap = document.createElement('div'); wrap.className = 'field' + (f.ta ? ' top' : '');
+      var lb = document.createElement('label'); lb.textContent = f.lb || f.k; lb.setAttribute('for', 'glih-f-' + f.k);
+      var el = document.createElement(f.ta ? 'textarea' : 'input'); el.id = 'glih-f-' + f.k; el.className = f.ta ? 'fta' : 'fin';
+      if (!f.ta) { el.type = 'text'; el.setAttribute('autocomplete', 'off'); }
+      var t = toText(kind, f, row); orig[f.k] = t; el.value = t;
+      el.addEventListener('input', updateFind);
+      wrap.appendChild(lb); wrap.appendChild(el); box.appendChild(wrap); addClear(el); addRevert(el, f.k); if (kind === 'logs' && (f.k === 'groups' || f.k === 'relations')) addGroupChips(el); if (kind === 'logs' && f.k === 'setlistid') addJump(el); if (kind === 'logs' && (f.k === 'url' || f.k === 'map')) addOpen(el, 51); if (kind === 'logs' && f.k === 'sns') addSnsHelper(el); if (kind === 'logs' && (f.k === 'tags' || f.k === 'sns')) addOrigToggles(el, f.k); if (kind === 'logs' && f.k === 'contents') addSuggest(el, lxContents, null, true); if (kind === 'setlist' && f.k === 'venue') addSuggest(el, venueOptions, null, true); if (kind === 'setlist' && f.k === 'artist') addArtistChips(el); if (kind === 'setlist' && f.k === 'member') addGroupChips(el, true); if (kind === 'setlist' && f.k === 'songs') addSongsHelper(el, row, isNew); if (kind === 'logs' && (f.k === 'date' || f.k === 'time')) useNative(el, f.k, f.k);
+    });
+    var jb = $('fjson'); jb.value = JSON.stringify([row], null, 2); origJson = jb.value; jb.classList.remove('bad'); setJsonOpen(jsonOpen); $('fcprow').hidden = !!isNew; $('fjrow').hidden = !!isNew;
+    if (isNew && kind === 'setlist') { var spe = $('f-songs_patch'); if (spe && spe.closest('.field')) spe.closest('.field').hidden = true; } // new mode: the songs box is used as it is (the per-song edit is for the loaded setlist only)
+    if (isNew && kind === 'logs') { ['date', 'time'].forEach(function (k) { var e = $('f-' + k); if (e) { var fl = e.closest('.field'); if (fl) fl.hidden = true; } }); } // new mode: the top date / time are used
+    if (isNew && kind === 'logs') { var tw = $('f-title'); if (tw && tw.closest('.field')) addRepeat(tw.closest('.field')); } // new mode: repeat registration block under the title
+    applyModeUI(); updateFind();
+  }
+  // JSON box of the find tab: collapsed at first, opened / closed with the button, and editable. Valid JSON edits are written into the input fields (the Issue link follows); invalid JSON gets a red border and is ignored.
+  var jsonOpen = false, origJson = '';
+  function sizeJson() { var jb = $('fjson'); jb.style.height = 'auto'; jb.style.height = (jb.scrollHeight + 2) + 'px'; }
+  function setJsonOpen(open) {
+    jsonOpen = open; var jb = $('fjson'), b = $('fjtog');
+    jb.hidden = !open || !found || found.isNew; b.innerHTML = open ? 'JSON &#9652;' : 'JSON &#9662;'; b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open && found) sizeJson();
+  }
+  function applyJson() {
+    var jb = $('fjson'), row;
+    try { row = JSON.parse(jb.value); } catch (e) { jb.classList.add('bad'); return; }
+    if (Array.isArray(row)) row = row[0];
+    if (!row || typeof row !== 'object' || !found) { jb.classList.add('bad'); return; }
+    jb.classList.remove('bad');
+    DEFS[found.kind].fields.forEach(function (f) {
+      var el = $('f-' + f.k); if (!el) return;
+      var t = toText(found.kind, f, row);
+      if (el.value !== t) { el.value = t; el.dispatchEvent(new Event('input', { bubbles: true })); }
+    });
+  }
+  function clearFound() { found = null; rep = null; showDiff([]); $('fcprow').hidden = true; $('fcp').checked = false; $('ff').innerHTML = ''; $('fjson').hidden = true; $('fjrow').hidden = true; $('fjson').classList.remove('bad'); setLink($('go-find'), ''); $('go-find').textContent = 'Issue'; applyModeUI(); }
+  // ---- repeat registration (new logs only): the date list is built here (every N days / weeks / months, until a date and / or a count, minus skipped dates), previewed with check boxes and sent as the repeat field of the form (one yyyymmdd per line; the server counts up the #number of the title for each row) ----
+  var rep = null, REP_MAX = 60;
+  function pad2(n) { return ('0' + n).slice(-2); }
+  function ymdOf(dt) { return dt.getFullYear() + pad2(dt.getMonth() + 1) + pad2(dt.getDate()); }
+  function dateOf(s) { return new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)); }
+  function addMonths(s, n) { var y = s.getFullYear(), m = s.getMonth() + n, last = new Date(y, m + 1, 0).getDate(); return new Date(y, m, Math.min(s.getDate(), last)); } // same day of month; a short month clamps to its last day (31 -> 30 / 28)
+  function lastNum(t) { var re = /#(\d+)/g, m, last = null; t = String(t == null ? '' : t); while ((m = re.exec(t)) !== null) last = m; return last; }
+  function bumpTitle(t, i) { // the last #number + i (zero padding is kept): the same rule as merge_json.py
+    var m = lastNum(t); if (!m || !i) return t;
+    var n = String(+m[1] + i); while (n.length < m[1].length) n = '0' + n;
+    return t.slice(0, m.index + 1) + n + t.slice(m.index + 1 + m[1].length);
+  }
+  function nthWeekday(y, m, w, nth) { // nth 1-4, or 5 = the last one of the month
+    if (nth === 5) { var l = new Date(y, m + 1, 0); return new Date(y, m, l.getDate() - ((l.getDay() - w + 7) % 7)); }
+    var f = new Date(y, m, 1); return new Date(y, m, 1 + ((w - f.getDay() + 7) % 7) + (nth - 1) * 7);
+  }
+  function startNth(s) { var o = Math.floor((s.getDate() - 1) / 7) + 1; return o >= 5 ? 5 : o; } // the position of the start date in its month (5th = last)
+  // the dates of the i-th period. no weekday: one date (every N days / weeks / months). weekdays + weeks: the checked weekdays inside the 7-day block that starts on the start date + 7 x N x i. weekdays + months: the nth weekday of every N-th month.
+  function periodDates(s, unit, every, i, wd, nth) {
+    if (!wd.length || unit === 'day') return [unit === 'month' ? addMonths(s, i * every) : new Date(s.getFullYear(), s.getMonth(), s.getDate() + i * every * (unit === 'week' ? 7 : 1))];
+    var out = [], j;
+    if (unit === 'week') {
+      for (j = 0; j < 7; j++) { var dt = new Date(s.getFullYear(), s.getMonth(), s.getDate() + i * every * 7 + j); if (wd.indexOf(dt.getDay()) >= 0) out.push(dt); }
+      return out;
+    }
+    var b = new Date(s.getFullYear(), s.getMonth() + i * every, 1), n = nth || startNth(s);
+    wd.forEach(function (w) { out.push(nthWeekday(b.getFullYear(), b.getMonth(), w, n)); });
+    return out;
+  }
+  function genDates(start, unit, every, until, count, skip, wd, nth) {
+    var s = dateOf(start), sk = ymdOf(s), out = [], seen = {}, i = 0, capped = false, stop = false, useWd = wd && wd.length && unit !== 'day';
+    while (i < 1000 && !stop) {
+      var cands = periodDates(s, unit, every, i, useWd ? wd : [], nth);
+      if (useWd && i === 0) cands.push(s); // with weekdays the start date is always the first entry
+      i++;
+      var ks = cands.map(ymdOf).filter(function (k) { return k >= sk && !seen[k]; }).sort();
+      for (var q = 0; q < ks.length; q++) {
+        var k = ks[q]; if (seen[k]) continue; seen[k] = 1;
+        if (until && k > until) { stop = true; break; }
+        if (skip.some(function (x) { return x.length === 8 ? x === k : x === k.slice(4); })) continue;
+        if (out.length >= REP_MAX) { capped = true; stop = true; break; }
+        out.push(k);
+        if (count && out.length >= count) { stop = true; break; }
+      }
+    }
+    return { dates: out, capped: capped };
+  }
+  function addRepeat(after) {
+    var box = document.createElement('div'); box.className = 'rep';
+    box.innerHTML = '<div class="field"><label>repeat</label><label class="chk" style="margin:0"><input type="checkbox" id="glih-rpon">repeat entry</label></div>'
+      + '<div id="glih-rpbody" hidden>'
+      + '<div class="field"><label>mode</label><div class="chipr nw" id="glih-rpmd"></div></div>'
+      + '<div id="glih-rpiv">'
+      + '<div class="field"><label for="glih-rpn">every</label><input type="text" id="glih-rpn" class="fin num" inputmode="numeric" value="1" autocomplete="off"><select id="glih-rpu" class="fsel"><option value="day">day(s)</option><option value="week" selected>week(s)</option><option value="month">month(s)</option></select></div>'
+      + '<div class="field"><label></label><div class="chipr nw" id="glih-rpq"></div></div>'
+      + '<div class="field"><label>days</label><div class="chipr nw" id="glih-rpw"></div></div>'
+      + '<div class="field" id="glih-rpof" hidden><label for="glih-rpo">nth</label><select id="glih-rpo" class="fsel"><option value="0">as start</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option><option value="4">4th</option><option value="5">last</option></select></div>'
+      + '<div class="field"><label for="glih-rpd">until</label><input type="text" id="glih-rpd" class="fin" autocomplete="off"></div>'
+      + '<div class="field"><label for="glih-rpc">count</label><input type="text" id="glih-rpc" class="fin num" inputmode="numeric" value="4" autocomplete="off"><span class="rpnote">including the first date (max ' + REP_MAX + '); empty = auto from until</span></div>'
+      + '<div class="field"><label for="glih-rpx">skip</label><input type="text" id="glih-rpx" class="fin" autocomplete="off" spellcheck="false" placeholder="yyyymmdd, mmdd, ..."></div>'
+      + '</div><div id="glih-rpsc" hidden></div>'
+      + '<div class="fcand" id="glih-rpl"></div><div class="fstat" id="glih-rpm"></div></div>';
+    after.parentNode.insertBefore(box, after.nextSibling);
+    var on = $('rpon'), body = $('rpbody'), num = $('rpn'), unit = $('rpu'), until = $('rpd'), cnt = $('rpc'), skipEl = $('rpx'), list = $('rpl'), msg = $('rpm'), off = {}, last = null, memo = '', asked = false, cTouched = false;
+    dtText(until, 'date'); dtPicker(until, 'date'); var wdUntil = addWeekday(until); until.addEventListener('input', wdUntil);
+    [['weekly', 1, 'week'], ['biweekly', 2, 'week'], ['monthly', 1, 'month']].forEach(function (q) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = q[0]; b.setAttribute('data-n', q[1]); b.setAttribute('data-u', q[2]);
+      b.onclick = function () { num.value = String(q[1]); unit.value = q[2]; changed(); };
+      $('rpq').appendChild(b);
+    });
+    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(function (nm, w) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = nm; b.setAttribute('data-w', w);
+      b.onclick = function () { b.classList.toggle('on'); changed(); };
+      $('rpw').appendChild(b);
+    });
+    function changed() { refresh(); updateFind(); }
+    // schedule mode: related dates of one case (start / close / result / due) are registered together. Each row = one repeat line: `yyyymmdd hhmm | title | CONTENTS | url` (time `-` = none)
+    var mode = 'interval', SC = [
+      { k: 'start', lb: 'start', ct: '', sf: '' },
+      { k: 'close', lb: 'close', ct: 'CLOSE', sf: '\u7de0\u5207' },
+      { k: 'result', lb: 'result', ct: 'RESULT', sf: '\u5f53\u9078\u767a\u8868' },
+      { k: 'due', lb: 'due', ct: 'CLOSE', sf: '\u5165\u91d1\u671f\u9650' } ];
+    [['interval', 'interval'], ['schedule', 'schedule']].forEach(function (q) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = q[1]; b.setAttribute('data-m', q[0]);
+      b.onclick = function () { mode = q[0]; changed(); };
+      $('rpmd').appendChild(b);
+    });
+    (function () {
+      var sc = $('rpsc'), lead = document.createElement('div'); lead.className = 'rpnote'; lead.textContent = 'start = the date / time / title / contents above. Other rows: fill the date to register it (time empty = none; title = the title above + the label).'; sc.appendChild(lead);
+      SC.forEach(function (r) {
+        var row = document.createElement('div'); row.className = 'rpsrow';
+        var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = r.lb; row.appendChild(nm);
+        if (r.k === 'start') { r.cb = document.createElement('input'); r.cb.type = 'checkbox'; r.cb.checked = true; r.cb.title = 'register the date above'; row.appendChild(r.cb); }
+        else {
+          r.d = document.createElement('input'); r.d.type = 'text'; r.d.className = 'fin rpd'; r.d.setAttribute('autocomplete', 'off'); dtText(r.d, 'date'); row.appendChild(r.d); dtPicker(r.d, 'date');
+          r.t = document.createElement('input'); r.t.type = 'text'; r.t.className = 'fin rpt'; r.t.setAttribute('autocomplete', 'off'); dtText(r.t, 'time'); row.appendChild(r.t); dtPicker(r.t, 'time');
+        }
+        r.sel = document.createElement('select'); r.sel.className = 'fsel'; r.sel.title = 'contents';
+        (r.k === 'start' ? [''] : []).concat(CONTENTS_LIST).forEach(function (c) { var o = document.createElement('option'); o.value = c; o.textContent = c || '(above)'; r.sel.appendChild(o); });
+        r.sel.value = r.ct; row.appendChild(r.sel);
+        if (r.k !== 'start') { r.sf2 = document.createElement('input'); r.sf2.type = 'text'; r.sf2.className = 'fin rpf'; r.sf2.value = r.sf; r.sf2.title = 'label added to the title'; r.sf2.setAttribute('autocomplete', 'off'); row.appendChild(r.sf2); }
+        sc.appendChild(row);
+      });
+      var uw = document.createElement('div'); uw.className = 'field'; uw.innerHTML = '<label></label><label class="chk" style="margin:0"><input type="checkbox" id="glih-rpsu" checked>same url (the url above)</label>'; sc.appendChild(uw);
+      var sw = document.createElement('div'); sw.className = 'field'; sw.innerHTML = '<label for="glih-rpsp">sp</label><input type="text" id="glih-rpsp" class="fin" autocomplete="off" placeholder="short title for display_sp (optional)"><span class="rpnote">display_sp = this + the label (start: this only). Empty = display_sp is not set.</span>'; sc.appendChild(sw);
+      [].forEach.call(sc.querySelectorAll('input,select'), function (e) { e.addEventListener('input', changed); e.addEventListener('change', changed); });
+    })();
+    function schedRefresh() {
+      var st = topReady('logs'), t0 = ((($('f-title') || {}).value) || '').replace(/\s*\n\s*/g, ' ').trim(), uv = ((($('f-url') || {}).value) || '').trim(), same = $('rpsu').checked && /^https?:\/\/\S+$/i.test(uv), sp0 = ($('rpsp').value || '').replace(/\s*\n\s*/g, ' ').trim();
+      var lines = [], rows = [], note = '', bad = false;
+      list.innerHTML = '';
+      if (!st) note = 'Set the date above first.';
+      else SC.forEach(function (r) {
+        var d, t, tt = '', sv = sp0;
+        if (r.k === 'start') { if (!r.cb.checked) return; d = st.d; t = st.t; }
+        else {
+          d = digits(r.d.value); t = digits(r.t.value);
+          r.d.classList.toggle('bad', d !== '' && !okDate(d)); r.t.classList.toggle('bad', t !== '' && !okTime(t));
+          if (d === '') return;
+          if (!okDate(d) || (t !== '' && !okTime(t))) { bad = true; return; }
+          tt = (t0 + ' ' + r.sf2.value.trim()).trim();
+          if (sp0) sv = (sp0 + ' ' + r.sf2.value.trim()).trim();
+        }
+        var ct = r.sel.value;
+        lines.push(d + ' ' + (t || '-') + ' | ' + tt + ' | ' + ct + (same || sv ? ' | ' + (same ? uv : '') : '') + (sv ? ' | ' + sv : ''));
+        rows.push(d);
+        var lb = document.createElement('div'), ds = document.createElement('span'), ms = document.createElement('span');
+        lb.className = 'rprow'; ds.className = 'd'; ds.textContent = fmtD(d, '') + ' ' + (t ? t.slice(0, 2) + ':' + t.slice(2) : '--:--'); ms.className = 'm'; ms.textContent = (tt || '(title above)') + ' / ' + (ct || '(contents above)') + (sv ? ' / sp: ' + sv : '');
+        lb.appendChild(ds); lb.appendChild(ms); list.appendChild(lb);
+      });
+      list.hidden = !rows.length;
+      if (!note && bad) note = 'A date / time of a row is not valid (the row is skipped).';
+      msg.textContent = note || (rows.length + ' entries will be registered (' + (same ? 'the url above is added to each' : 'no url') + '; map / sns / display are not copied).');
+      last = { rows: rows, lines: lines };
+      return last;
+    }
+    function refresh() {
+      var qs = $('rpq').children, i;
+      for (i = 0; i < qs.length; i++) qs[i].classList.toggle('on', qs[i].getAttribute('data-n') === String(parseInt(num.value, 10)) && qs[i].getAttribute('data-u') === unit.value);
+      body.hidden = !on.checked;
+      var qm = $('rpmd').children; for (i = 0; i < qm.length; i++) qm[i].classList.toggle('on', qm[i].getAttribute('data-m') === mode);
+      $('rpiv').hidden = mode === 'schedule'; $('rpsc').hidden = mode !== 'schedule';
+      if (mode === 'schedule') { if (!on.checked) { last = null; return null; } return schedRefresh(); }
+      var wd = [].filter.call($('rpw').children, function (b) { return b.classList.contains('on'); }).map(function (b) { return +b.getAttribute('data-w'); });
+      [].forEach.call($('rpw').children, function (b) { b.disabled = unit.value === 'day'; });
+      $('rpof').hidden = !(unit.value === 'month' && wd.length);
+      if (!on.checked) { last = null; return null; }
+      var st = topReady('logs'), every = parseInt(num.value, 10), ud = digits(until.value), uBad = ud !== '' && !okDate(ud), uOk = ud !== '' && !uBad, c = (uOk && !cTouched) ? 0 : (parseInt(cnt.value, 10) || 0); // until set and the count not typed: the count is calculated from until
+      until.classList.toggle('bad', uBad); num.classList.toggle('bad', num.value.trim() !== '' && !(every >= 1));
+      var skip = skipEl.value.split(/[,\u3001\s]+/).map(digits).filter(function (x) { return x.length === 8 || x.length === 4; });
+      var rows = [], note = '';
+      if (!st) note = 'Set the date above first.';
+      else if (!(every >= 1)) note = 'every: 1 or more.';
+      else if (uBad) note = 'until: 8 digits (yyyymmdd).';
+      else if (!ud && !c) note = 'Set until or count.';
+      else { var g = genDates(st.d, unit.value, every, ud, c, skip, wd, +$('rpo').value); rows = g.dates; if (uOk && !cTouched) cnt.value = String(rows.length); if (g.capped) note = 'Stopped at ' + REP_MAX + ' rows (the maximum).'; }
+      if (!uOk && !cTouched && cnt.value !== '4') cnt.value = '4'; // until cleared: back to the default count
+      var checked = rows.filter(function (k) { return !off[k]; }), t0 = ($('f-title') || {}).value || '', ct = (($('f-contents') || {}).value || '').trim();
+      var have = {}; rowsOf('logs').forEach(function (r) { if (r && r.date) have[r.date + '|' + (r.time || '') + '|' + (r.contents || '') + '|' + (r.title || '')] = 1; });
+      var key = [rows.join(','), checked.join(','), t0, ct, st ? st.t : '', Object.keys(have).length].join('#');
+      if (key !== memo) {
+        memo = key; list.innerHTML = '';
+        var idx = 0;
+        rows.forEach(function (k) {
+          var lb = document.createElement('label'), cb = document.createElement('input'), d = document.createElement('span'), m = document.createElement('span'), isOn = !off[k], tt = '';
+          lb.className = 'rprow' + (isOn ? '' : ' off'); cb.type = 'checkbox'; cb.checked = isOn;
+          if (isOn) { tt = bumpTitle(t0, idx); idx++; }
+          d.className = 'd'; d.textContent = fmtD(k, '') + ' ' + ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dateOf(k).getDay()];
+          m.className = 'm'; m.textContent = tt.replace(/\s*\n\s*/g, ' / ');
+          cb.onchange = function () { if (cb.checked) delete off[k]; else off[k] = 1; changed(); };
+          lb.appendChild(cb); lb.appendChild(d); lb.appendChild(m);
+          if (isOn && have[k + '|' + (st ? st.t : '') + '|' + (ct || 'ETC') + '|' + tt]) { var ex = document.createElement('span'); ex.className = 'ex'; ex.textContent = 'exists'; lb.appendChild(ex); }
+          list.appendChild(lb);
+        });
+        list.hidden = !rows.length;
+      }
+      if (!asked) { asked = true; fetchIndex('logs').then(function () { if (rep && rep.box === box) { memo = ''; changed(); } }).catch(function () {}); } // the existing rows (for the exists mark): asked once
+      msg.textContent = note || (checked.length + ' of ' + rows.length + ' dates will be registered (the same time / contents / groups / relations / tags; url / map / sns / display are not copied; the #number counts up).');
+      last = { rows: checked };
+      return last;
+    }
+    cnt.addEventListener('input', function () { cTouched = cnt.value.trim() !== ''; }); // typed by hand: it stops the auto calculation (empty = auto again)
+    [num, until, cnt, skipEl, unit, on, $('rpo')].forEach(function (e) { e.addEventListener('input', changed); e.addEventListener('change', changed); });
+    rep = { box: box, refresh: refresh };
+    refresh();
+  }
+  // continue: from the loaded log, open a new entry with the date moved by the pressed button (repeat = the same date with the repeat entry turned on, weekly = +7 days, monthly = the same day of the next month, yearly = the same day of the next year; a short month clamps to its last day) and the next #number
+  function nextOf(row, mode) {
+    var cur = String(row.date || ''); if (!okDate(cur)) return '';
+    var c = dateOf(cur);
+    if (mode === 'week') return ymdOf(new Date(c.getFullYear(), c.getMonth(), c.getDate() + 7));
+    if (mode === 'month') return ymdOf(addMonths(c, 1));
+    if (mode === 'year') return ymdOf(addMonths(c, 12));
+    if (mode === 'repeat') return cur; // the date stays; the repeat entry is turned on in continueFrom
+    return '';
+  }
+  function continueFrom(row, mode) {
+    var nd = nextOf(row, mode); if (!nd) return;
+    $('fid').value = ''; hideCands(); clearFound();
+    $('fdd').value = fmtDigits(nd, 'date'); $('fdt').value = fmtDigits(row.time || '', 'time'); $('fany').checked = !row.time;
+    topChanged();
+    [['contents', row.contents], ['groups', row.groups], ['relations', row.relations], ['tags', row.tags], ['title', bumpTitle(row.title, 1)]].forEach(function (x) {
+      var v = x[1]; if (Array.isArray(v)) v = v.join(','); if (v) setVal(x[0], String(v));
+    });
+    if (mode === 'repeat' && $('rpon')) { $('rpon').checked = true; $('rpon').dispatchEvent(new Event('change', { bubbles: true })); } // repeat entry mode: the repeat check is turned on (the date is kept)
+  }
+  [].forEach.call($('fcc').children, function (b) { // weekly / monthly / yearly: pressing one runs continue with that interval
+    b.onclick = function () {
+      if (!found || found.isNew || found.kind !== 'logs' || !found.row) return;
+      continueFrom(found.row, b.getAttribute('data-m'));
+    };
+  });
+  // ---- songs tab: register / update one song (artist + title + link) of songs.json through the add_songs.yml form ----
+  var songsReady = false;
+  function songsInit() {
+    if (songsReady) return; songsReady = true;
+    var sa = $('sa'), st = $('st'), sl = $('sl'), match = null, auto = false, prog = false;
+    addClear(sa); addClear(st); addClear(sl); addOpen(sl, 28);
+    var artistOnly = makeOpts('artist-only', ['songs'], function (m) { (cache.songs || []).forEach(function (r) { if (r) addTo(m, r.artist); }); });
+    function titleOpts() {
+      var a = normQ(sa.value.trim()), all = (cache.songs || []).filter(function (r) { return r && typeof r.title === 'string' && r.title.trim(); });
+      var mine = a ? all.filter(function (r) { return normQ(r.artist) === a; }) : [];
+      return (mine.length ? mine : all).map(function (r) { return { v: r.title.trim(), k: normQ(r.title) }; });
+    }
+    addSuggest(sa, function () { var v = sa.value.trim(); return v === 'Girls\u00B2' || v === 'Laki' ? [] : artistOnly(); }, sa.closest('.field')); // no candidates while an artist chip is selected
+    // artist chips: Girls2 / Laki (the same values as the artist check of the setlist form). Click sets the artist; click again clears it.
+    var arow = document.createElement('div'); arow.className = 'field'; var alb = document.createElement('label'); arow.appendChild(alb);
+    var acs = document.createElement('div'); acs.className = 'chipr'; arow.appendChild(acs);
+    var CH = ['Girls\u00B2', 'Laki'];
+    function syncArt() { [].forEach.call(acs.children, function (b) { b.classList.toggle('on', sa.value.trim() === b.getAttribute('data-v')); }); }
+    CH.forEach(function (v) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = v; b.setAttribute('data-v', v);
+      b.onclick = function () { sa.value = sa.value.trim() === v ? '' : v; sa.dispatchEvent(new Event('input', { bubbles: true })); };
+      acs.appendChild(b);
+    });
+    sa.addEventListener('input', syncArt); syncArt();
+    var afield = sa.closest('.field'); afield.parentNode.insertBefore(arow, afield.nextSibling);
+    addSuggest(st, titleOpts, st.closest('.field'));
+    function setLink(v) { prog = true; sl.value = v; sl.dispatchEvent(new Event('input', { bubbles: true })); prog = false; }
+    function upd() {
+      var a = sa.value.trim(), t = st.value.trim(), list = cache.songs;
+      if (!list) { setLink2(''); return; }
+      match = null;
+      if (a && t) list.forEach(function (r) { if (!match && r && String(r.artist || '').trim() === a && String(r.title || '').trim() === t) match = r; });
+      if (match && !sl.value.trim() && !sl._touched) { setLink(match.link || ''); auto = true; }
+      if (!match && auto) { setLink(''); auto = false; }
+      var l = sl.value.trim(), p = {};
+      if (a) p.artist_free = a; if (t) p.item_title = t;
+      if (l && !(match && l === String(match.link || '').trim())) p.link = l;
+      var ok = !!(a && t);
+      setLink2(ok ? issueUrl(TPL_SONGS, p) : '');
+    }
+    function setLink2(url) { var g = $('go-songs'); if (url) { g.href = url; g.setAttribute('aria-disabled', 'false'); } else { g.removeAttribute('href'); g.setAttribute('aria-disabled', 'true'); } }
+    sl.addEventListener('input', function () { if (!prog) { sl._touched = true; auto = false; } upd(); });
+    sa.addEventListener('input', upd); st.addEventListener('input', upd);
+    st.addEventListener('input', function () { if (!st.value.trim() && !prog) sl._touched = false; });
+    // the songs button: after the form page is opened, the input is reset
+    $('go-songs').addEventListener('click', function () {
+      if ($('go-songs').getAttribute('aria-disabled') === 'true') return;
+      setTimeout(function () { sl._touched = false; auto = false; [sa, st, sl].forEach(function (e) { e.value = ''; e.dispatchEvent(new Event('input', { bubbles: true })); }); }, 300);
+    });
+    upd();
+    fetchData('songs').then(function () { upd(); }).catch(function () {});
+  }
+  // ---- candidate search: a keyword in the id box lists the rows whose title contains it ----
+  function normQ(s) { return String(s == null ? '' : s).normalize('NFKC').toLowerCase(); }
+  function flat(v) { if (v == null) return ''; if (Array.isArray(v)) return v.map(flat).join(' '); if (typeof v === 'object') return flat(v.title) + ' ' + flat(v.original); return String(v); }
+  function hayOf(kind, r) {
+    return normQ(flat(r.title)); // the keyword search of the id box looks at the title only (a full id still loads that row)
+  }
+  function sortKey(kind, r) { return kind === 'logs' ? String(r.date || '') + String(r.time || '') : String(r.setlistid || ''); }
+  function searchRows(kind, list, q) {
+    var toks = normQ(q).split(/\s+/).filter(Boolean).map(function (t) {
+      return t.replace(/^(\d{4})[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?$/, function (_, y, m, d) { return y + ('0' + m).slice(-2) + (d ? ('0' + d).slice(-2) : ''); });
+    });
+    if (!toks.length) return [];
+    return list.filter(function (r) { if (!r) return false; var h = hayOf(kind, r); return toks.every(function (t) { return h.indexOf(t) !== -1; }); })
+      .sort(function (a, b) { var x = sortKey(kind, a), y = sortKey(kind, b); return x < y ? 1 : x > y ? -1 : 0; });
+  }
+  function fmtD(d, t) { d = String(d || ''); t = String(t || ''); return (/^\d{8}$/.test(d) ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6) : d) + (/^\d{4}$/.test(t) ? ' ' + t.slice(0, 2) + ':' + t.slice(2) : ''); }
+  function hideCands() { var c = $('fcand'); c.hidden = true; c.innerHTML = ''; }
+  // one candidate button, shared by the keyword list and the date/time list. line 1: date time + contents (setlist: artist), line 2: title. The id is not shown.
+  function candButton(kind, r) {
+    var b = document.createElement('button'), l1, l2;
+    b.type = 'button';
+    if (kind === 'logs') { l1 = fmtD(r.date, r.time) + (r.contents ? '  ' + String(r.contents).slice(0, 40) : ''); l2 = String(r.title || '').slice(0, 60); }
+    else { var sid = String(r.setlistid || ''); l1 = fmtD(sid.slice(0, 8), sid.slice(8)) + (r.artist ? '  ' + flat(r.artist).slice(0, 30) : ''); l2 = String(r.title || '').slice(0, 60); }
+    b.appendChild(document.createTextNode(l1));
+    if (l2) { var m = document.createElement('span'); m.className = 'm l2'; m.textContent = l2; b.appendChild(m); }
+    return b;
+  }
+  function renderCands(kind, rows) {
+    var c = $('fcand'), idKey = DEFS[kind].idKey; c.innerHTML = '';
+    rows.slice(0, 30).forEach(function (r) {
+      var b = candButton(kind, r);
+      b.onclick = function () { $('fid').value = String(r[idKey]); $('fid').dispatchEvent(new Event('input', { bubbles: true })); hideCands(); doFind(); };
+      c.appendChild(b);
+    });
+    c.hidden = !rows.length;
+  }
+  var candTimer = null;
+  function candidates() {
+    var kind = $('fkind').value, q = $('fid').value.trim();
+    if (q.length < 2) { hideCands(); return; }
+    fetchIndex(kind).then(function (d) {
+      if ($('fid').value.trim() !== q || $('fkind').value !== kind) return;
+      var list = Array.isArray(d) ? d : [], idKey = DEFS[kind].idKey;
+      if (list.some(function (r) { return r && String(r[idKey]) === q; })) { hideCands(); return; }
+      var rows = searchRows(kind, list, q);
+      if (!rows.length) { hideCands(); return; }
+      renderCands(kind, rows);
+      if (!found) fstat(rows.length + ' candidates' + (rows.length > 30 ? ' (showing 30)' : ''));
+    }).catch(function () {});
+  }
+  // type radio buttons (logs / setlist) drive the hidden select that the rest of the code reads
+  // new setlist opened from a logs row: title <- title, artist <- groups (G2 / L2), member <- member codes of groups, venue <- the tag that equals a venue already used in setlist.json
+  function normV(s) { return String(s || '').normalize('NFKC').replace(/\s+/g, '').toLowerCase(); }
+  function seedFromLogs(sd, list) {
+    var gs = String(sd.groups || '').split(/[,\n]/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var art = [];
+    if (gs.indexOf('G2') >= 0) art.push(ART_G2);
+    if (gs.indexOf('L2') >= 0) art.push(ART_L2);
+    var mem = gs.filter(function (g) { return G2_MEM.indexOf(g) >= 0 || L2_MEM.indexOf(g) >= 0; });
+    var venues = {};
+    (list || []).forEach(function (r) { if (r && r.venue) venues[normV(r.venue)] = String(r.venue); });
+    var ven = '', tg = String(sd.tags || '').split(/[,\n]/);
+    for (var i = 0; i < tg.length && !ven; i++) { var k = normV(tg[i]); if (k && venues[k]) ven = venues[k]; }
+    if (sd.title) setVal('title', sd.title);
+    if (art.length) setVal('artist', art.join(AJOIN));
+    if (mem.length) setVal('member', mem.join(','));
+    if (ven) setVal('venue', ven);
+  }
+  function doFind() {
+    var kind = $('fkind').value, id = $('fid').value.trim(), def = DEFS[kind];
+    clearFound();
+    if (!id) { fstat('Enter an id.'); return; }
+    fstat('Loading...');
+    fetchData(kind).then(function (d) {
+      var list = Array.isArray(d) ? d : [], row = null;
+      for (var i = 0; i < list.length; i++) { if (list[i] && String(list[i][def.idKey]) === id) { row = list[i]; break; } }
+      if (!row) {
+        var m = searchRows(kind, list, id);
+        if (m.length === 1) { $('fid').value = String(m[0][def.idKey]); $('fid').dispatchEvent(new Event('input', { bubbles: true })); doFind(); return; }
+        if (m.length > 1) { renderCands(kind, m); fstat(m.length + ' candidates' + (m.length > 30 ? ' (showing 30)' : '') + '. Pick one.'); return; }
+        if (kind === 'setlist' && /^\d{12}$/.test(id) && okDate(id.slice(0, 8)) && okTime(id.slice(8))) { // no such setlist: new mode, the date / time are taken from the id (yyyymmdd + hhmm)
+          $('fdd').value = fmtDigits(id.slice(0, 8), 'date'); $('fdt').value = fmtDigits(id.slice(8), 'time');
+          $('fdd').dispatchEvent(new Event('input', { bubbles: true })); $('fdt').dispatchEvent(new Event('input', { bubbles: true }));
+          var sd = jumpSeed; jumpSeed = null;
+          if (sd && sd.sid === id) seedFromLogs(sd, list);
+          fstat('Not found: ' + id + ' (new: filled from the id' + (sd && sd.sid === id ? ' and the logs row' : '') + ')'); return;
+        }
+        fstat('Not found: ' + id); return;
+      }
+      hideCands(); fstat('Found: ' + id); renderFound(kind, id, row);
+    }).catch(function (e) { fstat('Load error: ' + e.message); });
+  }
+  // id helper: pick a date (and optionally a time) -> list the rows of that day (time + title + id). Picking one puts its id into the id box.
+  function dtSearch() {
+    var dv = $('fdd').value.replace(/\D/g, ''), tv = $('fdt').value.replace(/\D/g, ''), kind = $('fkind').value, box = $('fdl');
+    if (found && !found.isNew) { box.hidden = true; box.innerHTML = ''; box._key = ''; return; } // edit mode: no date candidates
+    var noList = tv !== '' || (kind === 'logs' && $('fany').checked); // a time (logs: or anytime) means the entry is being made, so no candidates
+    if (noList) { box.hidden = true; box.innerHTML = ''; box._key = ''; return; }
+    if (dv.length === 8 && !box.hidden && box._key === kind + dv) return; // same list already shown: keep it (a rebuild between mousedown and mouseup would swallow the click on a candidate)
+    box.hidden = true; box.innerHTML = ''; box._key = '';
+    if (dv.length !== 8) return;
+    fetchIndex(kind).then(function (d) {
+      if ($('fdd').value.replace(/\D/g, '') !== dv || $('fkind').value !== kind || $('fdt').value !== '' || (kind === 'logs' && $('fany').checked)) return;
+      var idKey = DEFS[kind].idKey;
+      function rd(r) { return kind === 'logs' ? String(r.date || '') : String(r.setlistid || '').slice(0, 8); }
+      function rt(r) { return kind === 'logs' ? String(r.time || '') : String(r.setlistid || '').slice(8, 12); }
+      var rows = (Array.isArray(d) ? d : []).filter(function (r) { return r && rd(r) === dv; })
+        .sort(function (a, b) { var x = rt(a), y = rt(b); return x < y ? -1 : x > y ? 1 : 0; });
+      if (!rows.length) { fstat('No ' + kind + ' data on ' + fmtD(dv, '')); return; }
+      rows.forEach(function (r) {
+        var b = candButton(kind, r);
+        b.onclick = function () { $('fid').value = String(r[idKey]); box.hidden = true; box.innerHTML = ''; doFind(); };
+        box.appendChild(b);
+      });
+      box._key = kind + dv; box.hidden = false; fstat(rows.length + ' on ' + fmtD(dv, ''));
+    }).catch(function (e) { fstat('Load error: ' + e.message); });
+  }
+  dtText($('fdd'), 'date'); dtText($('fdt'), 'time');
+  dtPicker($('fdd'), 'date', dtSearch); dtPicker($('fdt'), 'time', dtSearch);
+  var wdTop = addWeekday($('fdd')); $('fdd').addEventListener('input', wdTop);
+  ['fdd', 'fdt'].forEach(function (id) {
+    $(id).addEventListener('input', dtSearch); $(id).addEventListener('change', dtSearch);
+    $(id).addEventListener('focus', dtSearch); // clicking into the box lists the candidates again, even when the value is unchanged
+    $(id).addEventListener('click', dtSearch); // also when the box is already focused
+    $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); dtSearch(); } });
+  });
+  $('fdtoday').onclick = function () { $('fdd').value = fmtDigits(digits(today()), 'date'); $('fdd').dispatchEvent(new Event('input', { bubbles: true })); }; // today: lists the rows of today (the time box is left as it is)
+  function shiftDate(n) { // < > : moves the date by n days (an empty or incomplete date starts from today)
+    var d = digits($('fdd').value), t = new Date();
+    var base = d.length === 8 ? new Date(+d.slice(0, 4), +d.slice(4, 6) - 1, +d.slice(6, 8)) : new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    if (isNaN(base.getTime())) base = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    base.setDate(base.getDate() + n);
+    $('fdd').value = fmtDigits(base.getFullYear() + ('0' + (base.getMonth() + 1)).slice(-2) + ('0' + base.getDate()).slice(-2), 'date');
+    $('fdd').dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  $('fdprev').onclick = function () { shiftDate(-1); };
+  $('fdnext').onclick = function () { shiftDate(1); };
+  $('fcp').addEventListener('change', function () { applyModeUI(); updateFind(); }); // setlist copy: the top date / time become the new setlistid
+  addClear($('fid'));
+  $('fgo').onclick = doFind;
+  $('fid').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doFind(); } });
+  $('fkind').addEventListener('change', function () { clearFound(); hideCands(); $('fid').value = ''; dtSearch(); syncNew(); });
+  $('fid').addEventListener('input', function () {
+    clearTimeout(candTimer);
+    if ($('fid').value.trim() === '') { if (found && !found.isNew) clearFound(); hideCands(); fstat(''); syncNew(); return; } // id emptied: back to the first view (loaded data, candidates and status are cleared)
+    candTimer = setTimeout(candidates, 200);
+  });
+  $('fjtog').onclick = function () { setJsonOpen(!jsonOpen); };
+  $('fjson').addEventListener('input', function () { applyJson(); sizeJson(); });
+  $('freset').onclick = function () {
+    if (!found) return;
+    $('fjson').value = origJson; $('fjson').classList.remove('bad'); if (jsonOpen) sizeJson();
+    DEFS[found.kind].fields.forEach(function (f) { var el = $('f-' + f.k); if (el && el.value !== orig[f.k]) { el.value = orig[f.k]; el.dispatchEvent(new Event('input', { bubbles: true })); } });
+  };
+  $('fcopy').onclick = function () {
+    var t = $('fjson').value, b = $('fcopy');
+    var done = function () { var o = b.textContent; b.textContent = 'OK'; setTimeout(function () { b.textContent = o; }, 900); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, function () {});
+    else { $('fjson').select(); try { document.execCommand('copy'); done(); } catch (e) {} }
+  };
+  $('fid').value = (location.search.match(/[?&]id=([0-9a-f]{12}|\d{12})/) || [])[1] || '';
+  var qid0 = $('fid').value;
+  // ---- logs / setlist tabs share one panel. new mode: nothing loaded, date / time (or anytime) at the top make a blank form. edit mode: a loaded row (the top date / time are hidden) ----
+  function setVal(key, v) { var el = $('f-' + key); if (el && el.value !== v) { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); } }
+  function topReady(kind) {
+    var dv = digits($('fdd').value), tv = digits($('fdt').value), dOk = okDate(dv), tOk = okTime(tv);
+    $('fdd').classList.toggle('bad', dv !== '' && !dOk); $('fdt').classList.toggle('bad', tv !== '' && !tOk);
+    if (!dOk) return null;
+    if (tv !== '') return tOk ? { d: dv, t: tv } : null;
+    return kind === 'logs' && $('fany').checked ? { d: dv, t: '' } : null; // an empty time is allowed only for logs with anytime checked
+  }
+  function syncNew() {
+    wdTop();
+    if (found && !found.isNew) { updateFind(); return; } // edit mode: the top date / time only matter for the setlist copy
+    var kind = $('fkind').value, r = topReady(kind);
+    if (!r) { if (found) clearFound(); return; }
+    var id = kind === 'setlist' ? r.d + r.t : '';
+    if (!found || found.kind !== kind) renderFound(kind, id, {}, true);
+    found.id = id;
+    if (kind === 'logs') { setVal('date', r.d); setVal('time', r.t); }
+    updateFind();
+  }
+  function applyModeUI() {
+    var edit = !!(found && !found.isNew), kind = $('fkind').value;
+    var cp = edit && kind === 'setlist' && $('fcp').checked; // setlist copy needs the new date / time
+    $('frd').hidden = edit && !cp; $('frt').hidden = edit && !cp; $('fanyl').hidden = kind !== 'logs'; $('fnew').hidden = !found; $('fcontrow').hidden = !(edit && kind === 'logs');
+    if (edit) { $('fdl').hidden = true; $('fdl').innerHTML = ''; $('fdl')._key = ''; }
+  }
+  function topChanged() { dtSearch(); syncNew(); }
+  ['fdd', 'fdt'].forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'fdt' && $('fdt').value !== '') $('fany').checked = false; syncNew(); }); $(id).addEventListener('change', syncNew); });
+  $('fany').addEventListener('change', function () { if ($('fany').checked) $('fdt').value = ''; topChanged(); });
+  $('fnew').onclick = function () {
+    $('fid').value = ''; hideCands(); clearFound(); $('fdd').value = ''; $('fdt').value = ''; $('fany').checked = false; topChanged();
+  };
+  // the Issue button (bottom of the find tab): after the form page is opened, the input is reset (the same as the new button), ready for the next entry
+  $('go-find').addEventListener('click', function () { if ($('go-find').getAttribute('aria-disabled') === 'true') return; setTimeout(function () { $('fnew').onclick(); }, 300); });
+  tab(location.hash === '#setlist' ? 'setlist' : location.hash === '#songs' ? 'songs' : 'logs'); // the first view is the logs tab (#find is the same as #logs)
+  applyModeUI();
+  if (qid0) { $('fid').value = qid0; doFind(); } // opened with ?id=...: load that id in the tab given by the hash (#logs / #setlist)
+})();
+//]]>
+</script>
+</div>
