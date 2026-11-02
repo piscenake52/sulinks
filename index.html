@@ -338,6 +338,9 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
 .hero.day-g::before{display:none}
 .agenda>.day-g:first-child,.tlv>.day-g:first-child{margin-top:8px}
 .tlv>.day-g+.day-g{margin-top:14px}   /* Nextの日と日の間隔を、BEFORE/AFTERの日の区切りと同じに */
+/* 日付の帯もカードと同じ現れ方(TODAY・Next・BEFORE・AFTER、追加読み込み分も) */
+.day-h{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both}
+body.noanim .day-h,body.shifting .day-h{animation:none!important}
 </style>
 </head>
 <body>
@@ -690,7 +693,7 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
     const arr = key ? all.filter(i => i.date.indexOf(key) === 0) : all;
     if (!arr.length) { const c = el('div', 'card empty'); c.append(el('div', 'ttl', '予定はありません')); $('view').append(c); list = []; shown = 0; }
     else dayList(arr, !past);   // BEFOREは新しい順、AFTERは近い順
-    cascade(Array.from($('view').querySelectorAll(keepHead ? '.card' : '.hero-h, .card')), 70, 10); keepHead = false;   // TODAYと同じ: 見出しはすっと、最初の分のカードは上から順に(追加読み込み分はずらさない)
+    cascade(Array.from($('view').querySelectorAll(keepHead ? '.day-h, .card' : '.hero-h, .day-h, .card')), 70, 10); keepHead = false;   // TODAYと同じ: 見出しはすっと、最初の分のカードは上から順に(追加読み込み分はずらさない)
   };
   const agenda = items => {
     document.body.classList.toggle('ld', !(DEMO || done || got.size === 3)); if (!(DEMO || done || got.size === 3)) { $('count').textContent = 'LOADING...'; return; }
@@ -714,10 +717,9 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
       if (lazy && lazy.length) { list = lazy; list.chunk = 6; shown = 0; more(); }   // Next: 数件ずつ、スクロールで続きを読み込む
     };
     hero('Today', [[t, by[t] || []]], '本日の予定はありません', '本日のSARD UNDERGROUND');
-    const mkDay = k => { const f = () => { const gp = el('div', 'day-g'), dr = el('div', 'day-h'), g = el('div', 'grid'); dr.append(dateEl(k)); by[k].forEach(i => g.append(railify(cardOf(i, true)(), i))); gp.append(dr, g); return gp; }; f.n = by[k].length; return f; };
-    const fut = ks.filter(k => k > t);
+    const nk = ks.find(k => k > t);   // Next = 今日より後で、最初に予定がある日だけ(その日の予定はすべて表示)
     list = []; shown = 0;
-    hero('Next', [], '次の予定はありません', '次のSARD UNDERGROUND', fut.map(mkDay));
+    hero('Next', nk ? [[nk, by[nk]]] : [], '次の予定はありません', '次のSARD UNDERGROUND');
     cascade(Array.from($('view').querySelectorAll('.hero-h, .day-h, .card')), 70, 10);
   };
   const dayList = (arr, asc) => {
