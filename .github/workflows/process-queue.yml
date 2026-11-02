@@ -1,0 +1,70 @@
+name: process queue
+on:
+  push:
+    branches: [main]
+    paths: ['data/*/queue/*.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data-queue
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: apply queue
+        run: |
+          python3 - <<'PY'
+          import json, glob, os, shutil, hashlib
+          LEG = {   # ID が無い旧データ用の目印(内容から固定のIDを作るのに使う)
+            'logs': lambda o: '|'.join(str(o.get(a) or o.get(b) or '') for a, b in (('date','d'),('time','t'),('contents','c'),('title','ti'),('url','u'))),
+            'songs': lambda o: str(o.get('title') or o.get('t') or ''),
+          }
+          IDF = {'logs': ('logid', 'L'), 'songs': ('songid', 'S')}
+          REQ = {'logs': ['date','contents','title'], 'songs': ['title'], 'setlist': ['setlistid','title']}
+          def ident(kind, o):
+              if kind == 'setlist': return str(o.get('setlistid') or o.get('id') or '')
+              f, p = IDF[kind]
+              return str(o[f]) if o.get(f) else p + hashlib.sha1(LEG[kind](o).encode('utf-8')).hexdigest()[:10]
+          def stamp(kind, o):   # ID が無ければ付ける
+              if kind != 'setlist' and not o.get(IDF[kind][0]): o[IDF[kind][0]] = ident(kind, o)
+              return o
+          for kind in REQ:
+              files = sorted(glob.glob(f'data/{kind}/queue/*.json'))
+              if not files: continue
+              main = f'data/{kind}/{kind}.json'
+              arr = json.load(open(main, encoding='utf-8')) if os.path.exists(main) else []
+              arr = [stamp(kind, o) for o in arr]
+              idx = {ident(kind, o): i for i, o in enumerate(arr)}
+              for f in files:
+                  try:
+                      item = json.load(open(f, encoding='utf-8'))['item']
+                      assert isinstance(item, dict) and all(item.get(r) for r in REQ[kind])
+                      k = ident(kind, stamp(kind, item))
+                      if k in idx: arr[idx[k]] = item      # 同じIDは上書き(更新)
+                      else: idx[k] = len(arr); arr.append(item)
+                      dst = 'processed'
+                  except Exception:
+                      dst = 'failed'                       # 構造不正は failed へ退避(再送しても同じなので止める)
+                  os.makedirs(f'data/{kind}/{dst}', exist_ok=True)
+                  shutil.move(f, f'data/{kind}/{dst}/' + os.path.basename(f))
+              json.dump(arr, open(main, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+          PY
+      - name: commit data, then version.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data
+          git diff --cached --quiet || git commit -m "data: apply queue [skip ci]"
+          h() { sha1sum "$1" | cut -d' ' -f1; }
+          printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s"}}\n' \
+            "$(git rev-parse HEAD)" "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" > /tmp/version.json
+          if [ ! -f version.json ] || [ "$(jq -S .files version.json)" != "$(jq -S .files /tmp/version.json)" ] || ! jq -e '.commit | test("^[0-9a-f]{40}$")' version.json >/dev/null; then
+            cp /tmp/version.json version.json; git add version.json; git commit -m "chore: update version.json [skip ci]"
+          fi
+          for i in 1 2 3 4 5; do git pull --rebase origin main && git push && exit 0; sleep $((i*3)); done
+          exit 1

@@ -3,6 +3,13 @@ on:
   push:
     branches: [main]
     paths: ['data/**']
+  schedule:
+    - cron: '17 */6 * * *'   # 自動コミット(GITHUB_TOKEN)でデータが更新され push で動かなかったときの保険。変化がなければ何もしない
+  workflow_dispatch:
+  # すぐ反映したい場合: Issue処理などデータを更新するワークフロー名を書く
+  # workflow_run:
+  #   workflows: ['（ワークフロー名）']
+  #   types: [completed]
 permissions:
   contents: write
 concurrency:
@@ -13,12 +20,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - name: generate version.json
         run: |
           h() { sha1sum "$1" | cut -d' ' -f1; }
           printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s"}}\n' \
-            "${{ github.sha }}" \
-            "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" > version.json
+            "$(git rev-parse HEAD)" \
+            "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" > /tmp/version.json
+          # データのハッシュが変わっていなければコミットしない(commit欄だけの変化では更新しない)
+          if [ -f version.json ] && [ "$(jq -S .files version.json)" = "$(jq -S .files /tmp/version.json)" ] && jq -e '.commit | test("^[0-9a-f]{40}$")' version.json >/dev/null; then echo "no change"; exit 0; fi
+          cp /tmp/version.json version.json
       - name: commit
         run: |
           git config user.name "github-actions[bot]"
