@@ -32,7 +32,7 @@
 {"d":"20261101","t":"1000","c":"RELEASE","ti":"TEST ALBUM 4 発売日","u":"https://example.com/release/5","g":["YUA","IZM","HRM","MIU"],"tg":["release"],"o":true},
 {"d":"20261101","t":"2200","c":"YOUTUBE","ti":"配信ライブのお知らせ","u":"https://www.youtube.com/watch?v=TESTLOG0004","g":["YUA","IZM"],"tg":["youtube"],"o":true},
 {"d":"20261104","t":"1900","c":"TV","ti":"テスト音楽番組 出演","u":"https://example.com/tv/3","g":["HRM","MIU"],"tg":["tv"]},
-{"d":"20261106","t":"1200","c":"FANCLUB","ti":"FC限定卓上カレンダー2027購入受付開始","u":"https://example.com/radio/3","g":["YUA"],"tg":["fanclub"],"o":true},
+{"d":"20261106","t":"1200","c":"FANCLUB","ti":"FC限定卓上カレンダー2027購入受付開始","g":"https://example.com/radio/3","g":["YUA"],"tg":["fanclub"],"o":true},
 {"d":"20261110","t":"1000","c":"TICKET","ti":"TEST TOUR 2026 FINAL 一般発売","u":"https://example.com/ticket/3","g":["YUA","IZM"],"tg":["ticket"],"o":true},
 {"d":"20261115","t":"1800","c":"EVENT","ti":"トークイベント","u":"https://example.com/event/1","g":["HRM","MIU"],"tg":["event"],"o":true},
 {"d":"20261201","t":"1200","c":"RELEASE","ti":"SAMPLE SINGLE 4 発売","u":"https://example.com/release/6","g":["YUA","IZM","HRM","MIU"],"tg":["release"]},
