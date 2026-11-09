@@ -14,6 +14,7 @@
 {"d":"20241211","t":"2000","c":"YOUTUBE","ti":"MV公開 夜明けのテスト","u":"https://www.youtube.com/watch?v=TESTLOG0001","g":["YUA","IZM"],"tg":["youtube"],"o":true},
 {"d":"20250311","t":"1900","c":"TV","ti":"テスト音楽番組 出演","u":"https://example.com/tv/1","g":["HRM","MIU"],"tg":["tv"],"o":true},
 {"d":"20261108","t":"2359","c":"RADIO","ti":"神野友亜のキャッチ！ メッセージ受付締切","u":"https://example.com/radio/1","g":["YUA"],"tg":["radio"]},
+{"d":"20261110","t":"1600","c":"RADIO","ti":"e-radio 神野友亜のキャッチ！","u":"https://example.com/radio/1","g":["YUA"],"tg":["radio"]},
 {"d":"20250619","t":"1000","c":"TICKET","ti":"TEST TOUR 2025 チケット先行受付","u":"https://example.com/ticket/1","g":["YUA","IZM"],"tg":["ticket"],"o":true},
 {"d":"20250808","t":"1215","c":"SNS","ti":"新ビジュアル公開","u":"https://www.instagram.com/p/TEST0001/","g":["HRM","MIU"],"tg":["sns"],"o":true},
 {"d":"20251101","t":"0900","c":"ANNIVERSARY","ti":"デビュー記念日","u":"https://x.com/test_official/status/1020","g":["YUA","IZM","HRM","MIU"],"tg":["anniversary"],"o":true},
