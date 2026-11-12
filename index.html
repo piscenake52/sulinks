@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
+<script>(function(){var d=document.documentElement,t;d.className+=' fw';function x(){clearTimeout(t);d.className=d.className.replace(/\bfw\b/,'')}window.__fwOff=x;t=setTimeout(x,1200)})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>SARD UNDERLINKS</title>
 <meta name="description" content="SARD UNDERGROUNDの情報まとめ。曲・ライブ・お知らせ・カレンダー・おすすめ。"/>
@@ -14,9 +15,10 @@
 <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin/>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=M+PLUS+1p:wght@900&amp;display=swap"/>
 <style type="text/css">
 /*<![CDATA[*/
+html.fw body{opacity:0}body{transition:opacity .14s ease-out}   /* フォント(Anton)の読み込みと、位置合わせが終わるまで、画面を出さない(文字の形や位置が途中で変わって見えないように)。1.2秒たったら、読み込み中でも出す */
 /* ===== 色の定数(画面の色は、ここと、JS の MONTH_THEME / TOUR_THEME / RELEASE_THEME の2か所) =====
    土台: --bg 背景 / --card カード / --line 線 / --fg 文字 / --mut 弱い文字
    面:   --card2 持ち上がった面(帯・ホバー) / --face チップ・タブの面 / --face-h ホバー / --face-a 押している間
@@ -123,8 +125,6 @@ dialog li a{margin-left:auto;color:var(--acc);text-decoration:none}
 .day-i{overflow:hidden;min-height:0;transition:opacity .2s}
 .day-g.closed .day-w{grid-template-rows:0fr}.day-g.closed .day-i{opacity:0}
 
-.day-h .tt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* 青帯のタイトル */
-.day-h .dsm{flex:none;font-size:11px;font-weight:400;color:var(--mut)}   /* 青帯のタイトルの横の、小さい日付 */
 .day-h .tag{padding:0 9px;border-radius:99px;font-size:11px;background:var(--grad);color:var(--on)}
 .day-h .tag.plain{background:none;border:1px solid var(--line);color:var(--mut)}
 .hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
@@ -171,7 +171,7 @@ body.tab-setlist #modes{display:none}
 .stat{display:flex;flex-wrap:wrap;gap:2px 12px;font:11px ui-monospace,monospace;color:var(--fg)}
 .stat b{color:var(--mut);font-weight:700;margin-right:3px}
 .stat .ok{color:var(--ok);font-weight:700}
-.card.att{border-color:var(--acc)}
+.card.att{border-left-color:var(--acc)}   /* ATTENDEDしたカード: 枠の左側の線だけピンク(ほかの辺は、開いたときの青のまま) */
 .btn.myon{border-color:var(--acc);color:var(--acc)}
 .my-r{display:flex;align-items:baseline;gap:6px;border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
 .my-r .att-r{flex:1;min-width:0;border-top:0;margin-top:0;padding:0}
@@ -335,7 +335,7 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
 .hero-d{display:flex;align-items:center;gap:8px;margin-bottom:4px;min-height:22px;align-items:flex-end}
 .hero-l{font-family:'Anton','Noto Sans JP',sans-serif;font-size:28px;line-height:1.1;letter-spacing:.04em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2);display:block;width:fit-content}
 .hero-h.flat .hero-l{transform:none}
-body.tab-setlist #fbar{display:none}   /* SETLISTでは、LINKS用の「選んだ絞り込み」の列は出さない */
+
 #sfc.nr .chip{animation:none!important}   /* ピンクの帯がまっすぐのときは、文字もまっすぐ */
 .hero:first-of-type .hero-l{font-size:28px}
 .hj{display:inline}
@@ -403,28 +403,27 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .day-r{margin:12px 0 6px}
 /* ===== 日付の帯 + 縦線(タイムライン): 全画面で同じ見え方 ===== */
 .agenda,.tlv{position:relative;padding:2px 0 0 20px}
-.agenda::before,.tlv::before{content:"";position:absolute;left:4px;top:10px;bottom:0;width:2px;background:var(--line)}   /* 一番上の日付の帯の位置から始める(上にはみ出さない) */
+.agenda::before,.tlv::before{content:"";position:absolute;left:3px;top:10px;bottom:0;width:2px;background:var(--line)}   /* 一番上の日付の帯の位置から始める(上にはみ出さない) */
 .tour-g{margin-top:18px}
 .tour-g:first-child{margin-top:4px}
 .tour-h{box-shadow:-22px 0 0 0 var(--bg);position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;width:100%;box-sizing:border-box;margin:0;padding:7px 18px 8px 13px;background:none;border:0;color:var(--fg);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* TOURのツアー見出し: 見出し(Tourなど)と同じピンクの斜めの帯と、帯につながるピンクの下線。帯は日付の青い帯と同じ位置(左端がタイムラインの縦線に重なる)。見出しの高さの間は縦線を背景色で隠し、縦線は帯の下端から出るようにする(日付の帯と同じ作り) */
 .tour-h::before{content:"";position:absolute;left:-20px;top:0;bottom:0;width:8px;background:var(--acc);transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}   /* 水平の太さ8px。角度は、ほかの帯・見出しと同じ15.5度(高さが変わっても同じ角度) */
 .tour-h::after{content:"";position:absolute;left:-20px;right:0;bottom:0;height:2px;background:var(--acc)}
 .tour-g.tclosed .tour-h::before{transform:none}   /* 閉じているときは、見出しと同じく帯がまっすぐ */
-.tour-h .tn{max-width:calc(100% - 30px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 22px/1.2 'Anton','Noto Sans JP',sans-serif;letter-spacing:.03em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
+.tour-h .tn{max-width:calc(100% - 30px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:900 20px/1.25 'M PLUS 1p','Noto Sans JP','Hiragino Sans',sans-serif;letter-spacing:.02em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
 .tour-g.tclosed .tour-h .tn{transform:none}
-.tour-h .tag{flex:none;padding:0 9px;border-radius:99px;font:11px ui-monospace,monospace;border:1px solid var(--line);color:var(--mut)}
 .tour-h .chv{opacity:.75;transform:rotate(225deg)}
 .tour-g.tclosed .tour-h .chv{transform:rotate(45deg)}
 .tour-h:hover{filter:brightness(1.2)}.tour-h:active{filter:brightness(1.3)}
 .tour-w{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s cubic-bezier(.2,.9,.25,1)}
 .tour-i{position:relative;overflow:hidden;min-height:0;padding:8px 0 0 24px;margin-left:-24px;transition:opacity .2s}
 .agenda:has(>.tour-g)::before{display:none}   /* タイトル枠(ツアー名など)があるときは、タイムラインを枠ごとに分け、枠と枠の間はつなげない */
-.agenda:has(>.tour-g)>.day-g::before{content:"";position:absolute;left:-16px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}   /* 枠に入らない日付の帯は、日付の帯が続く間だけ縦線でつなぐ */
+.agenda:has(>.tour-g)>.day-g::before{content:"";position:absolute;left:-17px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}   /* 枠に入らない日付の帯は、日付の帯が続く間だけ縦線でつなぐ */
 .agenda:has(>.tour-g)>.day-g:has(+.day-g)::before{bottom:-7px}
 .agenda:has(>.tour-g)>.day-g.closed:not(:has(+.day-g))::before{bottom:8px}
 .tour-g+.day-g{margin-top:18px}
 .agenda:has(>.tour-g)>.day-g:first-child{margin-top:4px}
-.tour-i::before{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}
+.tour-i::before{content:"";position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}
 .tour-i:has(>.day-g:last-child.closed)::before{bottom:8px}   /* 最後の日付の帯が閉じているときは、縦線を帯の下端で止める(帯の下の余白にはみ出さない) */   /* ツアー見出しの下線から、そのツアーの最後までの縦線 */   /* 日付の帯の左のはみ出し(最大22px)が切れないよう、左に余白を取る */
 .tour-g.tclosed .tour-w{grid-template-rows:0fr}.tour-g.tclosed .tour-i{opacity:0}
 .day-g{position:relative}
@@ -481,6 +480,7 @@ body.noanim .day-h,body.shifting .day-h{animation:none!important}
 .card.fold .hd .chv{margin:6px 9px 0 6px;transform:rotate(45deg)}
 .card.fold.open .hd .chv{transform:rotate(225deg)}
 .card.fold.open{border-color:var(--main);box-shadow:inset 3px 0 0 var(--main)}
+.card.fold.open.att{border-left-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}   /* 開いたときも、左側の線だけピンク */
 /* ===== 検索窓の下に展開するフィルターチップ(さんぷる) ===== */
 .sfc{position:relative;z-index:30;display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s cubic-bezier(.2,.9,.25,1),margin .28s cubic-bezier(.2,.9,.25,1)}   /* 画面の流れの中に置く(開くと下の内容が下がり、閉じると戻る) */
 .sfc.open{grid-template-rows:1fr;margin-bottom:8px}
@@ -559,11 +559,13 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
 </style>
 </head>
 <body>
+<script>try{var sw=parseInt(localStorage.getItem('su_w')||'0',10);if(sw&&window.matchMedia('(min-width:1024px)').matches)document.documentElement.style.setProperty('--w',sw+'px')}catch(e){}</script>
 <div id="top"><a id="site" href="https://sard-under-links.blogspot.com/">SARD UNDERLINKS</a><span id="upd"></span><div id="modes"></div><div id="tabSw" role="tablist"><button type="button" data-tab="search" class="on">LINKS</button><button type="button" data-tab="setlist">LIVES</button></div><button type="button" id="setBtn" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button></div>
 <header><div class="wrap">
   <div id="qrow"><input id="q" type="search" placeholder="曲名 / キーワード / 日付 (2024, 202403, 2024.03.15)　-語 で除外" autocomplete="off"/><button type="button" id="calBtn" aria-label="カレンダーから日付を選ぶ"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg></button></div>
   <ul id="sug" role="listbox" hidden="hidden"></ul>
 </div></header>
+<script>try{var st=JSON.parse(localStorage.getItem('su_set')||'{}');if(st.start==='setlist'){document.body.classList.add('tab-setlist');var tb=document.querySelectorAll('#tabSw button');for(var ti=0;ti<tb.length;ti++)tb[ti].classList.toggle('on',tb[ti].getAttribute('data-tab')==='setlist');document.getElementById('q').placeholder=window.matchMedia('(max-width:640px)').matches?'ライブ名 / 曲名 / 日付':'ライブ名 / 曲名 / ALBUM / SINGLE / 日付 (2024, 202403, 2024.03.15)'}}catch(e){}</script>
 <main>
   <div id="ctl"></div>
   <div id="count">LOADING...</div>
@@ -843,6 +845,15 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const srcChips = () => chips(CHIPSET, src, v => { src = v; render(); });
 
+  // Xへの投稿の文面。記号は \u エスケープで書く(Bloggerに貼っても崩れないように)
+  const postText = (nm, r) => {
+    const B = '\u2501', T = '\u254B', S = '\u3000', deco = B.repeat(7) + T;
+    const cw = ch => { const c = ch.codePointAt(0); return c >= 0x2E80 || (c >= 0xFF00 && c <= 0xFFEF) || (c >= 0x2500 && c <= 0x257F) || c > 0xFFFF ? 1 : ch === ' ' ? .35 : (ch >= 'A' && ch <= 'Z') ? .75 : /[a-z0-9]/.test(ch) ? .6 : .5; };   // 全角を1とした、だいたいの文字幅
+    const wd = t => Array.from(t).reduce((a, ch) => a + cw(ch), 0), l2 = S + nm + 'さんに', l3 = S + 'おすすめSARD UNDERGROUND';
+    const pad = Math.max(0, Math.round(Math.max(wd(l2), wd(l3)) - wd(deco)));   // 下の線の右端を、「○○さんに」と「おすすめ…」の長いほうの右端にそろえる
+    const ly = (r.song && r.song.lyric) || 'ここに歌詞の一部が入ります(仮)';
+    return [T + B.repeat(7), l2, l3, S.repeat(pad) + deco, '', '\uD83C\uDFA7' + r.title, r.url, '', ly, '', '#SARDUNDERGROUND'].join('\n');
+  };
   const renderRec = () => {
     $('rbody').innerHTML = '';
     const w = el('div', 'rec'); w.append(el('div', 'ttl', 'おすすめ SARD UNDERGROUND'));
@@ -854,8 +865,10 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
       box.innerHTML = ''; subEl = null; if (!recRes) return;
       const r = recRes, c = el('div', 'card'), a = el('div', 'act'); subEl = el('div', 'sub', (recName || 'あなた') + 'さんにおすすめ');
       c.append(subEl, el('div', 'ttl', r.title)); if (r.label) c.append(el('div', 'sub', r.label));
-      a.append(ytBtn(r.url)); if (utaUrl(r.song)) a.append(linkBtn(utaUrl(r.song), '歌ネット \u2197'));
-      a.append(linkBtn('https://x.com/intent/tweet?text=' + encodeURIComponent('おすすめSARD UNDERGROUND\n' + r.title + '\n' + r.url), 'SHARE \u2197')); c.append(a); box.append(c);
+      const tx = () => postText((recName || '').trim() || 'あなた', r), enc = () => 'https://x.com/intent/tweet?text=' + encodeURIComponent(tx()), cp = el('button', 'btn', 'COPY'), sh = linkBtn(enc(), 'SHARE \u2197'); cp.type = 'button';
+      sh.addEventListener('click', () => { sh.href = enc(); });   // 名前を直したあとでも、押した時点の名前で投稿する
+      cp.onclick = () => { const done = () => { cp.textContent = 'COPIED'; clearTimeout(cp._t); cp._t = setTimeout(() => { cp.textContent = 'COPY'; }, 1400); }; try { navigator.clipboard.writeText(tx()).then(done, () => {}); } catch (e) { const t = document.createElement('textarea'); t.value = tx(); document.body.append(t); t.select(); try { document.execCommand('copy'); done(); } catch (e2) {} t.remove(); } };
+      a.append(ytBtn(r.url), cp, sh); c.append(a); box.append(c);
     };
     const roll = () => { if (!POOL.length) return; recRes = POOL[Math.floor(Math.random() * POOL.length)]; showRes(); };
     inp.oninput = () => { recName = inp.value; clr.hidden = !recName; if (subEl) subEl.textContent = (recName || 'あなた') + 'さんにおすすめ'; try { localStorage.setItem('su_name', recName); } catch (e) {} };
@@ -890,15 +903,17 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const shiftDay = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8) + n); return '' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()); };
   let themeKey = '', themeInit = false, monthShine = false;
   const shineBars = () => document.querySelectorAll('.sec-ind').forEach(i => { i.classList.remove('shine'); void i.offsetWidth; i.classList.add('shine'); });   // タブの青い面に、光が左から右へ走る
+  const setThemeVars = th => { const st = document.documentElement.style, h = th.main.replace('#', ''), rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)).join(','); st.setProperty('--main', th.main); st.setProperty('--main-rgb', rgb); st.setProperty('--main2', th.main2); st.setProperty('--on', th.on); st.setProperty('--acc', th.acc); };
   const applyTheme = () => {
     if (!themeInit) { themeInit = true; try { const mk = todayKey().slice(0, 6), last = localStorage.getItem('su_lastmonth'); if (last && last !== mk) { monthShine = true; setTimeout(() => { monthShine = false; shineBars(); }, 700); } localStorage.setItem('su_lastmonth', mk); } catch (e) {} }   // 前に開いたときと月が違うときだけ(初めて開いたときは出さない)
-    const t = todayKey(), key = t + '|' + LIVES.length + '|' + SONGS.length; if (key === themeKey) return; themeKey = key;
+    const t = todayKey(), key = t + '|' + LIVES.length + '|' + SONGS.length, loaded = LIVES.length + SONGS.length > 0;
+    if (!loaded) { try { const c = JSON.parse(localStorage.getItem('su_th') || 'null'); if (c && c.d === t && c.th && c.th.main) { setThemeVars(c.th); return; } } catch (e) {} }   // データを待つ間は、今日の前回の色(特別な色も含む)をそのまま使う
+    if (key === themeKey) return; themeKey = key;
     let th = MONTH_THEME[+t.slice(4, 6) - 1];
     const tr = new Map(); LIVES.forEach(l => { if (l.tour && /^\d{8}$/.test(l.date)) { const r = tr.get(l.tour) || [l.date, l.date]; if (l.date < r[0]) r[0] = l.date; if (l.date > r[1]) r[1] = l.date; tr.set(l.tour, r); } });
     if (Array.from(tr.values()).some(r => t >= r[0] && t <= r[1])) th = TOUR_THEME;
     if (SONGS.some(x => /^\d{8}$/.test(x.date) && t >= shiftDay(x.date, -RELEASE_DAYS) && t <= shiftDay(x.date, RELEASE_DAYS))) th = RELEASE_THEME;
-    const st = document.documentElement.style, h = th.main.replace('#', ''), rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
-    st.setProperty('--main', th.main); st.setProperty('--main-rgb', rgb); st.setProperty('--main2', th.main2); st.setProperty('--on', th.on); st.setProperty('--acc', th.acc);
+    setThemeVars(th); if (loaded) { try { localStorage.setItem('su_th', JSON.stringify({ d: t, th })); } catch (e) {} }
   };
   document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });   // 開いたままで月が替わったときも、戻ってきたときに切り替わる
   const dayOf = k => new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8));
@@ -928,7 +943,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   // ===== 開閉の記憶: 日付の帯(開閉)とカードの開き具合を、タブを移っても覚えておく(メモリだけ。画面を更新すると初期化) =====
   const FOLD = {}; let restoring = false, moreUsed = 0;
   const ctxKey = () => tab === 'setlist' ? 'setlist:' + slView() : (isRes() && !rtab) ? 'results' : sec;   // RESULTSだけ別。ほかは、検索中でもタブごと(同じ全データ)
-  const gKey = g => { const d = g.querySelector(':scope > .day-h .dm'), t = g.querySelector(':scope > .day-h .tt'); return d ? ctxKey() + '|' + d.textContent + (t ? '|' + t.textContent : '') : ''; };
+  const gKey = g => { const d = g.querySelector(':scope > .day-h .dm'); return d ? ctxKey() + '|' + d.textContent : ''; };
   const cTag = (c, i) => i + ':' + ((c.querySelector('.ttl') || {}).textContent || '');
   const rec = g => { if (restoring || !g) return; g._user = true; openIO.unobserve(g); const k = gKey(g);   // 人が開閉した日は、順番に開く自動処理(openIO)の対象から外す
     if (!k) return; FOLD[k] = { c: g.classList.contains('closed'), o: Array.from(g.querySelectorAll('.card.fold')).map((c, i) => c.classList.contains('open') ? cTag(c, i) : null).filter(Boolean) }; };
@@ -941,11 +956,20 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const foldAll = getGroups => {
     const gs = getGroups(), cardsOf = g => Array.from(g.querySelectorAll('.card.fold')), open = gs.filter(g => !g.classList.contains('closed'));
     if (!gs.length) return;
+    const ts = Array.from(document.querySelectorAll('#view .tour-g')), setTour = (t, closed) => { t.classList.toggle('tclosed', closed); const th = t.querySelector(':scope > .tour-h'); if (th) th.setAttribute('aria-expanded', closed ? 'false' : 'true'); };
+    if (ts.length) {   // タイトル枠(ピンク帯)のある画面(LIVESの3つのタブ): 日付とカード半分開く(最初)、カードを全部開く、カードを閉じて日付だけ、日付を閉じてタイトルだけ、最初に戻る
+      const allCardsOpen = g => cardsOf(g).every(c => c.classList.contains('open'));
+      if (ts.every(t => t.classList.contains('tclosed'))) { ts.forEach(t => setTour(t, false)); gs.forEach(g => { setDay(g, false); cardsOf(g).forEach(c => setCard(c, false)); }); }
+      else if (gs.every(g => g.classList.contains('closed'))) ts.forEach(t => setTour(t, true));
+      else if (open.length === gs.length && gs.every(allCardsOpen)) gs.forEach(g => setDay(g, true));
+      else { ts.forEach(t => setTour(t, false)); gs.forEach(g => { setDay(g, false); cardsOf(g).forEach(c => setCard(c, true)); }); }
+      syncHero(); return;
+    }
     if (!open.length) gs.forEach(g => { setDay(g, false); cardsOf(g).forEach(c => setCard(c, false)); });
     else if (open.length < gs.length || open.some(g => cardsOf(g).some(c => !c.classList.contains('open')))) gs.forEach(g => { setDay(g, false); cardsOf(g).forEach(c => setCard(c, true)); });
     else gs.forEach(g => setDay(g, true));
   };
-  const syncHero = () => { document.querySelectorAll('.hero-h').forEach(h => { const gs = h.parentNode.querySelectorAll('.day-g'); h.classList.toggle('flat', gs.length > 0 && Array.from(gs).every(g => g.classList.contains('closed'))); }); };
+  const syncHero = () => { document.querySelectorAll('.hero-h').forEach(h => { const ts = h.parentNode.querySelectorAll('.tour-g'), gs = h.parentNode.querySelectorAll(ts.length ? '.agenda > .day-g' : '.day-g'); h.classList.toggle('flat', (ts.length || gs.length) > 0 && Array.from(ts).every(t => t.classList.contains('tclosed')) && Array.from(gs).every(g => g.classList.contains('closed'))); }); };   // 見出しの帯がまっすぐになるのは、日付の帯だけが並ぶ画面では全部閉じたとき。タイトル枠のある画面では、全部の枠がタイトルだけになったとき
   let heroQ = 0; new MutationObserver(() => { if (heroQ) return; heroQ = requestAnimationFrame(() => { heroQ = 0; syncHero(); }); }).observe($('view'), { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });   // 日付の帯の開閉に合わせて、見出しの帯の形を切り替える
   const headBtn = (h, getGroups) => { h.setAttribute('role', 'button'); h.tabIndex = 0; const go = () => { foldAll(getGroups); h.classList.remove('fl'); void h.offsetWidth; h.classList.add('fl'); setTimeout(() => h.classList.remove('fl'), 400); }; h.onclick = e => { if (e.target.closest('.prog')) return; go(); }; h.onkeydown = e => { if (e.target.closest('.prog')) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; };
   const foldCard = c => {
@@ -1205,7 +1229,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const slCard = (l, hits, nd) => () => {
     const c = el('div', 'card'), kid = { 'FES': 'fes', 'RELEASE EVENT': 'relev', 'EVENT': 'event' }[l.lkind];
-    head(c, l.date, cbdg(l.lkind || 'LIVE', '#4ade80', () => { if (!kid) return; if (qs.trim()) { qs = ''; $('q').value = ''; } if (slOn.indexOf(kid) < 0) toggleSl(kid); else render(); }), l.title, !!nd);
+    head(c, l.date, cbdg(l.lkind || 'LIVE', '#4ade80', () => { if (!kid) return; if (qs.trim()) { qs = ''; $('q').value = ''; } if (slOn.indexOf(kid) < 0) toggleSl(kid); else render(); }), l.ltitle || l.title, !!nd);   // カードのタイトルは、ログのタイトルがあればそれ
     c.append(el('div', 'sub', [l.tour, l.venue, l.area].filter(Boolean).concat([l.n + ' SONGS']).join(' / ')));
     if (l.mem.length) c.append(chipRow(l.mem.map(n => ({ t: n, fn: () => qGo(n) }))));
     if (l.enc.length || l.fst.length) {
@@ -1231,9 +1255,9 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     slRtab = false; render();
   };
   const SLRS = { tour: { y: [], m: [] }, live: { y: [], m: [] }, event: { y: [], m: [] }, results: { y: [], m: [] } }; let slCnt = 0, slCntOn = false;   // SETLISTの年月フィルター(複数選択。TOUR/LIVE/EVENT/RESULTSのタブごとに別々)と、件数カウンターの前回値
-  const slDay = (k, arr, title) => () => {   // LINKSと同じ日付の帯(開閉)+その日のライブカード(時刻つき)
+  const slDay = (k, arr) => () => {   // LINKSと同じ日付の帯(開閉)+その日のライブカード(時刻つき)
     const sec = el('section', 'day-sec day-g'), h = el('div', 'day-h'), g = el('div', 'grid'), t = todayKey(), diff = Math.round((dayOf(k) - dayOf(t)) / 864e5);
-    if (title) { const dw = dateEl(k); dw.classList.add('dsm'); h.append(el('span', 'tt', title), dw); } else h.append(dateEl(k)); if (dayTag(diff)) h.append(el('span', 'tag' + (diff === 0 ? '' : ' plain'), dayTag(diff)));
+    h.append(dateEl(k)); if (dayTag(diff)) h.append(el('span', 'tag' + (diff === 0 ? '' : ' plain'), dayTag(diff)));
     arr.forEach(x => g.append(railify(slCard(x.l, x.hits, true)(), x.l)));
     sec.append(h, g); return foldify(sec);
   };
@@ -1244,12 +1268,19 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const sec = el('section', 'tour-g'), h = el('button', 'tour-h'), w = el('div', 'tour-w'), inn = el('div', 'tour-i');
     const byD = {};
     h.type = 'button'; h.setAttribute('aria-expanded', 'true');
-    h.append(el('span', 'tn', name), el('span', 'tag plain', arr.length + '公演'));
+    h.append(el('span', 'tn', name));
     h.append(el('span', 'chv'));
-    arr.forEach(x => { const d = x.l.date || '', t = x.l.ltitle || '', kk = !d ? '' : t ? 'L:' + d + '|' + t : 'D:' + d; (byD[kk] = byD[kk] || []).push(x); });
-    Object.keys(byD).filter(Boolean).sort((a, b) => a.slice(2, 10).localeCompare(b.slice(2, 10)) || a.localeCompare(b)).forEach(kk => { const it = byD[kk].sort((a, b) => timeCmp(a.l, b.l)); inn.append(slDay(kk.slice(2, 10), it, kk.charAt(0) === 'L' ? it[0].l.ltitle : '')()); });   // タイトル(青帯): ログのタイトルがあればタイトルと日付、なければ日付だけ
+    arr.forEach(x => { (byD[x.l.date || ''] = byD[x.l.date || ''] || []).push(x); });
+    Object.keys(byD).filter(Boolean).sort().forEach(k => inn.append(slDay(k, byD[k].sort((a, b) => timeCmp(a.l, b.l)))()));
     if (byD['']) { const g = el('div', 'grid'); byD[''].forEach(x => g.append(railify(slCard(x.l, x.hits, true)(), x.l))); inn.append(g); }
-    h.onclick = () => { const c = sec.classList.toggle('tclosed'); h.setAttribute('aria-expanded', c ? 'false' : 'true'); };
+    h.onclick = () => {   // 大分類タイトルを押すたびに、その枠だけ: 日付とカード半分開く(最初)、日付とカード全開、日付のみ、大分類タイトルのみ、最初に戻る
+      const gs = Array.from(sec.querySelectorAll('.day-g')), cards = g => Array.from(g.querySelectorAll('.card.fold'));
+      if (sec.classList.contains('tclosed')) { sec.classList.remove('tclosed'); gs.forEach(g => { setDay(g, false); cards(g).forEach(c => setCard(c, false)); }); }
+      else if (gs.length && gs.every(g => g.classList.contains('closed'))) sec.classList.add('tclosed');
+      else if (gs.every(g => !g.classList.contains('closed') && cards(g).every(c => c.classList.contains('open')))) gs.forEach(g => setDay(g, true));
+      else gs.forEach(g => { setDay(g, false); cards(g).forEach(c => setCard(c, true)); });
+      h.setAttribute('aria-expanded', sec.classList.contains('tclosed') ? 'false' : 'true'); syncHero();
+    };
     w.append(inn); sec.append(h, w); return sec;
   };
   const renderSetlist = prevSl => {
@@ -1299,7 +1330,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     };
     const OPTS = { album: () => ALBUMS, single: () => SINGLES, song: songOpts, area: () => AREAS, venue: () => VENUES, tour: () => TOURS };
     ['album', 'single', 'song', 'area', 'venue', 'tour'].forEach(id => {
-      if (slOn.indexOf(id) >= 0 || (id === 'song' && ag)) { cbs[id] = combo(id.toUpperCase(), OPTS[id], slV[id], v => { cur[id] = v; update(); }); ctl.append(cbs[id]); }
+      if (slOn.indexOf(id) >= 0 || (id === 'song' && ag)) { cbs[id] = combo(id.toUpperCase(), OPTS[id], slV[id], v => { cur[id] = v; drawSel(); update(); }); ctl.append(cbs[id]); }
     });
     const tg = el('button', 'chip', slAll ? 'MATCH ALL' : 'MATCH ANY'); tg.type = 'button'; tg.style.alignSelf = 'flex-start';
     if (ag) ctl.append(tg);
@@ -1376,9 +1407,18 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const set = o => { if (o) buildFlt(); if (o) sf.classList.remove('nr'); sf.classList.toggle('open', o); btn.classList.toggle('open', o); };
     btn.onclick = () => set(!sf.classList.contains('open'));   // 検索窓にカーソルを入れても開かない。この小さなボタンで開閉
     // 選んでいる絞り込みは、枠を閉じていても、ここに小さく並ぶ(押すと外れる)
+    let selSig = null;
     drawSel = () => {
+      const SLVK = ['album', 'single', 'song', 'area', 'venue', 'tour'], sig = tab === 'setlist' ? 'S|' + slOn.join(',') + '|' + SLVK.map(k => slV[k].map(v => v.t).join('~')).join('/') : 'L|' + FLT.cat.join(',') + '|' + FLT.mem.join(',') + '|' + FLT.of;   // 選択が変わっていないときは、チップを作り直さない(動きが毎回走らないように)
+      if (sig === selSig) return; selSig = sig;
       sel.innerHTML = ''; cnt.textContent = '';   // 選択数の数字は出さない(選択中は、左の斜めの帯がアクセント色になる)
-      const add = (nm, rm) => { const b = el('button', 'chip on', nm); b.type = 'button'; b.append(el('span', 'xm')); b.setAttribute('aria-label', nm + 'の絞り込みを外す'); b.onclick = () => { rm(); rtab = false; drawSel(); if (sf.classList.contains('open')) buildFlt(); $('qrow').classList.toggle('fon', fCount() > 0); render(); }; sel.append(b); };
+      const add = (nm, rm) => { const b = el('button', 'chip on', nm); b.type = 'button'; b.append(el('span', 'xm')); b.setAttribute('aria-label', nm + 'の絞り込みを外す'); b.onclick = () => { rm(); if (tab !== 'setlist') { rtab = false; drawSel(); if (sf.classList.contains('open')) buildFlt(); $('qrow').classList.toggle('fon', fCount() > 0); render(); } }; sel.append(b); };
+      if (tab === 'setlist') {   // LIVES: 選んだ項目(ALBUM・VENUE・FESなど)と、その中で選んだ名前(曲名・アルバム名・会場名など)。押すと外れる
+        const vals = id => slV[id].slice().forEach(v => add(v.t, () => { const k = slV[id].indexOf(v); if (k >= 0) slV[id].splice(k, 1); slRtab = false; render(); }));
+        const hasSong = slV.song.length > 0;   // 曲名を選んでいるときは、ALBUM・SINGLEとその名前は出さず、曲名だけ出す。名前を選んだ種類は、種類のチップを出さず名前だけ出す
+        slOn.slice().forEach(id => { const ag = id === 'album' || id === 'single'; if (hasSong && ag) return; if (slV[id] && slV[id].length) { vals(id); return; } const t = (SLCH.find(c => c[0] === id) || [id, id.toUpperCase()])[1]; add(t, () => toggleSl(id)); });
+        vals('song'); return;
+      }
       FLT.cat.slice().forEach(v => add(v, () => { FLT.cat.splice(FLT.cat.indexOf(v), 1); }));
       FLT.mem.slice().forEach(v => add(v, () => { FLT.mem.splice(FLT.mem.indexOf(v), 1); }));
       if (FLT.of) add('OFFICIAL', () => { FLT.of = false; });
@@ -1410,7 +1450,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const res = isRes(), home = tab === 'search' && !mode && !qs.trim() && !year && !res; if (home || res) src = 'ALL'; $('secbar').hidden = !(home || res); $('slbar').hidden = tab !== 'setlist'; const showAll = res && !rtab; { const sb = $('secbar'), hadRes = sb.classList.contains('res'); sb.classList.toggle('res', res); sb.classList.toggle('ra', showAll); zoomSw(sb, hadRes !== res); }   // 検索・絞り込み中は、タブの右端にRESULTSを出す   // 初期表示(HOME)ではチップを出さない。検索・月表示のときだけ出す   // 初期表示(HOME)ではチップを出さない。検索・月表示のときだけ出す
     const keep = !home && !res && keepCtl && tab === 'search' && ctlTab === 'search' && $('ctl').children.length; keepCtl = false;   // 検索入力ではチップ(入力に依存しない)を作り直さない
     if (ctlTab !== tab && fltInn) { fltInn.innerHTML = ''; $('sfc').classList.remove('open', 'nr'); $('fbtn').classList.remove('open'); }   // タブ(LINKS/SETLIST)が変わったら、FILTERの枠は閉じて作り直す
-    $('qrow').classList.toggle('fon', tab === 'setlist' ? slOn.length > 0 : fCount() > 0);
+    $('qrow').classList.toggle('fon', tab === 'setlist' ? slOn.length > 0 : fCount() > 0); drawSel();   // 選んでいる絞り込みのチップ(検索窓の下)
     if (!keep) $('ctl').innerHTML = ''; $('view').innerHTML = ''; $('none').hidden = true; ctlTab = tab;
     if (SET.my !== false && tab !== 'setlist') { const mc = makeMy(); if (mc) $('view').append(mc); }   // MY PLAN: タブと見出しの間(LINKSだけ。SETLISTには出さない)
     if (tab === 'setlist') { renderSetlist(prevSl); return; }
@@ -1483,6 +1523,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     sw.style.marginRight = (sw.getBoundingClientRect().right - r.right) + 'px';
   };
   alignSw(); window.addEventListener('resize', alignSw); if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignSw);
+  Promise.race([(document.fonts && document.fonts.load) ? Promise.all([document.fonts.load('30px Anton'), document.fonts.load('900 20px "M PLUS 1p"')]) : Promise.resolve(), new Promise(r => setTimeout(r, 1100))]).catch(() => {}).then(() => { alignSw(); requestAnimationFrame(() => { if (window.__fwOff) window.__fwOff(); }); });   // フォントが読み込めたら、位置を合わせてから画面を出す
   if (window.ResizeObserver) new ResizeObserver(alignSw).observe($('fbtn'));
   Array.from($('modes').children).forEach(b => b.onclick = () => {
     const m = b.dataset.m;
@@ -1770,7 +1811,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const getVer = () => verP || (verP = fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/version.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null));
   // 短縮キーのJSONを従来のキー名に戻す(従来形式のデータはそのまま通る)
   const SK = { logs: { d: 'date', t: 'time', c: 'contents', ti: 'title', u: 'url', g: 'groups', r: 'relations', tg: 'tags', s: 'setlistid', o: 'official', dp: 'display_pc', y: 'yomi', lt: 'ltype', lg: 'lgroup' },
-    songs: { t: 'title', y: 'yomi', r: 'release', k: 'keywords', l: 'link', un: 'utanet', v: 'videos', a: 'album', s: 'single', ty: 'type', o: 'original', ot: 'original_title', oy: 'original_year', ow: 'original_work' },
+    songs: { t: 'title', y: 'yomi', r: 'release', k: 'keywords', l: 'link', un: 'utanet', v: 'videos', a: 'album', s: 'single', ty: 'type', o: 'original', ot: 'original_title', oy: 'original_year', ow: 'original_work', ly: 'lyric' },
     setlist: { id: 'setlistid', t: 'title', v: 'venue', a: 'area', tr: 'tour', k: 'kind', m: 'member', y: 'yomi', s: 'songs' } };
   const SV = { videos: { l: 'label', u: 'url' }, songs: { o: 'order', t: 'title', ty: 'type', og: 'original', n: 'notes' } };
   const ex = (o, m) => { const r = {}; for (const k in o) r[m[k] || k] = o[k]; return r; };
@@ -1800,6 +1841,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const syncAll = force => { verP = null; if (DEMO) { build(); return; } Promise.allSettled(Object.keys(FILES).map(n => sync(n, force))).then(rs => { flush(); const bad = rs.some(r => r.status === 'rejected'); $('err').hidden = !(bad && !SONGS.length && !INFOS.length && !LIVES.length); done = true; if (!rendered) render(); }); };
   $('retry').onclick = () => { $('err').hidden = true; syncAll(true); };
+  try { applyTheme(); } catch (e) {}   // データを待つ間も、今月の色で表示する(読み込み後に色が変わって見えないように)
   syncAll(false);
 })();
 //]]>
