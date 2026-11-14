@@ -40,7 +40,7 @@
 {"d":"20261104","t":"1900","c":"TV","ti":"テスト音楽番組 出演","u":"https://example.com/tv/3","g":["HRM","MIU"],"tg":["tv"]},
 {"d":"20261106","t":"1200","c":"FANCLUB","ti":"FC限定卓上カレンダー2027購入受付開始","u":"https://example.com/fc/11","g":["YUA"],"tg":["fanclub"],"o":true},
 {"d":"20271110","t":"1000","c":"TICKET","ti":"TEST TOUR 2026 FINAL 一般発売","u":"https://example.com/ticket/3","g":["YUA","IZM"],"tg":["ticket"],"o":true},
-{"d":"20261115","t":"1800","c":"EVENT","ti":"トークイベント","u":"https://example.com/event/1","g":["HRM","MIU"],"tg":["event"],"o":true,"lt":"EVENT","lg":"トークイベント 2026"},
+{"d":"20261105","t":"1800","c":"EVENT","ti":"トークイベント","u":"https://example.com/event/1","g":["HRM","MIU"],"tg":["event"],"o":true,"lt":"EVENT","lg":"トークイベント 2026"},
 {"d":"20261201","t":"1200","c":"RELEASE","ti":"SAMPLE SINGLE 4 発売","u":"https://example.com/release/6","g":["YUA","IZM","HRM","MIU"],"tg":["release"]},
 {"d":"20261216","t":"2000","c":"FANCLUB","ti":"ファンクラブ限定配信","u":"https://example.com/fc/11","g":["YUA","IZM"],"tg":["fanclub"],"o":true},
 {"d":"20261231","t":"1500","c":"TV","ti":"年末特番 出演","u":"https://example.com/tv/4","g":["HRM","MIU"],"tg":["tv"],"o":true},
