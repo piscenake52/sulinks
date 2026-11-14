@@ -1,6 +1,7 @@
 [
 {"d":"20261107","t":"1830","c":"RADIO","ti":"神野友亜のフリートークラボ","u":"https://example.com/radio/1","g":["YUA"],"tg":["radio"]},
 {"d":"20261114","t":"1830","c":"RADIO","ti":"e-radio「神野友亜のフリートークラボ」","u":"https://example.com/radio/1","g":["YUA"],"tg":["radio"]},
+{"d":"20261121","t":"1830","c":"RADIO","ti":"e-radio「神野友亜のフリートークラボ」","u":"https://example.com/radio/1","g":["YUA"],"tg":["radio"]},
 {"d":"20201108","t":"1400","c":"LIVE","ti":"LIVE TOUR 2020 初日 大阪公演昼","u":"https://x.com/test_official/status/1000","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202011081400","o":true,"lt":"TOUR","lg":"LIVE TOUR 2020"},
 {"d":"20201108","t":"1900","c":"LIVE","ti":"LIVE TOUR 2020 初日 大阪公演夜","u":"https://x.com/test_official/status/1000","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202011081900","o":true,"lt":"TOUR","lg":"LIVE TOUR 2020"},
 {"d":"20201113","t":"1900","c":"LIVE","ti":"LIVE TOUR 2020 東京公演","u":"https://x.com/test_official/status/1000","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202011131900","o":true,"lt":"TOUR","lg":"LIVE TOUR 2020"},
@@ -10,7 +11,7 @@
 {"d":"20260803","t":"1830","c":"LIVE","ti":"TEST TOUR 2026 名古屋","u":"https://x.com/test_official/status/1004","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202608031830","o":true,"lt":"TOUR","lg":"TEST TOUR 2026"},
 {"d":"20261002","t":"1730","c":"LIVE","ti":"TEST TOUR 2026 福岡","u":"https://x.com/test_official/status/1005","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202610021730","o":true,"lt":"TOUR","lg":"TEST TOUR 2026"},
 {"d":"20261101","t":"1900","c":"EVENT","ti":"TEST SPECIAL LIVE","u":"https://x.com/test_official/status/1006","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202611011900","o":true,"lt":"LIVE","lg":"TEST SPECIAL LIVE 2026"},
-{"d":"20261122","t":"1700","c":"LIVE","ti":"TEST TOUR 2026 FINAL","u":"https://x.com/test_official/status/1007","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202611221700","o":true,"lt":"TOUR","lg":"TEST TOUR 2026"},
+{"d":"20261121","t":"1700","c":"LIVE","ti":"TEST TOUR 2026 FINAL","u":"https://x.com/test_official/status/1007","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202611221700","o":true,"lt":"TOUR","lg":"TEST TOUR 2026"},
 {"d":"20270110","t":"1800","c":"EVENT","ti":"2027年も越しカウントダウン TEST","u":"https://x.com/test_official/status/1008","g":["YUA","IZM","HRM","MIU"],"tg":["live"],"s":"202701101800","o":true,"lt":"EVENT","lg":"年越しカウントダウン 2027"},
 {"d":"20241201","t":"1200","c":"RELEASE","ti":"TEST ALBUM 1 発売","u":"https://example.com/release/1","g":["YUA","IZM","HRM","MIU"],"tg":["release"],"o":true},
 {"d":"20241211","t":"2000","c":"YOUTUBE","ti":"MV公開 夜明けのテスト","u":"https://www.youtube.com/watch?v=TESTLOG0001","g":["YUA","IZM"],"tg":["youtube"],"o":true},
