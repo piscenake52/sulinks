@@ -2,39 +2,89 @@ name: "songs"
 description: "insert / update / delete"
 title: "[DATA] songs"
 body:
-  - type: checkboxes
-    id: artist_check
-    attributes:
-      label: "artist / 選択"
-      options:
-        - label: "SARD UNDERGROUND"
-        - label: "ZARD"
-
-
   - type: input
-    id: artist_free
+    id: id
     attributes:
-      label: "artist / 自由入力"
-
+      label: "id"
+      description: "更新・削除のときだけ入力（新規は空欄で、s00001 のように自動で付きます）"
 
   - type: input
     id: item_title
     attributes:
       label: "title"
 
+  - type: input
+    id: yomi
+    attributes:
+      label: "yomi"
 
   - type: input
-    id: link
+    id: date
     attributes:
-      label: "link"
+      label: "date"
+      description: "発売日 8桁（例: 20260928）"
 
+  - type: input
+    id: keywords
+    attributes:
+      label: "keywords"
+      description: "カンマ区切り"
+
+  - type: input
+    id: url
+    attributes:
+      label: "url"
+
+  - type: textarea
+    id: release
+    attributes:
+      label: "release (1行1件)"
+      description: "書式: `名前 | album` または `名前 | single`"
+
+  - type: input
+    id: original_name
+    attributes:
+      label: "original / name"
+
+  - type: input
+    id: original_title
+    attributes:
+      label: "original / title"
+
+  - type: input
+    id: original_year
+    attributes:
+      label: "original / year"
+
+  - type: input
+    id: original_work
+    attributes:
+      label: "original / work"
+
+  - type: input
+    id: lyricsid
+    attributes:
+      label: "lyricsid (歌ネットのURLまたは番号)"
+      description: "歌ネットの曲ページのURLを貼ると、番号だけを登録します"
+
+  - type: input
+    id: lyric
+    attributes:
+      label: "lyric"
 
   - type: checkboxes
     id: clear
     attributes:
       label: "値の削除（更新時）"
       options:
-        - label: "link"
+        - label: "yomi"
+        - label: "date"
+        - label: "keywords"
+        - label: "url"
+        - label: "release"
+        - label: "original"
+        - label: "lyricsid"
+        - label: "lyric"
 
   - type: checkboxes
     id: delete

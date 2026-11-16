@@ -1,0 +1,47 @@
+name: "videos"
+description: "insert / update / delete"
+title: "[DATA] videos"
+body:
+  - type: input
+    id: id
+    attributes:
+      label: "id"
+      description: "更新・削除のときだけ入力（新規は空欄で、v00001 のように自動で付きます）"
+
+  - type: input
+    id: item_title
+    attributes:
+      label: "title"
+
+  - type: input
+    id: label
+    attributes:
+      label: "label"
+      description: "MV / LIVE / MAKING など"
+
+  - type: input
+    id: url
+    attributes:
+      label: "url"
+
+  - type: input
+    id: song
+    attributes:
+      label: "song (曲名またはid)"
+      description: "曲に紐づける動画のときだけ入力（曲名を書くと songs の id に置き換わります）"
+
+  - type: checkboxes
+    id: clear
+    attributes:
+      label: "値の削除（更新時）"
+      options:
+        - label: "label"
+        - label: "url"
+        - label: "song"
+
+  - type: checkboxes
+    id: delete
+    attributes:
+      label: "DELETE"
+      options:
+        - label: "削除する"
