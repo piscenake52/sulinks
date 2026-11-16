@@ -19,40 +19,65 @@ jobs:
       - name: apply queue
         run: |
           python3 - <<'PY'
-          import json, glob, os, shutil, hashlib
-          LEG = {   # ID が無い旧データ用の目印(内容から固定のIDを作るのに使う)
-            'logs': lambda o: '|'.join(str(o.get(a) or o.get(b) or '') for a, b in (('date','d'),('time','t'),('contents','c'),('title','ti'),('url','u'))),
-            'songs': lambda o: str(o.get('title') or o.get('t') or ''),
-          }
-          IDF = {'logs': ('logid', 'L'), 'songs': ('songid', 'S')}
-          REQ = {'logs': ['date','contents','title'], 'songs': ['title'], 'setlist': ['setlistid','title']}
-          def ident(kind, o):
-              if kind == 'setlist': return str(o.get('setlistid') or o.get('id') or '')
-              f, p = IDF[kind]
-              return str(o[f]) if o.get(f) else p + hashlib.sha1(LEG[kind](o).encode('utf-8')).hexdigest()[:10]
-          def stamp(kind, o):   # ID が無ければ付ける
-              if kind != 'setlist' and not o.get(IDF[kind][0]): o[IDF[kind][0]] = ident(kind, o)
-              return o
+          import json, glob, os, re, shutil, hashlib, unicodedata
+          REQ = {'logs': ['date', 'cat', 'title'], 'songs': ['title'], 'setlist': ['id', 'title'], 'videos': ['title', 'url']}
+          PFX = {'songs': 's', 'videos': 'v'}   # songs / videos の id は s00001 / v00001 の連番(取り込み側で付ける)
+          def nt(s): return unicodedata.normalize('NFKC', str(s or '')).strip()
+          def load(kind):
+              p = f'data/{kind}/{kind}.json'
+              return json.load(open(p, encoding='utf-8')) if os.path.exists(p) else []
+          def save(kind, arr):
+              os.makedirs(f'data/{kind}', exist_ok=True)
+              json.dump(arr, open(f'data/{kind}/{kind}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+          def seq(kind, arr):
+              top = 0
+              for o in arr:
+                  m = re.fullmatch(PFX[kind] + r'(\d+)', str(o.get('id') or ''))
+                  if m: top = max(top, int(m.group(1)))
+              return f'{PFX[kind]}{top + 1:05d}'
+          def find(kind, arr, item):   # 同じレコードの位置(なければ None)
+              if item.get('id'): return next((i for i, o in enumerate(arr) if o.get('id') == item['id']), None)
+              if kind == 'songs': return next((i for i, o in enumerate(arr) if nt(o.get('title')) == nt(item['title'])), None)
+              if kind == 'videos': return next((i for i, o in enumerate(arr) if nt(o.get('url')) == nt(item['url'])), None)
+              return None
+          changed = False
           for kind in REQ:
               files = sorted(glob.glob(f'data/{kind}/queue/*.json'))
               if not files: continue
-              main = f'data/{kind}/{kind}.json'
-              arr = json.load(open(main, encoding='utf-8')) if os.path.exists(main) else []
-              arr = [stamp(kind, o) for o in arr]
-              idx = {ident(kind, o): i for i, o in enumerate(arr)}
+              arr = load(kind)
               for f in files:
                   try:
                       item = json.load(open(f, encoding='utf-8'))['item']
-                      assert isinstance(item, dict) and all(item.get(r) for r in REQ[kind])
-                      k = ident(kind, stamp(kind, item))
-                      if k in idx: arr[idx[k]] = item      # 同じIDは上書き(更新)
-                      else: idx[k] = len(arr); arr.append(item)
-                      dst = 'processed'
+                      assert isinstance(item, dict) and all(item.get(r) for r in REQ[kind] if r != 'id' or kind == 'setlist')
+                      if kind == 'logs' and not item.get('id'):
+                          item['id'] = 'L' + hashlib.sha1('|'.join(str(item.get(k) or '') for k in ('date', 'time', 'cat', 'title', 'url')).encode('utf-8')).hexdigest()[:10]
+                      i = find(kind, arr, item)
+                      if i is not None:
+                          if kind in PFX: item = {'id': arr[i]['id'], **{k: v for k, v in item.items() if k != 'id'}}
+                          arr[i] = item                            # 同じレコードは上書き(更新)
+                      else:
+                          if kind in PFX and not item.get('id'): item = {'id': seq(kind, arr), **item}
+                          arr.append(item)
+                      dst = 'processed'; changed = True
                   except Exception:
-                      dst = 'failed'                       # 構造不正は failed へ退避(再送しても同じなので止める)
+                      dst = 'failed'                               # 構造不正は failed へ退避(再送しても同じなので止める)
                   os.makedirs(f'data/{kind}/{dst}', exist_ok=True)
                   shutil.move(f, f'data/{kind}/{dst}/' + os.path.basename(f))
-              json.dump(arr, open(main, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+              save(kind, arr)
+          if changed:   # setlist の曲名・videos の曲名を、songs の id にそろえる(songs に無い曲名はそのまま残す)
+              songs = load('songs'); by = {}
+              for s in songs:
+                  if s.get('id') and s.get('title'): by.setdefault(nt(s['title']), s['id'])
+              sl = load('setlist')
+              for e in sl:
+                  for x in (e.get('songs') or []):
+                      if isinstance(x, dict) and not x.get('song') and by.get(nt(x.get('title'))):
+                          x['song'] = by[nt(x['title'])]; x.pop('title', None)
+              save('setlist', sl)
+              ids = {s.get('id') for s in songs}; vd = load('videos')
+              for v in vd:
+                  if v.get('song') and v['song'] not in ids and by.get(nt(v['song'])): v['song'] = by[nt(v['song'])]
+              if os.path.exists('data/videos/videos.json'): save('videos', vd)
           PY
       - name: commit data, then version.json
         run: |
@@ -60,9 +85,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A data
           git diff --cached --quiet || git commit -m "data: apply queue [skip ci]"
-          h() { sha1sum "$1" | cut -d' ' -f1; }
-          printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s"}}\n' \
-            "$(git rev-parse HEAD)" "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" > /tmp/version.json
+          h() { if [ -f "$1" ]; then sha1sum "$1" | cut -d' ' -f1; fi; }
+          printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s","videos":"%s"}}\n' \
+            "$(git rev-parse HEAD)" "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" "$(h data/videos/videos.json)" > /tmp/version.json
           if [ ! -f version.json ] || [ "$(jq -S .files version.json)" != "$(jq -S .files /tmp/version.json)" ] || ! jq -e '.commit | test("^[0-9a-f]{40}$")' version.json >/dev/null; then
             cp /tmp/version.json version.json; git add version.json; git commit -m "chore: update version.json [skip ci]"
           fi
