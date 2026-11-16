@@ -408,7 +408,11 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .tour-h::before{content:"";position:absolute;left:-20px;top:0;bottom:0;width:8px;background:var(--acc);transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}   /* 水平の太さ8px。角度は、ほかの帯・見出しと同じ15.5度(高さが変わっても同じ角度) */
 .tour-h::after{content:"";position:absolute;left:-20px;right:0;bottom:0;height:2px;background:var(--acc)}
 .tour-g.tclosed .tour-h::before{transform:none}   /* 閉じているときは、見出しと同じく帯がまっすぐ */
-.tour-h .tn{max-width:calc(100% - 30px);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:900 20px/1.25 'M PLUS 1p','Noto Sans JP','Hiragino Sans',sans-serif;letter-spacing:.02em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
+.tour-h .tn{max-width:calc(100% - 30px);min-width:0;height:46px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;font:900 20px/1.25 'M PLUS 1p','Noto Sans JP','Hiragino Sans',sans-serif;letter-spacing:.02em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
+/* ツアー見出しは常に2段分の高さ: [ ]のある名前は上段=名前・下段=[ ]の中身(少し小さく)、ない名前は中央に表示し、2行を超えるときだけ「…」で省略 */
+.tour-h .tn1,.tour-h .tn2{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tour-h .tn2{font-size:14px}
+.tour-h .solo .tn1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.15}
 .tour-g.tclosed .tour-h .tn{transform:none}
 .tour-h .chv{opacity:.75;transform:rotate(225deg)}
 .tour-g.tclosed .tour-h .chv{transform:rotate(45deg)}
@@ -633,7 +637,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   try { attX = new Set(JSON.parse(localStorage.getItem('su_att_x') || '[]')); } catch (e) {}   // 行ったライブから、曲単位で外した曲('ライブID|曲')
 
   // ===== 取り込み =====
-  const ready = () => DEMO || done || got.size === Object.keys(FILES).length;   // 全ファイルがそろったら描く(途中の状態は描かない)
+  const ready = () => DEMO || done || (tab === 'setlist' ? ['setlist', 'songs'] : ['logs']).every(n => got.has(n));   // 今の画面に必要なファイルがそろったら描く(LINKSはlogsだけ。SETLISTはsetlistとsongs。残りは届いたら差し込む)
   const waiting = () => { const w = !ready(); document.body.classList.toggle('ld', w); if (w) $('count').textContent = 'LOADING...'; return w; };   // 読み込み中は「LOADING...」を出して、描かない
   const lkOf = e => { const k = String(e.kind || '').toLowerCase(), s = String(e.sub || '').toLowerCase(); return s === 'release' ? 'RELEASE EVENT' : s === 'fes' ? 'FES' : k === 'event' ? 'EVENT' : 'LIVE'; };
   const build = () => {
@@ -658,9 +662,9 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     data.logs.forEach(o => {
       const k = [o.date, o.time, o.contents, o.title, o.url].join('_'); if (seen.has(k)) return; seen.add(k);
       const title = o.display_pc || o.title || '', mem = memNames([].concat(o.groups || [], o.relations || [])), memr = memYomi([].concat(o.groups || [], o.relations || [])), yo = [].concat(o.yomi || []).map(String);
-      INFOS.push({ kind: 'info', mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.relations || [], mem, memr, yo).join(' ')) });
+      INFOS.push({ kind: 'info', mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.relations || [], mem, memr, yo).join(' ')) });
     });
-    const used = new Set(data.logs.map(o => o.setlistid).filter(Boolean)); ALL = SONGS.concat(LIVES.filter(l => !used.has(l.sid)), INFOS);
+    const used = new Set(data.logs.map(o => o.setlistid).filter(Boolean)); ALL = INFOS;   // LINKSに出す項目は、すべてlogsの行(曲・ライブはSETLIST画面で見る)
     sugDirty = true; statsDirty = true; buildSl(); if (ready()) { render(); calRefresh(); }
   };
 
@@ -930,7 +934,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     let th = MONTH_THEME[+t.slice(4, 6) - 1];
     const tr = new Map(); LIVES.forEach(l => { if (l.tour && /^\d{8}$/.test(l.date)) { const r = tr.get(l.tour) || [l.date, l.date]; if (l.date < r[0]) r[0] = l.date; if (l.date > r[1]) r[1] = l.date; tr.set(l.tour, r); } });
     if (Array.from(tr.values()).some(r => t >= r[0] && t <= r[1])) th = TOUR_THEME;
-    if (SONGS.some(x => /^\d{8}$/.test(x.date) && t >= shiftDay(x.date, -RELEASE_DAYS) && t <= shiftDay(x.date, RELEASE_DAYS))) th = RELEASE_THEME;
+    if (SONGS.concat(INFOS.filter(x => x.cats.indexOf('RELEASE') >= 0)).some(x => /^\d{8}$/.test(x.date) && t >= shiftDay(x.date, -RELEASE_DAYS) && t <= shiftDay(x.date, RELEASE_DAYS))) th = RELEASE_THEME;
     setThemeVars(th); if (loaded) { try { localStorage.setItem('su_th', JSON.stringify({ d: t, th })); } catch (e) {} }
   };
   document.addEventListener('visibilitychange', () => { if (!document.hidden) applyTheme(); });   // 開いたままで月が替わったときも、戻ってきたときに切り替わる
@@ -1280,7 +1284,9 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const sec = el('section', 'tour-g'), h = el('button', 'tour-h'), w = el('div', 'tour-w'), inn = el('div', 'tour-i');
     const byD = {};
     h.type = 'button'; h.setAttribute('aria-expanded', 'true');
-    h.append(el('span', 'tn', name));
+    const bm = String(name).match(/^(.*?)\s*[\[［]([^\[\]［］]+)[\]］]\s*$/), two = !!(bm && bm[1]), tn = el('span', two ? 'tn' : 'tn solo');   // [ ]がある名前は、上段=名前・下段=[ ]の中身の2段。ない名前は最大2行
+    tn.append(el('span', 'tn1', two ? bm[1] : name)); if (two) tn.append(el('span', 'tn2', bm[2]));
+    h.append(tn);
     h.append(el('span', 'chv'));
     arr.forEach(x => { (byD[x.l.date || ''] = byD[x.l.date || ''] || []).push(x); });
     Object.keys(byD).filter(Boolean).sort().forEach(k => inn.append(slDay(k, byD[k].sort((a, b) => timeCmp(a.l, b.l)))()));
@@ -1727,6 +1733,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const seen = new Set(); SUG = [];
     const add = (text, kind, yo) => { text = String(text || '').trim(); if (!text) return; const n = norm(text); if (seen.has(n)) return; seen.add(n); SUG.push({ text, kind, n, y: norm([].concat(yo || []).join(' ')) }); };
     SONGS.forEach(s => { add(s.title, 'SONG', s.yo); s.kw.forEach(k => add(k, 'WORD')); s.albums.forEach(a => add(a, 'ALBUM')); s.singles.forEach(a => add(a, 'SINGLE')); if (s.o.original) add(s.o.original, 'ORIGINAL'); if (s.o.original_work) add(s.o.original_work, 'ORIGINAL'); });
+    data.logs.forEach(o => (o.tags || []).forEach(t => add(t, 'WORD')));
     LIVES.forEach(l => { if (l.title && l.title !== 'SETLIST') add(l.title, 'LIVE', l.yo); });
     INFOS.forEach(i => add(i.title, 'INFO', i.yo));
   };
@@ -1848,8 +1855,8 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const arr = v => Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]);
   // 英単語キーのJSONを、画面側の内部名に変換する
   const NORM = {
-    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live }),
-    setlist: e => ({ setlistid: e.id, title: e.title, venue: e.venue, area: e.area, kind: e.kind, sub: e.sub, tour: e.tour, member: e.members, open: e.open, yomi: e.yomi, songs: arr(e.songs).map(s => s && typeof s === 'object' ? { order: s.no, song: s.song, type: s.type, notes: s.note } : s) }),
+    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, tags: o.tags, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live }),
+    setlist: e => ({ setlistid: e.id, title: e.title, venue: e.venue, area: e.area, kind: e.kind, sub: e.sub, tour: e.tour, member: e.members, open: e.open, yomi: e.yomi, songs: arr(e.songs).map(s => s && typeof s === 'object' ? { order: s.no, song: s.song, title: s.title, type: s.type, notes: s.note } : s) }),
     songs: o => { const rl = arr(o.release), og = o.original || {}; return { id: o.id, title: o.title, yomi: o.yomi, release: o.date, keywords: o.keywords, link: o.url, utanet: o.lyricsid, lyric: o.lyric, album: rl.filter(x => x && x.type === 'album').map(x => x.name), single: rl.filter(x => x && x.type === 'single').map(x => x.name), original: og.name, original_title: og.title, original_year: og.year, original_work: og.work }; },
     videos: o => ({ id: o.id, title: o.title, label: o.label, url: o.url, song: o.song })
   };

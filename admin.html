@@ -27,7 +27,10 @@
 (function(){
 var LS=localStorage,MEM=['YUA','IZM','HRM','MIU'],$=function(s){return document.querySelector(s)};
 var CT=['live','release','event','tv','radio','fanclub','sns','youtube','web','ticket','anniversary','birthday'];
-var F={logs:[['date','DATE YYYYMMDD',1,'d8'],['time','TIME HHMM',0,'t4'],['cat','CAT',1,CT],['title','TITLE',1],['url','URL',0,'url'],['members','MEMBERS（YUA,IZM,HRM,MIU）',0,'mem'],['tags','TAGS（カンマ区切り）',0,'arr'],['live','LIVE（setlist の ID）',0,'id12']],
+var F={logs:[['date','DATE YYYYMMDD',1,'d8'],['time','TIME HHMM',0,'t4'],['cat','CAT',1,CT],['title','TITLE',1],['url','URL',0,'url'],['members','MEMBERS（YUA,IZM,HRM,MIU）',0,'mem'],['tags','TAGS（カンマ区切り）',0,'arr'],['live','LIVE（setlist の ID。空欄なら DATE+TIME）',0,'id12'],
+['_live.venue','【LIVE/EVENT】VENUE',0,'','live'],['_live.area','【LIVE/EVENT】AREA',0,'','live'],['_live.kind','【LIVE/EVENT】KIND（空欄なら CAT に合わせる）',0,['live','tour','event'],'live'],['_live.sub','【LIVE/EVENT】SUB（KIND が event のとき）',0,['release','fes','talk','other'],'live'],['_live.tour','【LIVE/EVENT】TOUR（ツアー名・シリーズ名）',0,'','live'],['_live.open','【LIVE/EVENT】OPEN HHMM',0,'t4','live'],['_live.songs','【LIVE/EVENT】SONGS（1行: 曲名 | type | note。TIME が必要）',0,'sl','live'],
+['_release.name','【RELEASE】作品名',0,'','release'],['_release.type','【RELEASE】種別',0,['album','single'],'release'],['_release.songs','【RELEASE】収録曲（1行1曲。DATE が発売日になります）',0,'tl','release'],
+['_video.label','【YOUTUBE】VIDEO LABEL（MV など）',0,'','video'],['_video.song','【YOUTUBE】SONG（曲名）',0,'','video']],
 songs:[['title','TITLE',1],['yomi','YOMI（ひらがな）'],['date','DATE YYYYMMDD',0,'d8'],['release','RELEASE（1行: 名前 | album か single）',0,'rel'],['keywords','KEYWORDS（カンマ区切り）',0,'arr'],['url','YOUTUBE URL',0,'url'],['lyricsid','LYRICSID（歌ネットのURLか番号）',0,'lyr'],['lyric','LYRIC（歌詞の一部）'],['original.name','ORIGINAL NAME'],['original.title','ORIGINAL TITLE'],['original.year','ORIGINAL YEAR'],['original.work','ORIGINAL WORK']],
 setlist:[['id','ID YYYYMMDDHHMM',1,'id12'],['title','TITLE',1],['venue','VENUE'],['area','AREA'],['kind','KIND',0,['live','tour','event']],['sub','SUB（kind が event のとき）',0,['release','fes','talk','other']],['tour','TOUR（ツアー名・シリーズ名）'],['open','OPEN HHMM',0,'t4'],['members','MEMBERS（YUA,IZM,HRM,MIU）',0,'mem'],['songs','SONGS（1行: 曲名 | type | note。type は encore など）',0,'sl']],
 videos:[['title','TITLE',1],['label','LABEL（MV など）'],['url','URL',1,'url'],['song','SONG（曲名または id）']]};
@@ -39,10 +42,13 @@ var save=function(){LS.su_q=JSON.stringify(Q);draw()};
 var b64=function(s){return btoa(unescape(encodeURIComponent(s)))};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 var newPath=function(k){return 'data/'+k+'/queue/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.json'};
+function grp(c){return c==='live'||c==='event'?'live':c==='release'?'release':c==='youtube'?'video':''}
+function sync(){var c=document.getElementById('f_cat'),g=c?grp(c.value):'';[].forEach.call(document.querySelectorAll('#f [data-g]'),function(w){w.style.display=w.dataset.g===g?'':'none'})}
 function form(){var f=$('#f');f.innerHTML='';F[kind].forEach(function(d){var l=document.createElement('label');l.textContent=d[1]+(d[2]?' *':'');var e;
 if(Array.isArray(d[3])){e=document.createElement('select');e.innerHTML='<option></option>'+d[3].map(function(o){return'<option>'+o+'</option>'}).join('')}
-else if(d[3]==='rel'||d[3]==='sl'){e=document.createElement('textarea')}else{e=document.createElement('input');if(d[3]==='chk')e.type='checkbox'}
-e.id='f_'+d[0];f.append(l,e)});
+else if(d[3]==='rel'||d[3]==='sl'||d[3]==='tl'){e=document.createElement('textarea')}else{e=document.createElement('input');if(d[3]==='chk')e.type='checkbox'}
+e.id='f_'+d[0];var w=document.createElement('div');if(d[4])w.dataset.g=d[4];w.append(l,e);f.append(w)});
+var c=document.getElementById('f_cat');if(c)c.onchange=sync;sync();
 document.querySelectorAll('#tabs button').forEach(function(b){b.className=b.dataset.k===kind?'on':''})}
 function conv(d,v){var t=d[3];if(t==='chk')return v?true:undefined;v=String(v).trim();if(!v){if(d[2])throw Error(d[1]+' は必須');return undefined}
 var csv=function(s){return s.split(/[,、]/).map(function(x){return x.trim()}).filter(Boolean)};
@@ -54,10 +60,15 @@ if(t==='arr')return csv(v);
 if(t==='mem'){var m=csv(v.toUpperCase());m.forEach(function(x){if(MEM.indexOf(x)<0)throw Error('メンバーコード不正: '+x)});return m}
 if(t==='rel'){var rl=v.split('\n').filter(function(r){return r.trim()}).map(function(r){var p=r.split('|').map(function(x){return x.trim()});var ty=(p[1]||'').toLowerCase();if(!p[0]||(ty!=='album'&&ty!=='single'))throw Error('RELEASE は「名前 | album」か「名前 | single」の形式');return{name:p[0],type:ty}});return rl.length===1?rl[0]:rl}
 if(t==='lyr'){var lm=v.match(/uta-net\.com\/song\/(\d+)/);if(lm)return lm[1];if(/^\d+$/.test(v))return v;throw Error(d[1]+' は歌ネットのURLか番号')}
+if(t==='tl')return v.split('\n').map(function(x){return x.trim()}).filter(Boolean);
 if(t==='sl')return v.split('\n').filter(function(r){return r.trim()}).map(function(r,i){var p=r.split('|').map(function(x){return x.trim()});var o={no:i+1,title:p[0]};if(!p[0])throw Error('SONGS の曲名が空の行があります');if(p[1])o.type=p[1];if(p.length>2)o.note=p.slice(2).join(' | ');return o});
 return v}
-function add(){try{var it={};F[kind].forEach(function(d){var e=document.getElementById('f_'+d[0]),v=conv(d,d[3]==='chk'?e.checked:e.value);if(v!==undefined){var p=d[0].split('.');if(p.length>1){it[p[0]]=it[p[0]]||{};it[p[0]][p[1]]=v}else it[d[0]]=v}});
+function add(){try{var it={},cv=document.getElementById('f_cat'),vg=kind==='logs'&&cv?grp(cv.value):'';F[kind].forEach(function(d){if(d[4]&&d[4]!==vg)return;var e=document.getElementById('f_'+d[0]),v=conv(d,d[3]==='chk'?e.checked:e.value);if(v!==undefined){var p=d[0].split('.');if(p.length>1){it[p[0]]=it[p[0]]||{};it[p[0]][p[1]]=v}else it[d[0]]=v}});
 if(it.sub&&it.kind!=='event')throw Error('SUB は KIND が event のときだけ指定できます');
+if(kind==='logs'){
+if(it._live){if(!it.time&&!it.live)throw Error('LIVE/EVENT の情報を入れるときは TIME が必要です');if(it._live.sub&&(it._live.kind||(it.cat==='event'?'event':'live'))!=='event')throw Error('SUB は KIND が event のときだけ指定できます');if(!it._live.kind)it._live.kind=it.cat==='event'?'event':'live'}
+if(it._release){if(!it._release.name||!it._release.type||!it._release.songs)throw Error('RELEASE は 作品名・種別・収録曲 をすべて入れてください')}
+if(it._video&&!it.url)throw Error('動画を登録するときは URL が必要です')}
 if(kind==='logs'){var o={id:gen('L')};for(var k in it)o[k]=it[k];it=o}   // logs だけ送信側でIDを付ける。songs / videos は取り込み側で s001 / v001 を付ける
 Q.push({kind:kind,path:newPath(kind),body:b64(JSON.stringify({item:it})),title:it.title,tries:0,st:'wait',next:0});save();form();say('キューに追加しました','ok');run()}catch(e){say(e.message,'err')}}
 async function run(){if(busy)return;busy=true;try{for(;;){var it=Q.find(function(x){return x.st!=='failed'&&Date.now()>=(x.next||0)});if(!it)break;var c=cfg();if(!c.tk){say('トークンを設定してください','err');break}
