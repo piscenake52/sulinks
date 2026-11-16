@@ -1,4 +1,5 @@
 [
+{"id":"202609271800","title":"LIVE LIVE","venue":"サンプルアリーナ大阪","area":"大阪","kind":"live","tour":"TEST LIVE","members":["YUA","IZM","HRM","MIU"],"open":"1600"},
 {"id":"202605051600","title":"リリースイベント SINGLE 3","venue":"サンプルモール広場","area":"神奈川","kind":"event","sub":"release","members":["YUA","IZM","HRM","MIU"],"open":"1500","songs":[{"no":1,"song":"s002"},{"no":2,"song":"s003"}]},
 {"id":"202011081800","title":"LIVE TOUR 2020","venue":"サンプルアリーナ大阪","area":"大阪","kind":"tour","tour":"LIVE TOUR 2020","members":["YUA","IZM","HRM","MIU"],"open":"1600"},
 {"id":"202111081800","title":"LIVE TOUR 2021 [Cheers!]","venue":"サンプルアリーナ大阪","area":"大阪","kind":"tour","tour":"LIVE TOUR 2021 [Cheers!]","members":["YUA","IZM","HRM","MIU"],"open":"1600"},
