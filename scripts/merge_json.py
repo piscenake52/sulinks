@@ -4,6 +4,7 @@ import json
 import glob
 import shutil
 import uuid
+import unicodedata
 import copy
 import sys
 
@@ -16,16 +17,19 @@ NOTICES = []
 REPEAT_LIMIT = 60  # 繰り返し登録の最大件数
 ISSUE_MAP_FILE = "data/issue_map.json"  # {Issue番号: logid}  Issue再編集時に同じログを更新するための対応表
 
-# 新規追加で groups / member が何も入力されなかったときの既定値
+# 新規追加で members が何も入力されなかったときの既定値
 DEFAULT_GROUPS = ["SARD"]
-DEFAULT_MEMBERS = {  # setlist: artist ごとの既定値
-    "SARD UNDERGROUND": ["SARD"],
-}
 
-# フォームのグループ選択肢（issue_to_json.py と揃える。groups の並び順にも使う）
+# フォームのグループ選択肢（issue_to_json.py と揃える。members の並び順にも使う）
 GROUP_CODE = "SARD"
 MEMBERS = ["YUA", "MIU", "IZM", "HRM"]
 OPTIONS = [GROUP_CODE] + MEMBERS
+
+KIND_OPTIONS = ("live", "tour", "event")        # setlist の kind
+SUB_OPTIONS = ("release", "fes", "talk", "other")  # kind が event のときの区分
+SEQ_PREFIX = {"songs": "s", "videos": "v"}      # 自動採番するID（s00001 / v00001）
+SONG_TITLES = {}  # songs の id → 曲名（setlist のインデックスと、曲名のまま残った曲の解決に使う）
+TOUCHED = {"setlist": set(), "videos": set()}  # この実行で登録・更新した id（未登録の曲をIssueに知らせる範囲）
 
 TARGETS = [
     {
@@ -33,28 +37,28 @@ TARGETS = [
         "queue_dir": "data/logs/queue/",
         "processed_dir": "data/logs/processed/",
         "main_file": "data/logs/logs.json",
-        "key_fields": ["logid"],
-        "order": ["logid", "date", "time", "contents", "title", "display_pc", "display_sp",
-                  "url", "map", "groups", "relations", "setlistid", "tags", "sns"],
+        "key_fields": ["id"],
+        "order": ["id", "date", "time", "cat", "title", "display_pc", "display_sp",
+                  "url", "map", "members", "relations", "live", "tags", "sns"],
         "clear_to_empty_list": [],
         "append_lists": ["tags", "sns"],  # 更新時は上書きせず、既存の値に新しいものだけ追記する
         "sort_key": lambda x: (x.get("date") or "", x.get("time") or ""),
         "sort_reverse": True,
         "index_file": "data/logs/logs_index.json",  # 検索・候補用の軽量版（helperが先に読む）
-        "index_fields": ["logid", "date", "time", "contents", "title", "setlistid"],
+        "index_fields": ["id", "date", "time", "cat", "title", "live"],
     },
     {
         "name": "setlist",
         "queue_dir": "data/setlist/queue/",
         "processed_dir": "data/setlist/processed/",
         "main_file": "data/setlist/setlist.json",
-        "key_fields": ["setlistid"],
-        "order": ["setlistid", "artist", "member", "title", "venue", "songs"],
+        "key_fields": ["id"],
+        "order": ["id", "title", "venue", "area", "kind", "sub", "tour", "members", "open", "songs"],
         "clear_to_empty_list": [],
-        "sort_key": lambda x: x.get("setlistid") or "",
+        "sort_key": lambda x: x.get("id") or "",
         "sort_reverse": True,
         "index_file": "data/setlist/setlist_index.json",
-        "index_fields": ["setlistid", "artist", "title", "venue"],
+        "index_fields": ["id", "title", "venue", "area", "kind", "sub", "tour"],
         "index_song_titles": True,  # songs は曲名の配列だけを入れる
     },
     {
@@ -62,16 +66,30 @@ TARGETS = [
         "queue_dir": "data/songs/queue/",
         "processed_dir": "data/songs/processed/",
         "main_file": "data/songs/songs.json",
-        "key_fields": ["artist", "title"],
-        "order": ["artist", "title", "link"],
+        "key_fields": ["id"],
+        "order": ["id", "title", "yomi", "date", "keywords", "url", "release", "original", "lyricsid", "lyric"],
         "clear_to_empty_list": [],
         "sort_key": None,  # 追加順のまま
+        "sort_reverse": False,
+    },
+    {
+        "name": "videos",
+        "queue_dir": "data/videos/queue/",
+        "processed_dir": "data/videos/processed/",
+        "main_file": "data/videos/videos.json",
+        "key_fields": ["id"],
+        "order": ["id", "title", "label", "url", "song"],
+        "clear_to_empty_list": [],
+        "sort_key": None,
         "sort_reverse": False,
     },
 ]
 
 
 # ---------- 共通ヘルパー ----------
+
+TARGET_BY_NAME = {tg["name"]: tg for tg in TARGETS}
+
 
 def is_blank(v):
     return v is None or v == "" or v == [] or v == {}
@@ -97,9 +115,23 @@ def reorder(target, item):
     return ordered
 
 
+def next_seq_id(prefix, main_data):
+    """s00001 / v00001 のような連番IDを発行する（既存の最大番号 + 1）"""
+    top = 0
+    for e in main_data:
+        m = re.fullmatch(prefix + r"(\d+)", str(e.get("id") or ""))
+        if m:
+            top = max(top, int(m.group(1)))
+    return f"{prefix}{top + 1:05d}"
+
+
+def norm_title(s):
+    return unicodedata.normalize("NFKC", s or "").strip()
+
+
 def generate_logid(item, main_data):
-    """12桁の短いUUID(16進数)を発行。既存のlogidと重複したら振り直す"""
-    existing = {e.get("logid") for e in main_data}
+    """12桁の短いUUID(16進数)を発行。既存のidと重複したら振り直す"""
+    existing = {e.get("id") for e in main_data}
     while True:
         new_id = uuid.uuid4().hex[:LOGID_LENGTH]
         if new_id not in existing:
@@ -108,14 +140,14 @@ def generate_logid(item, main_data):
 
 # ---------- 更新・新規追加 ----------
 
-def autofill_setlistid(record, explicit_clear=False):
-    """contents が LIVE で setlistid が未設定なら、date + time(12桁)を setlistid にする。
-    time が空・桁数不正のときは何もしない。setlistid を明示的に消す指定(!clear)のときも補完しない"""
-    if explicit_clear or record.get("contents") != "LIVE" or record.get("setlistid"):
+def autofill_live(record, explicit_clear=False):
+    """cat が live で live(setlist の id)が未設定なら、date + time(12桁)を live にする。
+    time が空・桁数不正のときは何もしない。live を明示的に消す指定(!clear)のときも補完しない"""
+    if explicit_clear or record.get("cat") != "live" or record.get("live"):
         return
     date, time = record.get("date") or "", record.get("time") or ""
     if re.fullmatch(r"\d{8}", date) and re.fullmatch(r"\d{4}", time):
-        record["setlistid"] = date + time
+        record["live"] = date + time
 
 
 def _sns_urls(e):
@@ -223,68 +255,76 @@ def add_member_groups(groups, members):
     return order_groups(list(groups or []) + [m for m in members if m not in (groups or [])])
 
 
+def song_label(x):
+    return x.get("title") or SONG_TITLES.get(x.get("song"), "")
+
+
 def apply_songs_patch(existing, ops, label=""):
-    """曲目の個別変更。ops は {"op": update/insert/delete, "order": N, title/type/original/notes} のリスト（書いた順に適用）。
+    """曲目の個別変更。ops は {"op": update/insert/delete/move, "no": N, title/type/note/members} のリスト（書いた順に適用）。
     update: 指定した項目だけ書き換える / insert: N番に挿入しN番以降を+1 / delete: N番を削除しN番以降を-1。
-    再編集で同じ操作がもう一度流れても二重にならないよう、insert は同じ曲名がすでにN番にあれば何もせず、delete は曲名が一致したときだけ削除する"""
+    再編集で同じ操作がもう一度流れても二重にならないよう、insert は同じ曲名がすでにN番にあれば何もせず、delete は曲名が一致したときだけ削除する。
+    曲名で指定した曲は、songs に登録済みなら最後に id へ置き換わる"""
     songs = [dict(x) for x in (existing.get("songs") or []) if isinstance(x, dict)]
     def find(n):
-        return next((i for i, x in enumerate(songs) if x.get("order") == n), None)
+        return next((i for i, x in enumerate(songs) if x.get("no") == n), None)
     for op in ops:
-        n, kind = op.get("order"), op.get("op")
+        n, kind = op.get("no"), op.get("op")
         i = find(n)
         where = f"{label} の {n}番"
         if kind == "update":
             if i is None:
                 NOTICES.append(f"- **setlist**: {where} の曲がないため更新できませんでした")
                 continue
-            for k in ("title", "type", "original", "notes"):
+            for k in ("title", "type", "note"):
                 if k in op:
                     songs[i][k] = op[k]
-            if "member" in op:  # [] は消去
-                if op["member"]:
-                    songs[i]["member"] = op["member"]
+            if "title" in op:
+                songs[i].pop("song", None)  # 曲名を変えたら、id は引き直す
+            if "members" in op:  # [] は消去
+                if op["members"]:
+                    songs[i]["members"] = op["members"]
                 else:
-                    songs[i].pop("member", None)
+                    songs[i].pop("members", None)
         elif kind == "insert":
-            if i is not None and songs[i].get("title") == op.get("title"):
+            if i is not None and song_label(songs[i]) == op.get("title"):
                 continue  # 反映済み（同じIssueの再編集）
             for x in songs:
-                if isinstance(x.get("order"), int) and x["order"] >= n:
-                    x["order"] += 1
-            songs.append({"order": n, "title": op.get("title", ""), "type": op.get("type", "song"),
-                          "original": op.get("original", ""), "notes": op.get("notes", "")})
-            if op.get("member"):
-                songs[-1]["member"] = op["member"]
+                if isinstance(x.get("no"), int) and x["no"] >= n:
+                    x["no"] += 1
+            songs.append({"no": n, "title": op.get("title", ""), "type": op.get("type", "song")})
+            if op.get("note"):
+                songs[-1]["note"] = op["note"]
+            if op.get("members"):
+                songs[-1]["members"] = op["members"]
         elif kind == "move":
             to = op.get("to")
             if i is None:
                 NOTICES.append(f"- **setlist**: {where} の曲がないため移動できませんでした")
                 continue
-            if op.get("title") and songs[i].get("title") != op["title"]:
-                NOTICES.append(f"- **setlist**: {where} は `{songs[i].get('title')}` で、指定の曲名 `{op['title']}` と違うため移動しませんでした")
+            if op.get("title") and song_label(songs[i]) != op["title"]:
+                NOTICES.append(f"- **setlist**: {where} は `{song_label(songs[i])}` で、指定の曲名 `{op['title']}` と違うため移動しませんでした")
                 continue
             x = songs.pop(i)
             for y in songs:
-                if isinstance(y.get("order"), int) and y["order"] > n:
-                    y["order"] -= 1
+                if isinstance(y.get("no"), int) and y["no"] > n:
+                    y["no"] -= 1
             for y in songs:
-                if isinstance(y.get("order"), int) and y["order"] >= to:
-                    y["order"] += 1
-            x["order"] = to
+                if isinstance(y.get("no"), int) and y["no"] >= to:
+                    y["no"] += 1
+            x["no"] = to
             songs.append(x)
         elif kind == "delete":
             if i is None:
                 NOTICES.append(f"- **setlist**: {where} の曲がないため削除できませんでした")
                 continue
-            if op.get("title") and songs[i].get("title") != op["title"]:
-                NOTICES.append(f"- **setlist**: {where} は `{songs[i].get('title')}` で、指定の曲名 `{op['title']}` と違うため削除しませんでした")
+            if op.get("title") and song_label(songs[i]) != op["title"]:
+                NOTICES.append(f"- **setlist**: {where} は `{song_label(songs[i])}` で、指定の曲名 `{op['title']}` と違うため削除しませんでした")
                 continue
             del songs[i]
             for x in songs:
-                if isinstance(x.get("order"), int) and x["order"] > n:
-                    x["order"] -= 1
-    songs.sort(key=lambda x: x["order"] if isinstance(x.get("order"), int) else 10**9)
+                if isinstance(x.get("no"), int) and x["no"] > n:
+                    x["no"] -= 1
+    songs.sort(key=lambda x: x["no"] if isinstance(x.get("no"), int) else 10**9)
     if songs:
         existing["songs"] = songs
     else:
@@ -314,6 +354,9 @@ def apply_update(target, existing, new_item):
         if k == "sns" and isinstance(v, list):
             existing[k] = merge_sns(existing.get(k), v)
             continue
+        if k == "original" and isinstance(v, dict):  # 入力した項目だけ書き換え、空欄の項目は今のまま
+            existing[k] = {**(existing.get(k) if isinstance(existing.get(k), dict) else {}), **v}
+            continue
         if k in target.get("append_lists", []) and isinstance(v, list):
             merged = existing[k] if isinstance(existing.get(k), list) else []
             merged = list(merged)
@@ -329,20 +372,20 @@ def apply_update(target, existing, new_item):
     if target["name"] == "logs" and "sns" in new_item:
         sync_groups_with_sns(existing, new_item)
     if isinstance(patch, list) and patch:
-        apply_songs_patch(existing, patch, existing.get("setlistid", ""))  # 曲目全体の置き換えがあれば、そのあとに適用する
+        apply_songs_patch(existing, patch, existing.get("id", ""))  # 曲目全体の置き換えがあれば、そのあとに適用する
 
 
 def sync_groups_with_sns(existing, new_item):
-    """このIssueで追加・変更したsnsのmemberを、groups に無ければ足す（グループのコード SARD も）。
-    groups を消す指定と同時でも足す。snsからmemberが外れても、groups からは外さない（足すだけ）"""
+    """このIssueで追加・変更したsnsのmemberを、members に無ければ足す（グループのコード SARD も）。
+    members を消す指定と同時でも足す。snsからmemberが外れても、members からは外さない（足すだけ）"""
     sns_in = new_item.get("sns")
     incoming = sns_members(sns_in) if isinstance(sns_in, list) and not is_clear(sns_in) else []
     if not incoming:
         return
-    groups = existing.get("groups") if isinstance(existing.get("groups"), list) else []
+    groups = existing.get("members") if isinstance(existing.get("members"), list) else []
     new_groups = add_member_groups(groups, incoming)
     if new_groups != groups:
-        existing["groups"] = new_groups
+        existing["members"] = new_groups
 
 
 def finalize_new(target, item, main_data):
@@ -351,44 +394,65 @@ def finalize_new(target, item, main_data):
 
     if name == "logs":
         date = item.get("date", "")
-        contents = item.get("contents", "") or "ETC"  # 未選択ならETC
+        cat = (item.get("cat", "") or "etc").lower()  # 未選択ならetc
         time = item.get("time", "")
         if not re.fullmatch(r"\d{8}", date):
             print(f"【スキップ】logsの新規追加には8桁のdateが必要です: {item}")
             return None
-        item["contents"] = contents
+        item["cat"] = cat
         if time and not re.fullmatch(r"\d{4}", time):
             print(f"【スキップ】timeは4桁の数字で指定してください: {item}")
             return None
         item["time"] = time  # 空欄ならそのまま空で登録する(0000には補完しない)
-        autofill_setlistid(item)  # LIVE で setlistid 未入力なら date+time を登録
+        autofill_live(item)  # live で live 未入力なら date+time を登録
         members = sns_members(item.get("sns"))
-        if item.get("groups"):
+        if item.get("members"):
             if members:
-                item["groups"] = add_member_groups(item["groups"], members)  # 入力された groups に、snsのmemberも足す
+                item["members"] = add_member_groups(item["members"], members)  # 入力された members に、snsのmemberも足す
         elif members:
-            item["groups"] = add_member_groups([], members)  # groups 未入力でsnsにmemberがあれば、既定の SARD ではなくmemberのグループにする
+            item["members"] = add_member_groups([], members)  # members 未入力でsnsにmemberがあれば、既定の SARD ではなくmemberのグループにする
         else:
-            item["groups"] = list(DEFAULT_GROUPS)
-        if not item.get("logid"):
-            item["logid"] = generate_logid(item, main_data)
+            item["members"] = list(DEFAULT_GROUPS)
+        if not item.get("id"):
+            item["id"] = generate_logid(item, main_data)
 
     elif name == "setlist":
-        if not re.fullmatch(r"\d{12}", item.get("setlistid", "")):
-            print(f"【スキップ】setlistidは12桁の数字で指定してください: {item}")
+        if not re.fullmatch(r"\d{12}", item.get("id", "")):
+            print(f"【スキップ】setlistのidは12桁の数字で指定してください: {item}")
             return None
-        if not item.get("artist") or not item.get("title"):
-            print(f"【スキップ】setlistの新規追加にはartistとtitleが必要です: {item}")
+        if not item.get("title"):
+            print(f"【スキップ】setlistの新規追加にはtitleが必要です: {item}")
             return None
-        # member は artist が SARD UNDERGROUND のときだけ既定値を補完（それ以外は属性を作らない）
-        # 「A × B」のように複数の場合は、該当分を合わせる
-        if "member" not in item:
-            default_member = []
-            for a in item["artist"].split(ARTIST_JOIN):
-                default_member += DEFAULT_MEMBERS.get(a.strip(), [])
-            if default_member:
-                item["member"] = default_member
-        # venue / songs は空なら属性を作らない
+        if item.get("kind") and item["kind"] not in KIND_OPTIONS:
+            print(f"【スキップ】kindは {'/'.join(KIND_OPTIONS)} のどれかで指定してください: {item}")
+            return None
+        if item.get("sub") and item["sub"] not in SUB_OPTIONS:
+            print(f"【スキップ】subは {'/'.join(SUB_OPTIONS)} のどれかで指定してください: {item}")
+            return None
+        if item.get("sub") and item.get("kind") != "event":
+            item.pop("sub")  # 区分は event のときだけ持つ
+        if item.get("open") and not re.fullmatch(r"\d{4}", item["open"]):
+            print(f"【スキップ】openは4桁の数字で指定してください: {item}")
+            return None
+        # members / area / tour / venue / songs は空なら属性を作らない
+
+    elif name == "songs":
+        if not item.get("title"):
+            print(f"【スキップ】songsの新規追加にはtitleが必要です: {item}")
+            return None
+        dup = [e for e in main_data if norm_title(e.get("title")) == norm_title(item["title"]) and e.get("id") != item.get("id")]
+        if dup:
+            NOTICES.append(f"- **songs**: `{item['title']}` はすでに登録されています（id: `{dup[0].get('id')}`）。更新するときは id を入力してください")
+            return None
+        if not item.get("id"):
+            item["id"] = next_seq_id(SEQ_PREFIX["songs"], main_data)
+
+    elif name == "videos":
+        if not item.get("title") or not item.get("url"):
+            print(f"【スキップ】videosの新規追加にはtitleとurlが必要です: {item}")
+            return None
+        if not item.get("id"):
+            item["id"] = next_seq_id(SEQ_PREFIX["videos"], main_data)
 
     return reorder(target, item)
 
@@ -426,7 +490,7 @@ def apply_delete(target, main_data, item, issue_map):
         return "notfound"
     del main_data[matches[0]]
     if target["name"] in ("logs", "setlist"):
-        # 削除したlogid / setlistid を指すIssue対応を消す（残すと、元Issueの再編集で存在しないlogidの更新扱いになるため）
+        # 削除したid を指すIssue対応を消す（残すと、元Issueの再編集で存在しないidの更新扱いになるため）
         for iss in [k for k, v in issue_map.items() if v == key[0]]:
             del issue_map[iss]
     print(f"【削除】{target['name']}: {shown}")
@@ -434,12 +498,12 @@ def apply_delete(target, main_data, item, issue_map):
 
 
 def apply_copy(target, main_data, src_id, item, issue, issue_map):
-    """logid(src_id)のレコードをコピーして新規登録する。入力された項目だけ上書きし、!clear の項目はコピーしない。
+    """id(src_id)のレコードをコピーして新規登録する。入力された項目だけ上書きし、!clear の項目はコピーしない。
     戻り値: added / notfound / conflict / invalid"""
-    src = [e for e in main_data if e.get("logid") == src_id]
+    src = [e for e in main_data if e.get("id") == src_id]
     if not src:
-        print(f"【スキップ】コピー元のlogidが見つかりません: {src_id}")
-        NOTICES.append(f"- **logs**: コピー元が見つかりませんでした（logid: `{src_id}`）")
+        print(f"【スキップ】コピー元のidが見つかりません: {src_id}")
+        NOTICES.append(f"- **logs**: コピー元が見つかりませんでした（id: `{src_id}`）")
         return "notfound"
     if len(src) > 1:
         print(f"【警告】コピー元 {src_id} が複数存在するためスキップします")
@@ -447,8 +511,8 @@ def apply_copy(target, main_data, src_id, item, issue, issue_map):
         return "conflict"
 
     new = copy.deepcopy(src[0])
-    new.pop("logid", None)  # 新しいlogidを発行する
-    overrides = {k: v for k, v in item.items() if not k.startswith("_") and k != "logid"}
+    new.pop("id", None)  # 新しいidを発行する
+    overrides = {k: v for k, v in item.items() if not k.startswith("_") and k != "id"}
     for k, v in overrides.items():
         if is_clear(v):
             new.pop(k, None)
@@ -461,71 +525,72 @@ def apply_copy(target, main_data, src_id, item, issue, issue_map):
                     apply_removals(new, k, rems)  # 個別削除はコピーした値から取り除く
             else:
                 new[k] = v  # tags / groups なども、コピーでは追記ではなく入力値で置き換える
-    # LIVE: date / time を変えたときは、コピー元の setlistid は引き継がず date+time で振り直す（setlistid 入力時はそれを優先）
-    if new.get("contents") == "LIVE" and "setlistid" not in overrides and ("date" in overrides or "time" in overrides):
-        new.pop("setlistid", None)
+    # live: date / time を変えたときは、コピー元の live は引き継がず date+time で振り直す（live 入力時はそれを優先）
+    if new.get("cat") == "live" and "live" not in overrides and ("date" in overrides or "time" in overrides):
+        new.pop("live", None)
 
     new_item = finalize_new(target, new, main_data)
     if new_item is None:
         return "invalid"
-    if is_clear(overrides.get("setlistid")):
-        new_item.pop("setlistid", None)  # 明示的に消す指定のときは自動補完もしない
+    if is_clear(overrides.get("live")):
+        new_item.pop("live", None)  # 明示的に消す指定のときは自動補完もしない
     if issue:
-        issue_map[issue] = new_item["logid"]
+        issue_map[issue] = new_item["id"]
     main_data.append(new_item)
-    print(f"【コピー】logs: {src_id} -> {new_item['logid']}")
+    print(f"【コピー】logs: {src_id} -> {new_item['id']}")
     return "added"
 
 
 def apply_copy_setlist(target, main_data, src_id, item, issue, issue_map):
-    """setlistid(src_id)のレコードを、新しいsetlistid(item["setlistid"])へコピーして新規登録する。
-    入力された項目だけ上書きし、空の項目（曲目・memberなど）はコピー元を引き継ぐ。!clear の項目はコピーしない。
+    """id(src_id)のsetlistを、新しいid(item["id"])へコピーして新規登録する。
+    入力された項目だけ上書きし、空の項目（曲目・membersなど）はコピー元を引き継ぐ。!clear の項目はコピーしない。
     新しいIDがすでに存在するときは、上書きせずに止める（Issueにコメント）。
     同じIssueの再編集では、前回のコピー先を取り除いて作り直す。戻り値: added / notfound / conflict / invalid"""
-    new_id = item.get("setlistid", "")
+    new_id = item.get("id", "")
     if not re.fullmatch(r"\d{12}", new_id):
-        print(f"【スキップ】コピー先のsetlistidは12桁の数字で指定してください: {item}")
+        print(f"【スキップ】コピー先のidは12桁の数字で指定してください: {item}")
         return "invalid"
-    src = [e for e in main_data if e.get("setlistid") == src_id]
+    src = [e for e in main_data if e.get("id") == src_id]
     if not src:
-        print(f"【スキップ】コピー元のsetlistidが見つかりません: {src_id}")
-        NOTICES.append(f"- **setlist**: コピー元が見つかりませんでした（setlistid: `{src_id}`）")
+        print(f"【スキップ】コピー元のidが見つかりません: {src_id}")
+        NOTICES.append(f"- **setlist**: コピー元が見つかりませんでした（id: `{src_id}`）")
         return "notfound"
     if len(src) > 1:
         print(f"【警告】コピー元 {src_id} が複数存在するためスキップします")
         NOTICES.append(f"- **setlist**: コピー元 `{src_id}` が複数存在するためコピーできませんでした")
         return "conflict"
     prev = issue_map.get(issue) if issue else None  # 同じIssueが前回作ったコピー先
-    clash = [e for e in main_data if e.get("setlistid") == new_id and new_id != prev]
+    clash = [e for e in main_data if e.get("id") == new_id and new_id != prev]
     if clash:
-        print(f"【スキップ】コピー先の setlistid {new_id} はすでに存在します")
-        NOTICES.append(f"- **setlist**: コピー先の setlistid `{new_id}` はすでに存在するため、コピーしませんでした（上書きしません）")
+        print(f"【スキップ】コピー先の id {new_id} はすでに存在します")
+        NOTICES.append(f"- **setlist**: コピー先の id `{new_id}` はすでに存在するため、コピーしませんでした（上書きしません）")
         return "conflict"
 
     new = copy.deepcopy(src[0])
     patch = item.get("songs_patch")
-    overrides = {k: v for k, v in item.items() if not k.startswith("_") and k not in ("setlistid", "songs_patch")}
+    overrides = {k: v for k, v in item.items() if not k.startswith("_") and k not in ("id", "songs_patch")}
     for k, v in overrides.items():
         if is_clear(v):
             new.pop(k, None)
         elif not is_blank(v):
-            new[k] = v  # songs / member なども、コピーでは入力値で置き換える
-    new["setlistid"] = new_id
+            new[k] = v  # songs / members なども、コピーでは入力値で置き換える
+    new["id"] = new_id
     if isinstance(patch, list) and patch:
         apply_songs_patch(new, patch, new_id)  # コピーした曲目に個別変更を適用する
     new_item = finalize_new(target, new, main_data)
     if new_item is None:
         return "invalid"
     if prev:
-        main_data[:] = [e for e in main_data if e.get("setlistid") != prev]  # 前回のコピー先を取り除いて作り直す
+        main_data[:] = [e for e in main_data if e.get("id") != prev]  # 前回のコピー先を取り除いて作り直す
     if issue:
         issue_map[issue] = new_id
     main_data.append(new_item)
+    TOUCHED["setlist"].add(new_id)
     print(f"【コピー】setlist: {src_id} -> {new_id}")
     return "added"
 
 
-REPEAT_DROP = ("date", "title", "logid", "setlistid", "url", "map", "sns", "display_pc", "display_sp")  # 繰り返し登録では引き継がない項目
+REPEAT_DROP = ("date", "title", "id", "live", "url", "map", "sns", "display_pc", "display_sp")  # 繰り返し登録では引き継がない項目
 
 
 def bump_number(title, i):
@@ -539,10 +604,10 @@ def bump_number(title, i):
 
 
 def apply_repeat(target, main_data, item, repeat, issue, issue_map):
-    """繰り返し登録: repeat（1行1回の {"date", "time"?, "title"?, "contents"?, "url"?, "display_sp"?}）ごとに logs を登録する。
-    title は最初の回の title の `#数字` を回ごとに +1（行に title があればそれを優先）。time / contents / url / display_sp は行に指定があればそれを使う。map / sns / display_pc（と、行に指定のない url / display_sp）は引き継がない。
+    """繰り返し登録: repeat（1行1回の {"date", "time"?, "title"?, "cat"?, "url"?, "display_sp"?}）ごとに logs を登録する。
+    title は最初の回の title の `#数字` を回ごとに +1（行に title があればそれを優先）。time / cat / url / display_sp は行に指定があればそれを使う。map / sns / display_pc（と、行に指定のない url / display_sp）は引き継がない。
     同じIssueの再編集は、前回の登録分を同じ順番で更新し、増えた回は追加、減った回は削除する（logid は変わらない）。
-    すでに同じ date + time + contents + title の行があるときは、その回は登録しない。戻り値: added / updated / invalid"""
+    すでに同じ date + time + cat + title の行があるときは、その回は登録しない。戻り値: added / updated / invalid"""
     base = {k: v for k, v in item.items() if not k.startswith("_") and k not in REPEAT_DROP}
     all_url = all(occ.get("url") for occ in repeat[:REPEAT_LIMIT])  # 全部の回にURLの指定があれば、フォームのURLの扱いは気にしなくてよい
     all_sp = all(occ.get("display_sp") for occ in repeat[:REPEAT_LIMIT])
@@ -559,21 +624,21 @@ def apply_repeat(target, main_data, item, repeat, issue, issue_map):
         rec["title"] = occ.get("title") or bump_number(title0, i)
         if "time" in occ:
             rec["time"] = occ["time"]  # 行ごとの時刻（空文字 = 時刻なし）
-        for k in ("contents", "url", "display_sp"):
+        for k in ("cat", "url", "display_sp"):
             if occ.get(k):
-                rec[k] = occ[k]  # 行ごとの contents / URL
+                rec[k] = occ[k]  # 行ごとの cat / URL
         row = None
         if i < len(prev) and prev[i]:
-            row = next((e for e in main_data if e.get("logid") == prev[i]), None)
+            row = next((e for e in main_data if e.get("id") == prev[i]), None)
         if row is not None:
             apply_update(target, row, dict(rec))
-            autofill_setlistid(row)
+            autofill_live(row)
             main_data[main_data.index(row)] = reorder(target, row)
             ids.append(prev[i])
             updated += 1
             continue
         dup = [e for e in main_data if e.get("date") == rec["date"] and (e.get("time") or "") == (rec.get("time") or "")
-               and e.get("contents") == (rec.get("contents") or "ETC") and e.get("title") == rec["title"]]
+               and e.get("cat") == (rec.get("cat") or "etc") and e.get("title") == rec["title"]]
         if dup:
             NOTICES.append(f"- **logs**: {rec['date']} `{rec['title']}` はすでにあるため登録しませんでした")
             ids.append("")
@@ -583,11 +648,11 @@ def apply_repeat(target, main_data, item, repeat, issue, issue_map):
             ids.append("")
             continue
         main_data.append(new_item)
-        ids.append(new_item["logid"])
+        ids.append(new_item["id"])
         added += 1
     for old in prev[len(repeat[:REPEAT_LIMIT]):]:  # 減った回を取り除く
         if old:
-            main_data[:] = [e for e in main_data if e.get("logid") != old]
+            main_data[:] = [e for e in main_data if e.get("id") != old]
     if len(repeat) > REPEAT_LIMIT:
         NOTICES.append(f"- **logs**: 繰り返し登録は{REPEAT_LIMIT}件までです。{len(repeat) - REPEAT_LIMIT}件は登録しませんでした")
     if issue:
@@ -618,14 +683,14 @@ def apply_item(target, main_data, raw, issue_map):
     if copy_from:
         if not (issue and issue in issue_map):
             return apply_copy(target, main_data, copy_from, item, issue, issue_map)
-        item["logid"] = issue_map[issue]
+        item["id"] = issue_map[issue]
 
-    # 同じIssueの再編集は、発行済みlogidの更新として扱う
-    if name == "logs" and not item.get("logid") and issue and isinstance(issue_map.get(issue), str):
-        item["logid"] = issue_map[issue]
+    # 同じIssueの再編集は、発行済みidの更新として扱う
+    if name == "logs" and not item.get("id") and issue and isinstance(issue_map.get(issue), str):
+        item["id"] = issue_map[issue]
 
     key = key_of(target, item)
-    can_generate = name == "logs" and not item.get("logid")
+    can_generate = name in ("logs", "songs", "videos") and not item.get("id")  # idなしは新規(logsは12桁の英数字、songs/videosは連番)
     if key is None and not can_generate:
         print(f"【スキップ】識別キー({'+'.join(target['key_fields'])})がありません: {item}")
         return "invalid"
@@ -637,8 +702,10 @@ def apply_item(target, main_data, raw, issue_map):
             return "conflict"
         if len(matches) == 1:
             apply_update(target, main_data[matches[0]], item)
+            if name in ("setlist", "videos"):
+                TOUCHED[name].add(key[0])
             if name == "logs":
-                autofill_setlistid(main_data[matches[0]], explicit_clear=is_clear(item.get("setlistid")))
+                autofill_live(main_data[matches[0]], explicit_clear=is_clear(item.get("live")))
             # 更新で属性が追加された場合も、決まった並び順の位置に入るよう整える
             main_data[matches[0]] = reorder(target, main_data[matches[0]])
             return "updated"
@@ -647,7 +714,9 @@ def apply_item(target, main_data, raw, issue_map):
     if new_item is None:
         return "invalid"
     if name == "logs" and issue:
-        issue_map[issue] = new_item["logid"]
+        issue_map[issue] = new_item["id"]
+    if name in ("setlist", "videos"):
+        TOUCHED[name].add(new_item["id"])
     main_data.append(new_item)
     return "added"
 
@@ -664,7 +733,7 @@ def write_index(target, main_data):
     for e in main_data:
         row = {k: e[k] for k in target["index_fields"] if not is_blank(e.get(k))}
         if target.get("index_song_titles"):
-            titles = [x.get("title") for x in (e.get("songs") or []) if isinstance(x, dict) and x.get("title")]
+            titles = [song_label(x) for x in (e.get("songs") or []) if isinstance(x, dict) and song_label(x)]
             if titles:
                 row["songs"] = titles
         out.append(row)
@@ -765,8 +834,59 @@ def process_target(target, issue_map):
     return changed > 0
 
 
+def refresh_song_titles():
+    SONG_TITLES.clear()
+    for s in load_json_list(TARGET_BY_NAME["songs"]["main_file"], "songs"):
+        if isinstance(s, dict) and s.get("id") and s.get("title"):
+            SONG_TITLES[s["id"]] = s["title"]
+
+
+def resolve_refs():
+    """setlist の曲と videos の song を、songs の id にそろえる。曲名のまま残っているものは、songs に登録されていれば id に置き換える。
+    songs に無い曲は曲名のまま残し、この実行で登録・更新した setlist / videos の分だけ Issue に知らせる"""
+    refresh_song_titles()
+    by_title = {}
+    for sid, ti in SONG_TITLES.items():
+        by_title.setdefault(norm_title(ti), sid)
+    sl_t = TARGET_BY_NAME["setlist"]
+    sl = load_json_list(sl_t["main_file"], "setlist")
+    changed = False
+    for e in sl:
+        for x in (e.get("songs") or []):
+            if not isinstance(x, dict) or x.get("song"):
+                continue
+            sid = by_title.get(norm_title(x.get("title")))
+            if sid:
+                x["song"] = sid
+                x.pop("title", None)
+                changed = True
+            elif x.get("title") and e.get("id") in TOUCHED["setlist"]:
+                NOTICES.append(f"- **setlist**: `{e.get('id')}` の曲 `{x['title']}` は songs に未登録です（曲名のまま保存しました。songs に登録すると、次の処理で id に置き換わります）")
+    if changed:
+        with open(sl_t["main_file"], "w", encoding="utf-8") as f:
+            json.dump(sl, f, ensure_ascii=False, indent=2)
+    write_index(sl_t, sl)
+    vd_t = TARGET_BY_NAME["videos"]
+    vd = load_json_list(vd_t["main_file"], "videos")
+    vchanged = False
+    for v in vd:
+        s = v.get("song")
+        if not s or s in SONG_TITLES:
+            continue
+        sid = by_title.get(norm_title(s))
+        if sid:
+            v["song"] = sid
+            vchanged = True
+        elif v.get("id") in TOUCHED["videos"]:
+            NOTICES.append(f"- **videos**: `{v.get('id')}` の song `{s}` は songs に見つかりません（曲名のまま保存しました。songs の id か曲名を確認してください）")
+    if vchanged:
+        with open(vd_t["main_file"], "w", encoding="utf-8") as f:
+            json.dump(vd, f, ensure_ascii=False, indent=2)
+
+
 def rebuild_indexes():
     """メインファイルから軽量インデックスだけを作り直す（初回の作成用: python merge_json.py --rebuild-index）"""
+    refresh_song_titles()
     for target in TARGETS:
         if target.get("index_file"):
             data = load_json_list(target["main_file"], "メインファイル")
@@ -787,10 +907,13 @@ def main():
             print(f"警告: {ISSUE_MAP_FILE} が不正なため空として扱います。")
     issue_map = dict(issue_map_raw) if isinstance(issue_map_raw, dict) else {}
 
+    refresh_song_titles()
     updated = False
     for target in TARGETS:
         if process_target(target, issue_map):
             updated = True
+    if updated:
+        resolve_refs()
 
     if issue_map != issue_map_raw:
         os.makedirs(os.path.dirname(ISSUE_MAP_FILE), exist_ok=True)
