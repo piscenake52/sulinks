@@ -58,12 +58,14 @@ jobs:
                   new = {'id': sid, 'title': item['title']}
                   if item.get('members'): new['members'] = item['members']
                   new.update({k: v for k, v in live.items() if v not in (None, '', [])})
+                  if item.get('cat') in ('live', 'tour', 'event'): new['cat'] = item['cat']   # 大分類は logs の cat が決める。kind(区分)は入力された値を使う
                   cur = next((e for e in D['setlist'] if e.get('id') == sid), None)
                   if cur is not None: cur.update(new)
                   else: D['setlist'].append(new)
                   item['live'] = sid
               if rel:
                   assert rel.get('name') and rel.get('type') in ('album', 'single')
+                  item['release'] = rel['name']   # 作品名をログにも残す(カードから収録曲を引くため)
                   for ti in rel.get('songs') or []:
                       r = song_rec(ti)
                       if item['date'] and not r.get('date'): r['date'] = item['date']
