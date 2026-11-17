@@ -14,7 +14,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin/>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin"/>
+<script>(function(){try{if(localStorage.getItem('su_seen'))return}catch(e){}   /* 初めて開くときだけ、データの取得を先に始める(次の訪問からは保存済みのデータを使うので不要) */
+['logs','songs','setlist'].forEach(function(n){var l=document.createElement('link');l.rel='preload';l.as='fetch';l.crossOrigin='anonymous';l.href='https://raw.githubusercontent.com/piscenake52/sulinks/main/data/'+n+'/'+n+'.json';document.head.appendChild(l)})})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=M+PLUS+1p:wght@900&amp;display=swap"/>
 <style type="text/css">
 /*<![CDATA[*/
@@ -263,8 +264,9 @@ dialog li a + .sm{margin-left:8px}
 .seg button{border:0;background:none;color:var(--mut);padding:7px 20px;font:700 12px ui-monospace,monospace;letter-spacing:.08em;cursor:pointer;transition:background-color .18s,color .18s}
 .seg button.on{background:var(--grad);color:var(--on)}
 .set-h{font-size:11px;color:var(--mut);margin-top:6px}
-.xbtn{position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;border-radius:8px;background:none;color:var(--mut);font-size:18px;line-height:1;cursor:pointer}
-.xbtn:hover{color:var(--fg);background:var(--card2)}
+.xbtn{position:absolute;z-index:3;top:6px;right:6px;width:36px;height:36px;border:0;border-radius:8px;background:none;color:var(--mut);font-size:18px;line-height:1;cursor:pointer;touch-action:manipulation}   /* 光る範囲=押せる範囲(疑似要素で広げない)。z-indexで、スクロールする中身より前に出す */
+@media (pointer:coarse){.xbtn{top:2px;right:2px;width:44px;height:44px}}
+.xbtn:hover,.xbtn:focus-visible{color:var(--fg);background:var(--card2)}
 .rec .ttl{padding-right:28px}
 .btn,.chip,#calBtn,.xbtn,.cal-nav,.cal-title,.cal-day,.cal-mgrid button,.cal-foot button{transition:background-color .18s,color .18s,border-color .18s,transform .12s}
 .btn:active,.chip:active,#calBtn:active{transform:scale(.96)}
@@ -324,7 +326,7 @@ dialog.out{animation:pSlash .16s ease-in reverse forwards}
 /* ===== 操作しやすさ: 見た目はそのままで、押せる範囲だけ広げる(約44px) / キーボード操作の枠線 ===== */
 .cal-nav,.cal-title,.cal-foot button,.pb,.cb-t button{position:relative}
 .cal-nav::after,.cal-title::after,.cal-foot button::after,.pb::after{content:"";position:absolute;inset:-5px}
-.clr::after,.xbtn::after,.cb-t button::after{content:"";position:absolute;inset:-7px}
+.clr::after,.cb-t button::after{content:"";position:absolute;inset:-7px}
 #q:focus-visible,.rec input:focus-visible,.cb-box:focus-within{outline:2px solid var(--acc);outline-offset:2px}
 /* ===== 読み込み表示: 斜めの帯が走る ===== */
 @keyframes pLoad{from{left:-40%}to{left:125%}}
@@ -404,15 +406,15 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .agenda::before,.tlv::before{content:"";position:absolute;left:3px;top:10px;bottom:0;width:2px;background:var(--line)}   /* 一番上の日付の帯の位置から始める(上にはみ出さない) */
 .tour-g{margin-top:18px}
 .tour-g:first-child{margin-top:4px}
-.tour-h{box-shadow:-22px 0 0 0 var(--bg);position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;width:100%;box-sizing:border-box;margin:0;padding:7px 18px 8px 13px;background:none;border:0;color:var(--fg);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* TOURのツアー見出し: 見出し(Tourなど)と同じピンクの斜めの帯と、帯につながるピンクの下線。帯は日付の青い帯と同じ位置(左端がタイムラインの縦線に重なる)。見出しの高さの間は縦線を背景色で隠し、縦線は帯の下端から出るようにする(日付の帯と同じ作り) */
+.tour-h{box-shadow:-22px 0 0 0 var(--bg);position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;width:100%;box-sizing:border-box;margin:0;padding:2px 18px 8px 13px;background:none;border:0;color:var(--fg);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}   /* TOURのツアー見出し: 見出し(Tourなど)と同じピンクの斜めの帯と、帯につながるピンクの下線。帯は日付の青い帯と同じ位置(左端がタイムラインの縦線に重なる)。見出しの高さの間は縦線を背景色で隠し、縦線は帯の下端から出るようにする(日付の帯と同じ作り) */
 .tour-h::before{content:"";position:absolute;left:-20px;top:0;bottom:0;width:8px;background:var(--acc);transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}   /* 水平の太さ8px。角度は、ほかの帯・見出しと同じ15.5度(高さが変わっても同じ角度) */
-.tour-h::after{content:"";position:absolute;left:-20px;right:0;bottom:0;height:2px;background:var(--acc)}
+.tour-h::after{content:"";position:absolute;left:-19.4px;right:0;bottom:0;height:2px;background:var(--acc)}
 .tour-g.tclosed .tour-h::before{transform:none}   /* 閉じているときは、見出しと同じく帯がまっすぐ */
-.tour-h .tn{max-width:calc(100% - 30px);min-width:0;height:46px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;font:900 20px/1.25 'M PLUS 1p','Noto Sans JP','Hiragino Sans',sans-serif;letter-spacing:.02em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
+.tour-h .tn{max-width:calc(100% - 30px);min-width:0;height:38px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;font:900 19px/1.15 'M PLUS 1p','Noto Sans JP','Hiragino Sans',sans-serif;letter-spacing:.02em;transform:skewX(-15.5deg);transform-origin:left bottom;transition:transform .26s cubic-bezier(.2,.9,.25,1.2)}
 /* ツアー見出しは常に2段分の高さ: [ ]のある名前は上段=名前・下段=[ ]の中身(少し小さく)、ない名前は中央に表示し、2行を超えるときだけ「…」で省略 */
 .tour-h .tn1,.tour-h .tn2{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tour-h .tn2{font-size:14px}
-.tour-h .solo .tn1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1.15}
+.tour-h .tn2{font-size:13px;line-height:1.2}
+.tour-h .solo .tn1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow-wrap:anywhere;line-height:1}
 .tour-g.tclosed .tour-h .tn{transform:none}
 .tour-h .chv{opacity:.75;transform:rotate(225deg)}
 .tour-g.tclosed .tour-h .chv{transform:rotate(45deg)}
@@ -425,7 +427,7 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .agenda:has(>.tour-g)>.day-g.closed:not(:has(+.day-g))::before{bottom:8px}
 .tour-g+.day-g{margin-top:18px}
 .agenda:has(>.tour-g)>.day-g:first-child{margin-top:4px}
-.tour-i::before{content:"";position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}
+.tour-i::before{content:"";position:absolute;left:7px;top:3px;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}
 .tour-i:has(>.day-g:last-child.closed)::before{bottom:8px}   /* 最後の日付の帯が閉じているときは、縦線を帯の下端で止める(帯の下の余白にはみ出さない) */   /* ツアー見出しの下線から、そのツアーの最後までの縦線 */   /* 日付の帯の左のはみ出し(最大22px)が切れないよう、左に余白を取る */
 .tour-g.tclosed .tour-w{grid-template-rows:0fr}.tour-g.tclosed .tour-i{opacity:0}
 .day-g{position:relative}
@@ -444,7 +446,8 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 /* 日付の帯もカードと同じ現れ方(TODAY・Next・BEFORE・AFTER、追加読み込み分も) */
 .day-h{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both}
 body.noanim .day-h,body.shifting .day-h{animation:none!important}
-.tm{font:500 13px ui-monospace,monospace;color:var(--mut)}
+.tm{display:flex;align-items:center;gap:8px;font:500 13px ui-monospace,monospace;color:var(--mut)}
+.tm .badge{margin-left:auto;margin-right:36px}   /* 開閉の矢印の縦のラインから離して、誤タップを防ぐ */
 /* ===== MOREボタン: 日付の帯と同じ仲間(暗い帯・右は斜め・左に青い斜めのライン) ===== */
 .more-b{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;width:100%;margin:12px 0 0 0;box-shadow:-22px 0 0 0 var(--bg);min-height:44px;padding:0 18px;border:0;background:none;color:var(--fg);font:700 16px ui-monospace,monospace;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .more-b::after{content:"";position:absolute;inset:0 0 0 -19px;z-index:-2;background:var(--card);clip-path:polygon(6px 0,100% 0,100% 100%,6px 100%);transition:clip-path .26s cubic-bezier(.2,.9,.25,1.2)}
@@ -478,6 +481,7 @@ body.noanim .day-h,body.shifting .day-h{animation:none!important}
 .card.open .cxi>*{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both;animation-delay:calc(var(--i,0) * 50ms + 60ms)}
 .card.open>.cx>.cxi{padding-top:6px}
 .card.fold .hd .chv{margin:6px 9px 0 6px;transform:rotate(45deg)}
+.card.fold .hd .ttl{flex:1;min-width:0}
 .card.fold.open .hd .chv{transform:rotate(225deg)}
 .card.fold.open{border-color:var(--main);box-shadow:inset 3px 0 0 var(--main)}
 .card.fold.open.att{border-left-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}   /* 開いたときも、左側の線だけピンク */
@@ -591,7 +595,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   // ===== データ元(gllogsと同じ方式:GitHubのJSONをコミットSHA固定のjsDelivrから取得し、IndexedDBにキャッシュ) =====
   const REPO = 'piscenake52/sulinks', BRANCH = 'main';
   const FILES = { logs: 'data/logs/logs.json', songs: 'data/songs/songs.json', setlist: 'data/setlist/setlist.json', videos: 'data/videos/videos.json' };
-  const COOLDOWN = 20 * 60000, PAGE = 40;
+  const COOLDOWN = 90 * 1000, PAGE = 40;   // COOLDOWN: 更新確認の間隔(90秒。確認は小さな version.json だけで、本体は内容が変わったときだけ取得する)
   const DEMO = REPO.indexOf('YOUR_') === 0;
   const data = { logs: [], songs: [], setlist: [], videos: [] };
   if (DEMO) { /*DEMO*/ }
@@ -607,7 +611,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const MAINC = ['LIVE', 'RELEASE', 'EVENT', 'TV', 'RADIO', 'FUNCTION'], BC = { LIVE: '#4ade80', RELEASE: '#c084fc' };
   const badgeOf = i => MAINC.find(k => i.cats.indexOf(k) >= 0) || SRCCAT[i.src] || i.cats[0] || i.contents || '--';
   const srcOf = u => { const h = String(u || '').toLowerCase(); return !h ? '--' : /x\.com|twitter\.com/.test(h) ? 'X' : /instagram\.com/.test(h) ? 'IG' : /tiktok\.com/.test(h) ? 'TT' : /youtu\.be|youtube\.com/.test(h) ? 'YT' : 'WEB'; };
-  const CATS = { LIVE: ['LIVE'], RELEASE: ['RELEASE', 'CD', 'BD', 'DVD', 'DIGITAL', 'MUSICCARD'], EVENT: ['EVENT', 'FANMEETING', 'RELEASEEVENT', 'STAGE', 'TICKET', 'ANNIVERSARY', 'BIRTHDAY', 'DEBUT', 'FORMATION', 'CAMPAIGN'], TV: ['TV'], RADIO: ['RADIO'], FUNCTION: ['FANCLUB'], SNS: ['SNS', 'YOUTUBE'], WEB: ['WEB'] };
+  const CATS = { LIVE: ['LIVE'], TOUR: ['TOUR'], RELEASE: ['RELEASE', 'CD', 'BD', 'DVD', 'DIGITAL', 'MUSICCARD'], EVENT: ['EVENT', 'FANMEETING', 'RELEASEEVENT', 'STAGE', 'TICKET', 'ANNIVERSARY', 'BIRTHDAY', 'DEBUT', 'FORMATION', 'CAMPAIGN'], TV: ['TV'], RADIO: ['RADIO'], FUNCTION: ['FANCLUB'], SNS: ['SNS', 'YOUTUBE'], WEB: ['WEB'] };
   const SRCCAT = { X: 'X', IG: 'INSTAGRAM', TT: 'TIKTOK', YT: 'YOUTUBE' };
   const catOf = (contents, s) => {
     const c = String(contents || '').toUpperCase(), out = [];
@@ -639,7 +643,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   // ===== 取り込み =====
   const ready = () => DEMO || done || (tab === 'setlist' ? ['setlist', 'songs'] : ['logs']).every(n => got.has(n));   // 今の画面に必要なファイルがそろったら描く(LINKSはlogsだけ。SETLISTはsetlistとsongs。残りは届いたら差し込む)
   const waiting = () => { const w = !ready(); document.body.classList.toggle('ld', w); if (w) $('count').textContent = 'LOADING...'; return w; };   // 読み込み中は「LOADING...」を出して、描かない
-  const lkOf = e => { const k = String(e.kind || '').toLowerCase(), s = String(e.sub || '').toLowerCase(); return s === 'release' ? 'RELEASE EVENT' : s === 'fes' ? 'FES' : k === 'event' ? 'EVENT' : 'LIVE'; };
+  const lkOf = e => { const c = String(e.cat || '').toLowerCase(), k = String(e.kind || '').toLowerCase(); return (k === 'releaseevent' || k === 'release') ? 'RELEASE EVENT' : k === 'fes' ? 'FES' : c === 'event' ? 'EVENT' : c === 'tour' ? 'TOUR' : 'LIVE'; };   // cat=大分類(live/tour/event)、kind=その中の区分(releaseeventなど。何を入れるかは今後決める)
   const build = () => {
     const sid2 = new Map(data.songs.filter(o => o && o.id != null).map(o => [String(o.id), o]));   // 曲IDから曲を引く
     data.setlist.forEach(e => (e.songs || []).forEach(s => { const f = s && s.song != null ? sid2.get(String(s.song)) : null; if (f) { s.title = f.title; if (f.original) s.original = f.original; } }));
@@ -656,13 +660,15 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     });
     data.videos.forEach(v => { if (v && (v.song == null || v.song === '') && okUrl(v.url)) POOL.push({ title: v.title, url: v.url }); });
     const LV = new Map();   // setlistid → ライブ(会場名をログのカードにも出すため)
-    LIVES = data.setlist.map(e => ({ kind: 'live', cats: ['LIVE'], ltype: String(e.kind || '').toUpperCase(), lgroup: '', ltitle: '', open: String(e.open || ''), time: String(e.setlistid || '').slice(8, 12), sid: e.setlistid, date: String(e.setlistid || '').slice(0, 8), title: e.title || 'SETLIST', venue: e.venue || '', area: e.area || '', tour: e.tour || '', lkind: lkOf(e), mem: memNames(e.member), yo: [].concat(e.yomi || []).map(String), enc: (e.songs || []).filter(s => s && isEnc(s)).map(s => s.title), fst: (e.songs || []).filter(s => s && isFirst(s)).map(s => s.title), n: (e.songs || []).length, hay: norm([e.title, e.venue, e.area, e.tour, e.kind, e.sub, e.setlistid].concat(memNames(e.member), memYomi(e.member), [].concat(e.yomi || []).map(String), (e.songs || []).some(s => s && isEnc(s)) ? ['encore'] : [], (e.songs || []).some(s => s && isFirst(s)) ? ['初演'] : [], (e.songs || []).map(s => s && s.title)).join(' ')) })); LIVES.forEach(l => LV.set(l.sid, l));
+    LIVES = data.setlist.map(e => ({ kind: 'live', cats: ['LIVE'], ltype: String(e.cat || '').toUpperCase(), lgroup: '', ltitle: '', open: String(e.open || ''), time: String(e.setlistid || '').slice(8, 12), sid: e.setlistid, date: String(e.setlistid || '').slice(0, 8), title: e.title || 'SETLIST', venue: e.venue || '', area: e.area || '', tour: e.tour || '', lkind: lkOf(e), mem: memNames(e.member), yo: [].concat(e.yomi || []).map(String), enc: (e.songs || []).filter(s => s && isEnc(s)).map(s => s.title), fst: (e.songs || []).filter(s => s && isFirst(s)).map(s => s.title), n: (e.songs || []).length, hay: norm([e.title, e.venue, e.area, e.tour, e.cat, e.kind, e.setlistid].concat(memNames(e.member), memYomi(e.member), [].concat(e.yomi || []).map(String), (e.songs || []).some(s => s && isEnc(s)) ? ['encore'] : [], (e.songs || []).some(s => s && isFirst(s)) ? ['初演'] : [], (e.songs || []).map(s => s && s.title)).join(' ')) })); LIVES.forEach(l => LV.set(l.sid, l));
+    const tgs = new Map(); LIVES.forEach(l => { if (l.tour) { const k = norm(l.tour); if (!tgs.has(k)) tgs.set(k, []); tgs.get(k).push(l); } });   // 同じツアー名のライブを日付順に並べ、何公演目かを付ける
+    tgs.forEach(a => { a.sort((x, y) => String(x.sid).localeCompare(String(y.sid))); if (a.length > 1) a.forEach((l, n) => { l.tno = n + 1; l.tcnt = a.length; }); });
     const seen = new Set();
     INFOS = [];
     data.logs.forEach(o => {
       const k = [o.date, o.time, o.contents, o.title, o.url].join('_'); if (seen.has(k)) return; seen.add(k);
       const title = o.display_pc || o.title || '', mem = memNames([].concat(o.groups || [], o.relations || [])), memr = memYomi([].concat(o.groups || [], o.relations || [])), yo = [].concat(o.yomi || []).map(String);
-      INFOS.push({ kind: 'info', mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.relations || [], mem, memr, yo).join(' ')) });
+      INFOS.push({ kind: 'info', live: LV.get(o.setlistid) || null, rel: String(o.release || ''), mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.relations || [], mem, memr, yo).join(' ')) });
     });
     const used = new Set(data.logs.map(o => o.setlistid).filter(Boolean)); ALL = INFOS;   // LINKSに出す項目は、すべてlogsの行(曲・ライブはSETLIST画面で見る)
     sugDirty = true; statsDirty = true; buildSl(); if (ready()) { render(); calRefresh(); }
@@ -736,9 +742,12 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     attS.forEach(key => { const k = key.slice(key.indexOf('|') + 1); if (k) heardSet.add(k); });
     return heardSet;
   };
+  let attBtns = [];   // 画面にあるATTENDボタン(✕で外したとき、ボタンの表示も戻すため)
+  const refreshAttBtns = sid => { attBtns = attBtns.filter(x => x.b.isConnected); attBtns.forEach(x => { if (x.sid === sid) x.sync(); }); };
   const attBtn = (sid, card, cb) => {
-    const b = el('button', 'btn'), lab = () => (att.has(sid) ? '\u2713 ATTENDED' : '+ ATTENDED'), sync = () => { b.textContent = lab(); b.classList.toggle('on', att.has(sid)); if (card) card.classList.toggle('att', att.has(sid)); };
-    b.type = 'button'; sync();
+    const lab = () => { const d0 = new Date(), td = d0.getFullYear() * 10000 + (d0.getMonth() + 1) * 100 + d0.getDate(), nm = (parseInt(String(sid).slice(0, 8), 10) || 0) < td ? 'ATTENDED' : 'ATTEND'; return (att.has(sid) ? '\u2713 ' : '+ ') + nm; };   // 今日より前のライブはATTENDED、今日以降はATTEND
+    const b = el('button', 'btn'), sync = () => { b.textContent = lab(); b.classList.toggle('on', att.has(sid)); if (card) card.classList.toggle('att', att.has(sid)); };
+    b.type = 'button'; sync(); attBtns.push({ sid, b, sync });
     b.onclick = () => { if (att.has(sid)) att.delete(sid); else att.add(sid); const xs = Array.from(attX).filter(x => x.indexOf(sid + '|') === 0); if (xs.length) { xs.forEach(x => attX.delete(x)); saveAttX(); }   // ライブ全体の切り替えで、曲ごとに外した記録はリセット
       saveAtt(); heardSet = null; sync(); progUpd(); if (cb) cb(); };
     return b;
@@ -748,6 +757,12 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const outThen = (n, cls, ms, cb) => { if (!n || !animOK()) { cb(); return; } n.style.animation = 'none'; void n.offsetWidth; n.style.animation = ''; n.classList.add(cls); setTimeout(cb, ms); };   // 消えるときは、出るときの逆の動きを見せてから、実際に消す
   let cardIn = '';   // 設定でカードを出したとき、そのカードを斜めに切り込んで出す('att' / 'my')
   const cinOnce = n => { n.classList.add('cin'); n.addEventListener('animationend', e => { if (e.target === n) n.classList.remove('cin'); }); };   // カードが出る動きを一度だけ再生する
+  const unAtt = sid => {   // ATTENDEDカードの✕: そのライブの記録(ライブ全体・曲ごとの記録)をすべて消す
+    att.delete(sid);
+    Array.from(attX).forEach(x => { if (x.indexOf(sid + '|') === 0) attX.delete(x); });
+    Array.from(attS).forEach(x => { if (x.indexOf(sid + '|') === 0) attS.delete(x); });
+    saveAtt(); saveAttX(); saveAttS(); heardSet = null; refreshAttBtns(sid); progUpd();
+  };
   const makeProg = () => {   // ATTENDEDカード: 初期はシンプル(進み具合だけ)、押すと詳細(行ったライブの一覧)が開閉する
     const box = el('div', 'prog' + (attOpen ? ' open' : '')); let prevRows = null, lastPc = 0, lastKey = '';
     if (cardIn === 'att') { cardIn = ''; cinOnce(box); }
@@ -764,7 +779,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
       const dw = el('div', 'prog-d'), di = el('div');
       const part = l => Array.from(attS).filter(x => x.indexOf(l.sid + '|') === 0).length, rows = LIVES.filter(l => att.has(l.sid) || part(l)).sort(byDateDesc);
       if (!rows.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
-      rows.forEach(l => { const b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); di.append(b); });
+      rows.forEach(l => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'ATTENDから外す'); c.onclick = () => outThen(w, 'out', 200, () => unAtt(l.sid)); w.append(b, c); di.append(w); });
       prevRows = new Set(rows.map(l => l.sid));
       dw.append(di); box.append(dw);
     };
@@ -811,7 +826,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const stat = (k, v) => { const sp = el('span'); sp.append(el('b', '', k), document.createTextNode(String(v))); return sp; };
   const bdg = (t, c) => { const b = el('span', 'badge', t); b.style.color = c; return b; };
   // ===== カード =====
-  const CHIPSET = ['ALL', 'SNS', 'X', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'WEB', 'RELEASE', 'LIVE', 'EVENT', 'TV', 'RADIO', 'FUNCTION'];
+  const CHIPSET = ['ALL', 'SNS', 'X', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'WEB', 'RELEASE', 'LIVE', 'TOUR', 'EVENT', 'TV', 'RADIO', 'FUNCTION'];
   const qGo = text => { $('q').value = qs = text; mode = ''; hideSug(); render(); window.scrollTo(0, 0); };   // カード内チップ: その言葉で絞り込む
   const catGo = lab => { src = lab; mode = ''; render(); window.scrollTo(0, 0); };   // カード内チップ: 上のチップ(種類)で絞り込む
   const goLab = lab => { if (CHIPSET.indexOf(lab) >= 0) catGo(lab); else qGo(lab); };
@@ -843,21 +858,48 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (s.vs.length) tg('VIDEOS ' + s.vs.length, () => s.vs.forEach((v, i) => { if (!okUrl(v.url)) return; const l = el('a', '', '\u25B6 ' + (v.label || '動画' + (i + 2))); l.href = v.url; l.target = '_blank'; l.rel = 'noopener'; pn.append(l); }));
     a.append(myBtn(s)); c.append(a, pn); return c;
   };
-  const liveMeta = (c, l) => { c.append(el('div', 'sub', [l.tour, l.venue, l.area].filter(Boolean).concat([l.n + ' SONGS']).join(' / '))); if (l.mem.length) c.append(chipRow(l.mem.map(n => ({ t: n, fn: () => qGo(n) })))); };   // ライブカードの会場の行とメンバーのチップ(LINKSとLIVESで共通)
+  const hm4 = x => /^\d{4}$/.test(x) ? x.slice(0, 2) + ':' + x.slice(2) : x;
+  const liveLab = l => l.lkind || 'LIVE';   // ライブの帯の表記(LINKSとLIVESで共通)
+  const liveMeta = (c, l) => {   // ライブの会場の行・メンバー・ENCORE/初演のタグ(LINKSとLIVESで共通。曲数が0のときは出さない)
+    const sub = [l.tno ? l.tno + ' / ' + l.tcnt + '公演' : '', l.open ? '開場 ' + hm4(l.open) : '', /^\d{4}$/.test(l.time || '') && l.time !== '0000' ? '開演 ' + hm4(l.time) : '', l.venue, l.area, l.n ? l.n + ' SONGS' : ''].filter(Boolean).join(' / ');
+    if (sub) c.append(el('div', 'sub', sub));
+    if (l.mem.length) c.append(chipRow(l.mem.map(n => ({ t: n, fn: () => qGo(n) }))));
+    if (l.enc.length || l.fst.length) {
+      const tr = el('div', 'tgs');
+      [['ENCORE ' + l.enc.length, l.enc, 'ENCORE'], ['初演 ' + l.fst.length, l.fst, '初演']].forEach(([x, names, q]) => {
+        if (!names.length) return; const b = el('button', 'tg', x); b.type = 'button'; b.title = names.join(' / '); b.onclick = () => qGo(q); tr.append(b);
+      });
+      c.append(tr);
+    }
+  };
+  const mapUrl = l => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([l.venue, l.area].filter(Boolean).join(' '));
+  const panelBtn = (a, pn, txt, fill) => { const b = el('button', 'btn', txt); b.type = 'button'; b.onclick = () => { const on = pn.dataset.k !== '1'; pn.dataset.k = on ? '1' : ''; b.classList.toggle('on', on); if (!on) { shut(pn, 170); return; } unshut(pn); pn.innerHTML = ''; fill(); }; a.append(b); };
+  const openBtn = i => okUrl(i.url) ? (i.src === 'YT' ? ytBtn(i.url, '\u25B6 PLAY') : linkBtn(i.url, 'OPEN \u2197')) : null;   // 元の投稿・公式ページ。YouTubeは再生ボタン
+  const liveActs = (c, l, it, hits, extra) => {   // ボタン: SETLIST・MY PLAN・ATTEND(ED)・関連する投稿・MAP(LINKSとLIVESで共通)
+    const a = el('div', 'act'), pn = el('div', 'panel'), b = el('button', 'btn main', 'SETLIST'); pn.hidden = true; b.onclick = () => openSet(l.sid, hits); a.append(b, myBtn(it), attBtn(l.sid, c));
+    const rel = INFOS.filter(x => x.sid === l.sid && x !== it).sort((x, y) => (x.date + (x.time || '')).localeCompare(y.date + (y.time || '')));   // 同じライブを指すほかのログ(告知・動画など)
+    if (rel.length) panelBtn(a, pn, 'RELATED ' + rel.length, () => rel.forEach(x => { const ok = okUrl(x.url), r = ok ? el('a', '', fmt(x.date) + '  ' + x.title) : el('div', '', fmt(x.date) + '  ' + x.title); if (ok) { r.href = x.url; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
+    if (l.venue) a.append(linkBtn(mapUrl(l), 'MAP \u2197'));
+    (extra || []).forEach(x => a.append(x));
+    c.append(a, pn); c.classList.toggle('att', att.has(l.sid));
+  };
   const liveCard = (l, nd) => () => {
     const c = el('div', 'card'); head(c, l.date, cbdg(l.lkind || 'LIVE', '#4ade80', () => goLab(l.lkind || 'LIVE')), l.title, nd);
     liveMeta(c, l);
     const a = el('div', 'act'), b = el('button', 'btn main', 'SETLIST'); b.onclick = () => openSet(l.sid); a.append(b, myBtn(l)); c.append(a); return c;
   };
   const infoCard = (i, nd) => () => {
-    const c = el('div', 'card'), lab = badgeOf(i);
-    head(c, i.date, cbdg(lab, BC[lab] || SRC[i.src], () => goLab(lab)), i.title, nd, i.url);
-    const hm = t => /^\d{4}$/.test(t) ? t.slice(0, 2) + ':' + t.slice(2) : t, vo = [i.open ? '開場 ' + hm(i.open) : '', i.venue].filter(Boolean).join(' / ');   // 開場時間と会場名
-    if (vo) c.append(el('div', 'sub', vo));
+    const c = el('div', 'card'), lv = i.live, lab = lv ? liveLab(lv) : badgeOf(i), ob = openBtn(i);   // setlistにつながるログは、LIVESと同じ内容(setlistのデータ)で出す
+    head(c, i.date, cbdg(lab, BC[lab] || SRC[i.src] || '#4ade80', () => goLab(lab)), i.title, nd, i.url);
+    if (lv) { liveMeta(c, lv); liveActs(c, lv, i, undefined, ob ? [ob] : []); return c; }
     const cr = []; i.mem.forEach(n => cr.push({ t: n, fn: () => qGo(n) }));
     if (cr.length) c.append(chipRow(cr));
-    const a = el('div', 'act'); if (i.sid) { const s = el('button', 'btn', 'SETLIST'); s.onclick = () => openSet(i.sid); a.append(s); }
-    a.append(myBtn(i)); c.append(a); return c;
+    const a = el('div', 'act'), pn = el('div', 'panel'); pn.hidden = true; if (i.sid) { const s = el('button', 'btn', 'SETLIST'); s.onclick = () => openSet(i.sid); a.append(s); }
+    a.append(myBtn(i));
+    const rs = i.rel ? SONGS.filter(s => s.albums.concat(s.singles).some(n => norm(n) === norm(i.rel))) : [];   // releaseのログ: 同じ作品名の収録曲
+    if (rs.length) panelBtn(a, pn, 'SONGS ' + rs.length, () => rs.forEach(s => { const ok = okUrl(s.o.link), r = ok ? el('a', '', '\u25B6 ' + s.title) : el('div', '', s.title); if (ok) { r.href = s.o.link; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
+    if (ob) a.append(ob);
+    c.append(a, pn); return c;
   };
   const yearsOf = arr => Array.from(new Set(arr.map(i => (i.date || '').slice(0, 4)).filter(Boolean))).sort().reverse();
   const yearChips = (ys, curY, fn) => {   // 検索チップの一番上: データにある年
@@ -996,9 +1038,9 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const headBtn = (h, getGroups) => { h.setAttribute('role', 'button'); h.tabIndex = 0; const go = () => { foldAll(getGroups); h.classList.remove('fl'); void h.offsetWidth; h.classList.add('fl'); setTimeout(() => h.classList.remove('fl'), 400); }; h.onclick = e => { if (e.target.closest('.prog')) return; go(); }; h.onkeydown = e => { if (e.target.closest('.prog')) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; };
   const foldCard = c => {
     const hd = c.querySelector(':scope > .hd'); if (!hd) return c;
-    const bdg = hd.querySelector('.badge'), cx = el('div', 'cx'), inn = el('div', 'cxi');
+    const cx = el('div', 'cx'), inn = el('div', 'cxi'), bdg = hd.querySelector('.badge');
+    if (bdg) { let tm = c.querySelector(':scope > .tm'); if (!tm) { tm = el('div', 'tm'); c.prepend(tm); } tm.append(bdg); }   // カテゴリの帯は、時間と同じ行の右端に置く
     Array.from(c.children).forEach(ch => { if (ch !== hd && !ch.classList.contains('tm')) inn.append(ch); });
-    if (bdg) inn.prepend(bdg);
     if (!inn.children.length) return c;
     Array.from(inn.children).forEach((n, i) => n.style.setProperty('--i', i));
     cx.append(inn); c.append(cx); hd.append(el('span', 'chv'));
@@ -1243,18 +1285,11 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     w._reset = () => { vals.length = 0; inp.value = ''; ul.hidden = true; drawTags(); }; return w;
   };
   const slCard = (l, hits, nd) => () => {
-    const c = el('div', 'card'), kid = { 'FES': 'fes', 'RELEASE EVENT': 'relev', 'EVENT': 'event' }[l.lkind];
-    head(c, l.date, cbdg(l.lkind || 'LIVE', '#4ade80', () => { if (!kid) return; if (qs.trim()) { qs = ''; $('q').value = ''; } if (slOn.indexOf(kid) < 0) toggleSl(kid); else render(); }), l.ltitle || l.title, !!nd);   // カードのタイトルは、ログのタイトルがあればそれ
+    const c = el('div', 'card'), kid = { 'FES': 'fes', 'RELEASE EVENT': 'relev', 'EVENT': 'event' }[l.lkind], lab = liveLab(l);
+    head(c, l.date, cbdg(lab, BC[lab] || '#4ade80', () => { if (!kid) return; if (qs.trim()) { qs = ''; $('q').value = ''; } if (slOn.indexOf(kid) < 0) toggleSl(kid); else render(); }), l.ltitle || l.title, !!nd);   // カードのタイトルは、ログのタイトルがあればそれ
     liveMeta(c, l);
-    if (l.enc.length || l.fst.length) {
-      const tr = el('div', 'tgs');
-      [['ENCORE ' + l.enc.length, l.enc, 'ENCORE'], ['初演 ' + l.fst.length, l.fst, '初演']].forEach(([t, names, q]) => {
-        if (!names.length) return; const b = el('button', 'tg', t); b.type = 'button'; b.title = names.join(' / '); b.onclick = () => qGo(q); tr.append(b);
-      });
-      c.append(tr);
-    }
     if (hits.length) c.append(el('div', 'kw', 'MATCH ' + hits.length + ': ' + hits.slice(0, 3).join(' / ') + (hits.length > 3 ? ' ...' : '')));
-    const a = el('div', 'act'), b = el('button', 'btn main', 'SETLIST'); b.onclick = () => openSet(l.sid, hits); a.append(b, attBtn(l.sid, c)); c.append(a); c.classList.toggle('att', att.has(l.sid)); return c;
+    liveActs(c, l, l, hits); return c;
   };
   const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '');
   const SLCH = [['album', 'ALBUM'], ['single', 'SINGLE'], ['area', 'AREA'], ['venue', 'VENUE'], ['tour', 'TOUR'], ['relev', 'RELEASE EVENT'], ['fes', 'FES'], ['event', 'EVENT']];
@@ -1284,7 +1319,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const sec = el('section', 'tour-g'), h = el('button', 'tour-h'), w = el('div', 'tour-w'), inn = el('div', 'tour-i');
     const byD = {};
     h.type = 'button'; h.setAttribute('aria-expanded', 'true');
-    const bm = String(name).match(/^(.*?)\s*[\[［]([^\[\]［］]+)[\]］]\s*$/), two = !!(bm && bm[1]), tn = el('span', two ? 'tn' : 'tn solo');   // [ ]がある名前は、上段=名前・下段=[ ]の中身の2段。ない名前は最大2行
+    const bm = String(name).match(/^(.*?)\s*([\[［][^\[\]［］]+[\]］])\s*$/), two = !!(bm && bm[1]), tn = el('span', two ? 'tn' : 'tn solo');   // [ ]がある名前は、上段=名前・下段=[ ]つきの中身の2段。ない名前は最大2行
     tn.append(el('span', 'tn1', two ? bm[1] : name)); if (two) tn.append(el('span', 'tn2', bm[2]));
     h.append(tn);
     h.append(el('span', 'chv'));
@@ -1850,13 +1885,13 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const sched = () => { if (bp) return; bp = true; setTimeout(flush, 30); };   // 複数ファイルの到着をまとめて1回だけ build
   // version.json(Actionsが生成)を1回だけ取得。無い/失敗時は従来のGitHub API確認にフォールバック
   let verP = null;
-  const getVer = () => verP || (verP = fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/version.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null));
+  const getVer = () => verP || (verP = fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/version.json?t=' + Math.floor(Date.now() / 60000), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null));
   // 短縮キーのJSONを従来のキー名に戻す(従来形式のデータはそのまま通る)
   const arr = v => Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]);
   // 英単語キーのJSONを、画面側の内部名に変換する
   const NORM = {
-    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, tags: o.tags, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live }),
-    setlist: e => ({ setlistid: e.id, title: e.title, venue: e.venue, area: e.area, kind: e.kind, sub: e.sub, tour: e.tour, member: e.members, open: e.open, yomi: e.yomi, songs: arr(e.songs).map(s => s && typeof s === 'object' ? { order: s.no, song: s.song, title: s.title, type: s.type, notes: s.note } : s) }),
+    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, tags: o.tags, release: o.release, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live }),
+    setlist: e => ({ setlistid: e.id, title: e.title, venue: e.venue, area: e.area, cat: e.cat, kind: e.kind, tour: e.tour, member: e.members, open: e.open, yomi: e.yomi, songs: arr(e.songs).map(s => s && typeof s === 'object' ? { order: s.no, song: s.song, title: s.title, type: s.type, notes: s.note } : s) }),
     songs: o => { const rl = arr(o.release), og = o.original || {}; return { id: o.id, title: o.title, yomi: o.yomi, release: o.date, keywords: o.keywords, link: o.url, utanet: o.lyricsid, lyric: o.lyric, album: rl.filter(x => x && x.type === 'album').map(x => x.name), single: rl.filter(x => x && x.type === 'single').map(x => x.name), original: og.name, original_title: og.title, original_year: og.year, original_work: og.work }; },
     videos: o => ({ id: o.id, title: o.title, label: o.label, url: o.url, song: o.song })
   };
@@ -1867,27 +1902,33 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (cached && !data[name].length) { try { data[name] = expand(name, JSON.parse(cached)); got.add(name); sched(); } catch (e) {} }
     if (!cached && !force) {   // 初回(保存データなし): version.json を待たず、本体を並行して取得してすぐ表示する
       getVer();
-      try { const r = await fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + f); if (r.ok) { const txt0 = await r.text(); data[name] = expand(name, JSON.parse(txt0)); got.add(name); sched(); await cset('n_' + name, txt0); cached = txt0; } } catch (e) {}
+      try { const r = await fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + f); if (r.ok) { const txt0 = await r.text(); data[name] = expand(name, JSON.parse(txt0)); got.add(name); sched(); try { localStorage.setItem('su_seen', '1'); } catch (e) {} await cset('n_' + name, txt0); cached = txt0; } } catch (e) {}
     }
+    const mk = () => { try { localStorage.setItem('su_chk_' + name, String(Date.now())); } catch (e) {} };   // 確認が終わったときだけ記録する(失敗したら次回すぐ確認し直す)
     const last = parseInt(localStorage.getItem('su_chk_' + name) || '0', 10);
     if (!force && cached && Date.now() - last < COOLDOWN) return;
     let sha = null, key = null;
     const vj = await getVer();
-    if (vj && vj.commit && vj.files && vj.files[name]) { sha = vj.commit; key = String(vj.files[name]); try { localStorage.setItem('su_chk_' + name, String(Date.now())); } catch (e) {} }
-    else try { const r = await fetch('https://api.github.com/repos/' + REPO + '/commits?path=' + f + '&sha=' + BRANCH + '&page=1&per_page=1', { cache: 'no-store' }); if (r.ok) { const c = await r.json(); sha = c[0] && c[0].sha; key = sha; localStorage.setItem('su_chk_' + name, String(Date.now())); } } catch (e) {}
-    if (!force && key && cached && key === localStorage.getItem('su_sha_' + name)) return;
+    if (vj && vj.commit && vj.files && vj.files[name]) { sha = vj.commit; key = String(vj.files[name]); }
+    else try { const r = await fetch('https://api.github.com/repos/' + REPO + '/commits?path=' + f + '&sha=' + BRANCH + '&page=1&per_page=1', { cache: 'no-store' }); if (r.ok) { const c = await r.json(); sha = c[0] && c[0].sha; key = sha; } } catch (e) {}
+    if (!force && key && cached && key === localStorage.getItem('su_sha_' + name)) { mk(); return; }
     if (!sha && !force && cached) return;   // SHAが取れない時は保存データを使う(全量取得は強制再読込時のみ)
-    if (!force && cached && vj && vj.files && vj.files[name]) { try { if (await sha1(cached) === String(vj.files[name])) { localStorage.setItem('su_sha_' + name, String(vj.files[name])); return; } } catch (e) {} }   // 保存データが最新と同じ内容なら、再取得しない
-    const res = await fetch(sha ? 'https://cdn.jsdelivr.net/gh/' + REPO + '@' + sha + '/' + f : 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + f + (force ? '?v=' + Date.now() : '')); if (!res.ok) throw new Error('fetch failed');
+    if (!force && cached && vj && vj.files && vj.files[name]) { try { if (await sha1(cached) === String(vj.files[name])) { localStorage.setItem('su_sha_' + name, String(vj.files[name])); mk(); return; } } catch (e) {} }   // 保存データが最新と同じ内容なら、再取得しない
+    const urls = sha ? ['https://raw.githubusercontent.com/' + REPO + '/' + sha + '/' + f, 'https://cdn.jsdelivr.net/gh/' + REPO + '@' + sha + '/' + f] : ['https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + f + (force ? '?v=' + Date.now() : '')];   // コミット固定のURLは反映の遅れがない。失敗したらjsDelivr
+    let res = null; for (const u of urls) { try { const r = await fetch(u); if (r.ok) { res = r; break; } } catch (e) {} } if (!res) throw new Error('fetch failed');
     const txt = await res.text(), j = JSON.parse(txt);   // 再stringifyせず原文のまま比較・保存
     if (!(cached && txt === cached)) { data[name] = expand(name, j); got.add(name); sched(); }   // 保存データと同じなら作り直さない
     const ok = await cset('n_' + name, txt);
     try { if (key && ok) localStorage.setItem('su_sha_' + name, key); else localStorage.removeItem('su_sha_' + name); } catch (e) {}
+    mk();
   };
-  const syncAll = force => { verP = null; if (DEMO) { build(); return; } Promise.allSettled(Object.keys(FILES).map(n => sync(n, force))).then(rs => { flush(); const bad = rs.some(r => r.status === 'rejected'); $('err').hidden = !(bad && !SONGS.length && !INFOS.length && !LIVES.length); done = true; if (!rendered) render(); }); };
+  let syncing = false;
+  const syncAll = force => { if (syncing && !force) return; verP = null; if (DEMO) { build(); return; } syncing = true; Promise.allSettled(Object.keys(FILES).map(n => sync(n, force))).then(rs => { syncing = false; flush(); const bad = rs.some(r => r.status === 'rejected'); $('err').hidden = !(bad && !SONGS.length && !INFOS.length && !LIVES.length); done = true; if (!rendered) render(); }); };
   $('retry').onclick = () => { $('err').hidden = true; syncAll(true); };
   try { applyTheme(); } catch (e) {}   // データを待つ間も、今月の色で表示する(読み込み後に色が変わって見えないように)
   syncAll(false);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !DEMO) syncAll(false); });   // 開いたままのタブに戻ったときも、間隔が空いていれば最新か確認する
+  window.addEventListener('pageshow', e => { if (e.persisted && !DEMO) syncAll(false); });
 })();
 //]]>
 </script>
