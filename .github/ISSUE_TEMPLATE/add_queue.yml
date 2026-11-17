@@ -1,0 +1,20 @@
+name: "データ登録（adminhelper から送信）"
+description: "adminhelper.html の「ISSUEで送信」で自動入力されます。内容は変えずに、そのまま送信してください"
+title: "[QUEUE] "
+body:
+  - type: input
+    id: kind
+    attributes:
+      label: "kind"
+      description: "logs / songs / setlist / videos"
+    validations:
+      required: true
+
+  - type: textarea
+    id: item
+    attributes:
+      label: "item"
+      description: "登録する内容（JSON）"
+      render: json
+    validations:
+      required: true
