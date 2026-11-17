@@ -195,6 +195,11 @@ body.tab-setlist #modes{display:none}
 .prog-r .ps.od{color:var(--acc)}
 .prog-b i{display:block;height:100%;border-radius:99px;background:var(--grad);transition:width .4s}
 .prog-h{margin-top:6px;color:var(--mut);font-size:11px}
+.prog-r button{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer;text-align:left}
+.prog-r .pr-l:hover,.prog-r .mu:hover{color:var(--acc)}
+.prog.open .prog-r .sel{color:var(--acc)}
+.prog-h .sw{background:none;border:0;padding:0;font:inherit;color:var(--mut);cursor:pointer}
+.prog-h .sw.on{color:var(--acc)}   /* 開いている一覧(曲 / ライブ)の文字を強調 */
 .otd{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;padding:8px 12px;margin:4px 0 10px;background:var(--card)}
 .otd-h{display:flex;gap:10px;align-items:baseline;font:700 12px ui-monospace,monospace;letter-spacing:.08em;margin-bottom:2px}
 .otd-h .mut{color:var(--mut)}
@@ -481,7 +486,8 @@ body.noanim .day-h,body.shifting .day-h{animation:none!important}
 .card.open .cxi>*{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both;animation-delay:calc(var(--i,0) * 50ms + 60ms)}
 .card.open>.cx>.cxi{padding-top:6px}
 .card.fold .hd .chv{margin:6px 9px 0 6px;transform:rotate(45deg)}
-.card.fold .hd .ttl{flex:1;min-width:0}
+.card.fold .hd .ttl{flex:0 1 auto;min-width:0;margin-right:auto}
+.sub .mp{display:inline-block;padding:2px 4px;margin:-2px 0;color:var(--acc);text-decoration:none}   /* タイトルは文字の幅だけ(リンクも文字のところだけ)。矢印は右端に寄せる */
 .card.fold.open .hd .chv{transform:rotate(225deg)}
 .card.fold.open{border-color:var(--main);box-shadow:inset 3px 0 0 var(--main)}
 .card.fold.open.att{border-left-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}   /* 開いたときも、左側の線だけピンク */
@@ -695,7 +701,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (!e) b.append(el('div', 'sub', 'SETLIST NOT FOUND'));
     else {
       b.append(el('h2', '', e.title || 'SETLIST'), (() => { const sd = el('div', 'sub'); sd.append(el('span', 'dt', fmtW(sid)), document.createTextNode(e.venue ? '  ' + e.venue : '')); return sd; })());
-      const syncs = [], ar = el('div', 'act'); ar.append(attBtn(sid, null, () => syncs.forEach(f => f()))); b.append(ar);
+      const syncs = []; if (SET.att !== false) { const ar = el('div', 'act'); ar.append(attBtn(sid, null, () => syncs.forEach(f => f()))); b.append(ar); }   // ATTENDEDカードを非表示にしているときは、ポップアップのボタンも出さない
       const ol = el('ol');
       (e.songs || []).filter(s => s && s.title).slice().sort((x, y) => (x.order || 0) - (y.order || 0)).forEach((s, i) => {
         const li = el('li', hs.indexOf(tkey(s.title)) >= 0 ? 'hl' : ''), w = el('div');
@@ -704,7 +710,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
         if (sub) w.append(el('div', 'sub', sub));
         li.append(el('i', '', String(s.order || i + 1)), w);
         const f = SONGS.find(x => tkey(x.title) === tkey(s.title)); if (f && okUrl(f.o.link)) { const a = el('a', '', '\u25B6'); a.href = f.o.link; a.target = '_blank'; a.rel = 'noopener'; li.append(a); }
-        li.append(songAtt(sid, s, syncs));
+        if (SET.att !== false) li.append(songAtt(sid, s, syncs));
         ol.append(li);
       });
       b.append(ol);
@@ -763,23 +769,61 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     Array.from(attS).forEach(x => { if (x.indexOf(sid + '|') === 0) attS.delete(x); });
     saveAtt(); saveAttX(); saveAttS(); heardSet = null; refreshAttBtns(sid); progUpd();
   };
+  let attMode = (() => { try { return localStorage.getItem('su_att_mode') === 'song' ? 'song' : 'live'; } catch (e) { return 'live'; } })();   // ATTENDEDカードの表示: ライブ / 曲
+  let attSong = (() => { try { return localStorage.getItem('su_att_song') === 'rest' ? 'rest' : 'heard'; } catch (e) { return 'heard'; } })();   // SONGS表示の中: 聴いた曲 / まだ聴いていない曲
+  const titleOfKey = k => { const s = SMAP.get(k); if (s) return s.title; for (const e of data.setlist) { const x = (e.songs || []).find(y => y && y.title && tkey(y.title) === k); if (x) return x.title; } return k; };
+  const heardList = () => {   // 聴いた曲の一覧(getHeardと同じ条件)。曲ごとに、聴いたライブの数も数える
+    const m = new Map(), add = (k, title, sid) => { if (!k) return; let r = m.get(k); if (!r) { r = { k, title: title || (SMAP.get(k) || {}).title || k, sids: new Set() }; m.set(k, r); } r.sids.add(sid); };
+    att.forEach(sid => { const e = SLMAP.get(sid); ((e && e.songs) || []).forEach(s => { if (s && s.title && !attX.has(sid + '|' + tkey(s.title))) add(tkey(s.title), s.title, sid); }); });
+    attS.forEach(key => { const i = key.indexOf('|'), sid = key.slice(0, i), k = key.slice(i + 1), e = SLMAP.get(sid), s = ((e && e.songs) || []).find(x => x && tkey(x.title) === k); add(k, s && s.title, sid); });
+    return Array.from(m.values()).sort((a, b) => String(a.title).localeCompare(String(b.title), 'ja'));
+  };
+  const unHear = k => {   // ✕: その曲を、どのライブでも聴いていないことにする(ライブ全体のATTENDEDは残す)
+    att.forEach(sid => { const e = SLMAP.get(sid); ((e && e.songs) || []).forEach(s => { if (s && s.title && tkey(s.title) === k) attX.add(sid + '|' + k); }); });
+    Array.from(attS).forEach(x => { if (x.slice(x.indexOf('|') + 1) === k) attS.delete(x); });
+    saveAttX(); saveAttS(); heardSet = null; progUpd();
+  };
   const makeProg = () => {   // ATTENDEDカード: 初期はシンプル(進み具合だけ)、押すと詳細(行ったライブの一覧)が開閉する
     const box = el('div', 'prog' + (attOpen ? ' open' : '')); let prevRows = null, lastPc = 0, lastKey = '';
     if (cardIn === 'att') { cardIn = ''; cinOnce(box); }
     const fill = () => {
       const h = getHeard(); let n = 0; stats().forEach((v, k) => { if (h.has(k)) n++; });
-      const tot = stats().size, pc = tot ? Math.round(n * 100 / tot) : 0, first = prevRows === null, key = n + '|' + att.size; box.textContent = '';
-      const r = el('button', 'prog-r'); r.type = 'button'; r.setAttribute('aria-expanded', attOpen ? 'true' : 'false');
-      const rr = el('span', 'pr-r'); rr.append(el('span', 'mu', 'ATTENDED ' + att.size + ' LIVES'), el('span', 'cv', '\u25BE')); r.append(el('span', 'pr-l', 'HEARD ' + n + ' / ' + tot + ' SONGS'), rr);
-      r.onclick = () => { attOpen = !attOpen; box.classList.toggle('open', attOpen); r.setAttribute('aria-expanded', attOpen ? 'true' : 'false'); if (attOpen) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10); };
+      const td = todayKey(), pastAll = LIVES.filter(l => l.date && l.date <= td).length, pastAtt = Array.from(att).filter(sid => String(sid).slice(0, 8) <= td).length;   // LIVES: 今日までのライブのうち行った数 / 全体
+      const tot = stats().size, pcS = tot ? Math.round(n * 100 / tot) : 0, pcL = pastAll ? Math.round(pastAtt * 100 / pastAll) : 0, pc = attMode === 'song' ? pcS : pcL, first = prevRows === null, key = n + '|' + att.size; box.textContent = '';
+      const r = el('div', 'prog-r'), L = el('button', 'pr-l' + (attMode === 'song' ? ' sel' : '')), M = el('button', 'mu' + (attMode === 'live' ? ' sel' : '')), V = el('button', 'cv', '\u25BE'), rr = el('span', 'pr-r');
+      [L, M, V].forEach(b => { b.type = 'button'; });
+      L.textContent = 'HEARD ' + n + ' / ' + tot + ' SONGS'; M.textContent = 'ATTENDED ' + pastAtt + ' / ' + pastAll + ' LIVES';
+      V.setAttribute('aria-expanded', attOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
+      rr.append(M, V); r.append(L, rr);
+      const setOpen = o => { attOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10); };
+      const pick = md => {   // 文字を押すと、その一覧(曲 / ライブ)に切り替わる。開いている一覧の文字をもう一度押すと閉じる
+        if (attOpen && attMode === md) { setOpen(false); return; }
+        const was = attOpen; attMode = md; try { localStorage.setItem('su_att_mode', md); } catch (e) {}
+        attOpen = true; box.classList.add('open'); fill(); if (!was) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10);
+      };
+      L.onclick = () => pick('song'); M.onclick = () => pick('live'); V.onclick = () => setOpen(!attOpen);
       if (!first && key !== lastKey) Array.from(r.querySelectorAll('.pr-l, .mu')).forEach(n2 => n2.classList.add('pk'));
       const bar = el('div', 'prog-b'), i = el('i'); i.style.width = (first ? pc : lastPc) + '%'; bar.append(i); box.append(r, bar);
       if (!first && lastPc !== pc) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = pc + '%'; }));
       lastPc = pc; lastKey = key;
-      const dw = el('div', 'prog-d'), di = el('div');
+      const dw = el('div', 'prog-d'), di = el('div'), hl = heardList();
       const part = l => Array.from(attS).filter(x => x.indexOf(l.sid + '|') === 0).length, rows = LIVES.filter(l => att.has(l.sid) || part(l)).sort(byDateDesc);
-      if (!rows.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
-      rows.forEach(l => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'ATTENDから外す'); c.onclick = () => outThen(w, 'out', 200, () => unAtt(l.sid)); w.append(b, c); di.append(w); });
+      if (attMode === 'song') {
+        const hs = getHeard(), rest = []; stats().forEach((v, k) => { if (!hs.has(k)) rest.push(k); });   // まだ聴いていない曲: 今日までに演奏されたのに、記録がない曲
+        const sw = el('div', 'prog-h');
+        [['heard', '聴いた曲 ' + hl.length], ['rest', 'まだ聴いていない曲 ' + rest.length]].forEach(([md, txt], ix) => { if (ix) sw.append(document.createTextNode(' / ')); const b = el('button', 'sw' + (attSong === md ? ' on' : ''), txt); b.type = 'button'; b.onclick = () => { if (attSong === md) return; attSong = md; try { localStorage.setItem('su_att_song', md); } catch (e) {} fill(); }; sw.append(b); });
+        di.append(sw);
+        if (attSong === 'rest') {
+          if (!rest.length) di.append(el('div', 'prog-h', 'まだ聴いていない曲はありません'));
+          rest.map(k => ({ k, title: titleOfKey(k) })).sort((a, b) => String(a.title).localeCompare(String(b.title), 'ja')).forEach(r => { const ds = (PLAYED.get(r.k) || []).slice().sort(), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', ds.length + ' LIVES  LAST ' + fmt(ds[ds.length - 1] || '')), el('span', 't', r.title)); b.onclick = () => qGo(r.title); di.append(b); });
+        } else {
+          if (!hl.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
+          hl.forEach(r => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', r.sids.size + ' LIVES'), el('span', 't', r.title)); b.onclick = () => qGo(r.title); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', '聴いた曲から外す'); c.onclick = () => outThen(w, 'out', 200, () => unHear(r.k)); w.append(b, c); di.append(w); });
+        }
+      } else {
+        if (!rows.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
+        rows.forEach(l => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'ATTENDから外す'); c.onclick = () => outThen(w, 'out', 200, () => unAtt(l.sid)); w.append(b, c); di.append(w); });
+      }
       prevRows = new Set(rows.map(l => l.sid));
       dw.append(di); box.append(dw);
     };
@@ -861,8 +905,12 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const hm4 = x => /^\d{4}$/.test(x) ? x.slice(0, 2) + ':' + x.slice(2) : x;
   const liveLab = l => l.lkind || 'LIVE';   // ライブの帯の表記(LINKSとLIVESで共通)
   const liveMeta = (c, l) => {   // ライブの会場の行・メンバー・ENCORE/初演のタグ(LINKSとLIVESで共通。曲数が0のときは出さない)
-    const sub = [l.tno ? l.tno + ' / ' + l.tcnt + '公演' : '', l.open ? '開場 ' + hm4(l.open) : '', /^\d{4}$/.test(l.time || '') && l.time !== '0000' ? '開演 ' + hm4(l.time) : '', l.venue, l.area, l.n ? l.n + ' SONGS' : ''].filter(Boolean).join(' / ');
-    if (sub) c.append(el('div', 'sub', sub));
+    const toks = [l.tno ? l.tno + ' / ' + l.tcnt + '公演' : '', l.open ? '開場 ' + hm4(l.open) : '', /^\d{4}$/.test(l.time || '') && l.time !== '0000' ? '開演 ' + hm4(l.time) : '', l.venue ? { v: l.venue } : '', l.area, l.n ? l.n + ' SONGS' : ''].filter(Boolean);
+    if (toks.length) {
+      const s = el('div', 'sub');
+      toks.forEach((x, ix) => { if (ix) s.append(document.createTextNode(' / ')); if (typeof x === 'string') s.append(document.createTextNode(x)); else { s.append(document.createTextNode(x.v + ' ')); const a = el('a', 'mp', '\u2197'); a.href = mapUrl(l); a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', '地図'); s.append(a); } });   // 会場名の右の矢印を押すと地図が開く
+      c.append(s);
+    }
     if (l.mem.length) c.append(chipRow(l.mem.map(n => ({ t: n, fn: () => qGo(n) }))));
     if (l.enc.length || l.fst.length) {
       const tr = el('div', 'tgs');
@@ -874,14 +922,18 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const mapUrl = l => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([l.venue, l.area].filter(Boolean).join(' '));
   const panelBtn = (a, pn, txt, fill) => { const b = el('button', 'btn', txt); b.type = 'button'; b.onclick = () => { const on = pn.dataset.k !== '1'; pn.dataset.k = on ? '1' : ''; b.classList.toggle('on', on); if (!on) { shut(pn, 170); return; } unshut(pn); pn.innerHTML = ''; fill(); }; a.append(b); };
-  const openBtn = i => okUrl(i.url) ? (i.src === 'YT' ? ytBtn(i.url, '\u25B6 PLAY') : linkBtn(i.url, 'OPEN \u2197')) : null;   // 元の投稿・公式ページ。YouTubeは再生ボタン
-  const liveActs = (c, l, it, hits, extra) => {   // ボタン: SETLIST・MY PLAN・ATTEND(ED)・関連する投稿・MAP(LINKSとLIVESで共通)
-    const a = el('div', 'act'), pn = el('div', 'panel'), b = el('button', 'btn main', 'SETLIST'); pn.hidden = true; b.onclick = () => openSet(l.sid, hits); a.append(b, myBtn(it), attBtn(l.sid, c));
+  const openBtn = i => (okUrl(i.url) && i.src === 'YT') ? ytBtn(i.url, '\u25B6 PLAY') : null;   // YouTubeのログだけ再生ボタン
+  const botRow = (c, it, sid) => {   // 一番下の行: MY PLAN と ATTEND(ED)。設定でそれぞれのカードを非表示にしているときは、ボタンも出さない
+    const bs = []; if (SET.my !== false) bs.push(myBtn(it)); if (sid && SET.att !== false) bs.push(attBtn(sid, c));
+    if (bs.length) { const r = el('div', 'act'); bs.forEach(x => r.append(x)); c.append(r); }
+    if (sid) c.classList.toggle('att', SET.att !== false && att.has(sid));
+  };
+  const liveActs = (c, l, it, hits, extra) => {   // ボタン: SETLIST・関連する投稿(LINKSとLIVESで共通)。MY PLAN・ATTENDは一番下
+    const a = el('div', 'act'), pn = el('div', 'panel'), b = el('button', 'btn main', 'SETLIST'); pn.hidden = true; b.onclick = () => openSet(l.sid, hits); a.append(b);
     const rel = INFOS.filter(x => x.sid === l.sid && x !== it).sort((x, y) => (x.date + (x.time || '')).localeCompare(y.date + (y.time || '')));   // 同じライブを指すほかのログ(告知・動画など)
     if (rel.length) panelBtn(a, pn, 'RELATED ' + rel.length, () => rel.forEach(x => { const ok = okUrl(x.url), r = ok ? el('a', '', fmt(x.date) + '  ' + x.title) : el('div', '', fmt(x.date) + '  ' + x.title); if (ok) { r.href = x.url; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
-    if (l.venue) a.append(linkBtn(mapUrl(l), 'MAP \u2197'));
     (extra || []).forEach(x => a.append(x));
-    c.append(a, pn); c.classList.toggle('att', att.has(l.sid));
+    c.append(a, pn); botRow(c, it, l.sid);
   };
   const liveCard = (l, nd) => () => {
     const c = el('div', 'card'); head(c, l.date, cbdg(l.lkind || 'LIVE', '#4ade80', () => goLab(l.lkind || 'LIVE')), l.title, nd);
@@ -895,11 +947,11 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const cr = []; i.mem.forEach(n => cr.push({ t: n, fn: () => qGo(n) }));
     if (cr.length) c.append(chipRow(cr));
     const a = el('div', 'act'), pn = el('div', 'panel'); pn.hidden = true; if (i.sid) { const s = el('button', 'btn', 'SETLIST'); s.onclick = () => openSet(i.sid); a.append(s); }
-    a.append(myBtn(i));
     const rs = i.rel ? SONGS.filter(s => s.albums.concat(s.singles).some(n => norm(n) === norm(i.rel))) : [];   // releaseのログ: 同じ作品名の収録曲
     if (rs.length) panelBtn(a, pn, 'SONGS ' + rs.length, () => rs.forEach(s => { const ok = okUrl(s.o.link), r = ok ? el('a', '', '\u25B6 ' + s.title) : el('div', '', s.title); if (ok) { r.href = s.o.link; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
     if (ob) a.append(ob);
-    c.append(a, pn); return c;
+    if (a.children.length) c.append(a, pn);
+    botRow(c, i, null); return c;
   };
   const yearsOf = arr => Array.from(new Set(arr.map(i => (i.date || '').slice(0, 4)).filter(Boolean))).sort().reverse();
   const yearChips = (ys, curY, fn) => {   // 検索チップの一番上: データにある年
