@@ -280,6 +280,7 @@ dialog li a + .sm{margin-left:8px}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes sheet{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
 .card{}
+.panel[hidden]{display:none}   /* 閉じている一覧が、線だけ残って見えないように */
 .panel:not([hidden]){}
 .panel.out{}
 #sug.out,.cb-list.out{}   /* 閉じるときは開くときの逆再生 */
@@ -449,8 +450,8 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .hero-h.flat~.agenda>.day-sec:not(:first-child){margin-top:7px}
 .hero-h.flat~.agenda>.day-sec>.day-h{margin-bottom:4px}
 /* 日付の帯もカードと同じ現れ方(TODAY・Next・BEFORE・AFTER、追加読み込み分も) */
-.day-h{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both}
-body.noanim .day-h,body.shifting .day-h{animation:none!important}
+.day-h,.tour-h{animation:pIn .32s cubic-bezier(.2,.9,.25,1.1) both}
+body.noanim .day-h,body.shifting .day-h,body.noanim .tour-h,body.shifting .tour-h{animation:none!important}
 .tm{display:flex;align-items:center;gap:8px;font:500 13px ui-monospace,monospace;color:var(--mut)}
 .tm .badge{margin-left:auto;margin-right:36px}   /* 開閉の矢印の縦のラインから離して、誤タップを防ぐ */
 /* ===== MOREボタン: 日付の帯と同じ仲間(暗い帯・右は斜め・左に青い斜めのライン) ===== */
@@ -571,6 +572,8 @@ html::-webkit-scrollbar{width:8px}
 html::-webkit-scrollbar-track{background:transparent}
 html::-webkit-scrollbar-thumb{background:var(--card2);border-radius:4px}
 html::-webkit-scrollbar-thumb:hover{background:var(--line)}
+
+.btn.col[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -617,7 +620,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const MAINC = ['LIVE', 'RELEASE', 'EVENT', 'TV', 'RADIO', 'FUNCTION'], BC = { LIVE: '#4ade80', RELEASE: '#c084fc' };
   const badgeOf = i => MAINC.find(k => i.cats.indexOf(k) >= 0) || SRCCAT[i.src] || i.cats[0] || i.contents || '--';
   const srcOf = u => { const h = String(u || '').toLowerCase(); return !h ? '--' : /x\.com|twitter\.com/.test(h) ? 'X' : /instagram\.com/.test(h) ? 'IG' : /tiktok\.com/.test(h) ? 'TT' : /youtu\.be|youtube\.com/.test(h) ? 'YT' : 'WEB'; };
-  const CATS = { LIVE: ['LIVE'], TOUR: ['TOUR'], RELEASE: ['RELEASE', 'CD', 'BD', 'DVD', 'DIGITAL', 'MUSICCARD'], EVENT: ['EVENT', 'FANMEETING', 'RELEASEEVENT', 'STAGE', 'TICKET', 'ANNIVERSARY', 'BIRTHDAY', 'DEBUT', 'FORMATION', 'CAMPAIGN'], TV: ['TV'], RADIO: ['RADIO'], FUNCTION: ['FANCLUB'], SNS: ['SNS', 'YOUTUBE'], WEB: ['WEB'] };
+  const CATS = { LIVE: ['LIVE'], TOUR: ['TOUR'], RELEASE: ['RELEASE', 'CD', 'BD', 'DVD', 'DIGITAL', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'], EVENT: ['EVENT', 'FANMEETING', 'RELEASEEVENT', 'STAGE', 'TICKET', 'ANNIVERSARY', 'BIRTHDAY', 'DEBUT', 'FORMATION', 'CAMPAIGN'], TV: ['TV'], RADIO: ['RADIO'], FUNCTION: ['FANCLUB'], SNS: ['SNS', 'YOUTUBE'], WEB: ['WEB'] };
   const SRCCAT = { X: 'X', IG: 'INSTAGRAM', TT: 'TIKTOK', YT: 'YOUTUBE' };
   const catOf = (contents, s) => {
     const c = String(contents || '').toUpperCase(), out = [];
@@ -629,8 +632,8 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     return out;
   };
   const okUrl = u => /^https?:\/\//i.test(u || '');
-  const MEM = { YUA: '神野友亜', IZM: '杉岡泉美', HRM: '坂本ひろ美', MIU: '赤坂美羽' };   // メンバーのコードと表示名(表示順)
-  const MEMY = { YUA: 'しんの ゆうあ しんのゆうあ', IZM: 'すぎおか いずみ すぎおかいずみ', HRM: 'さかもと ひろみ さかもとひろみ', MIU: 'あかさか みゆう あかさかみゆう' };   // メンバーの読み(ひらがなで検索できるように)
+  const MEM = { YUA: '神野友亜', IZM: '杉岡泉美', HRM: '坂本ひろ美', MIU: '赤坂美羽', OFFICIAL: 'OFFICIAL' };   // メンバーのコードと表示名(表示順)
+  const MEMY = { YUA: 'しんの ゆうあ しんのゆうあ', IZM: 'すぎおか いずみ すぎおかいずみ', HRM: 'さかもと ひろみ さかもとひろみ', MIU: 'あかさか みゆう あかさかみゆう', OFFICIAL: 'official おふぃしゃる' };   // メンバーの読み(ひらがなで検索できるように)
   const memYomi = codes => Object.keys(MEM).filter(k => (codes || []).indexOf(k) >= 0).map(k => MEMY[k]);
   const memNames = codes => { const u = Object.keys(MEM).filter(k => (codes || []).indexOf(k) >= 0); return u.map(k => MEM[k]); };   // 全員のときも表示する
   const isEnc = s => /^(encore|アンコール|en)$/i.test(String(s.type || '').trim());
@@ -840,30 +843,64 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const k = myKeyOf(it), b = el('button', 'btn my'); b.type = 'button'; b.dataset.k = k;
     const sync = () => { const on = myHas(k); b.textContent = on ? '\u2713 MY PLAN' : '+ MY PLAN'; b.classList.toggle('myon', on); b.hidden = !on && myEnd(it.date || '') < todayKey(); };   // 過去の予定は追加できない(すでにMY PLANにあるものは、未実施・完了済とも表示する)
     sync(); b._sync = sync;
-    b.onclick = () => { const i = MY.findIndex(x => x.k === k); if (i >= 0) MY.splice(i, 1); else MY.unshift({ k, d: it.date || '', t: it.title || '', x: it.kind || '' }); myPulse = true; if (i < 0) myNewK = k; saveMy(); refreshMy(); };
+    b.onclick = () => { const i = MY.findIndex(x => x.k === k); if (i >= 0) MY.splice(i, 1); else MY.unshift({ k, d: it.date || '', h: String(it.time || ''), t: it.title || '', x: it.kind || '' }); myPulse = true; if (i < 0) myNewK = k; saveMy(); refreshMy(); };
     return b;
+  };
+  const COLKEY = 'su_col', COLCATS = ['CD', 'BD', 'DVD', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'];   // 手元に残るもの(cat)
+  let COL = (() => { try { const a = JSON.parse(localStorage.getItem(COLKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
+  let myMode = (() => { try { return localStorage.getItem('su_my_mode') === 'col' ? 'col' : 'plan'; } catch (e) { return 'plan'; } })();   // MY PLANカードの表示: 予定 / コレクション
+  const saveCol = () => { try { localStorage.setItem(COLKEY, JSON.stringify(COL)); } catch (e) {} };
+  const colHas = k => COL.some(x => x.k === k), colTarget = it => COLCATS.indexOf(String(it.contents || '').toUpperCase()) >= 0;
+  const colBtn = it => {
+    const k = myKeyOf(it), b = el('button', 'btn col'); b.type = 'button'; b.dataset.k = k;
+    const sync = () => { const on = colHas(k); b.textContent = on ? '\u2713 COLLECTION' : '+ COLLECTION'; b.classList.toggle('myon', on); };
+    sync(); b._sync = sync;
+    b.onclick = () => { const i = COL.findIndex(x => x.k === k); if (i >= 0) COL.splice(i, 1); else COL.unshift({ k, d: it.date || '', h: String(it.time || ''), t: it.title || '', c: String(it.contents || '') }); saveCol(); refreshMy(); };
+    return b;
+  };
+  const myTimeOf = x => {   // 一覧の日付の右に出す時刻。保存してあればそれ、なければライブのidかログから探す
+    let h = String(x.h || '');
+    if (!h) { if (String(x.k).indexOf('live|') === 0) h = String(x.k).slice(13, 17); else { const v = INFOS.find(i => myKeyOf(i) === x.k); h = v ? String(v.time || '') : ''; } }
+    return /^\d{4}$/.test(h) && h !== '0000' ? h.slice(0, 2) + ':' + h.slice(2) : '';
   };
   const makeMy = () => {   // タブと見出しの間のカード。閉じているときは「次の予定」だけ、開くと日付順の一覧
     const t = todayKey(), cmp = (a, b) => myEnd(a.d).localeCompare(myEnd(b.d)), todo = MY.filter(x => !x.c).sort(cmp), up = todo.filter(x => myEnd(x.d) >= t), od = todo.filter(x => myEnd(x.d) < t), dn = MY.filter(x => x.c).sort((a, b) => cmp(b, a));   // 完了(チェック)したものだけが「完了済」。日付が過ぎても完了していないものは未完了のまま(赤字)
-    const box = el('div', 'prog my' + (myOpen ? ' open' : '')), r = el('button', 'prog-r'); r.type = 'button'; r.setAttribute('aria-expanded', myOpen ? 'true' : 'false');
+    const box = el('div', 'prog my' + (myOpen ? ' open' : '')), r = el('div', 'prog-r');
     if (cardIn === 'my') { cardIn = ''; cinOnce(box); }
     const nx = up[0]; let nt = '予定なし';
     if (nx) { const d = nx.d || '', n = d.length === 8 ? Math.round((dayOf(d) - dayOf(t)) / 864e5) : null; nt = '次 ' + (d.length >= 8 ? fmtW(d).slice(5) : myDate(d)) + (n === null ? '' : n === 0 ? ' 本日' : ' あと' + n + '日'); }
-    const pl = el('span', 'pr-l', 'MY PLAN ' + up.length), ps = el('span', 'ps' + (od.length ? ' od' : ''), '未完了 ' + todo.length + (od.length ? ' / 期限切れ ' + od.length : ''));
+    const L = el('button', 'pr-l' + (myMode === 'plan' ? ' sel' : '')), M = el('button', 'mu' + (myMode === 'col' ? ' sel' : '')), V = el('button', 'cv', '\u25BE'), rr = el('span', 'pr-r');
+    [L, M, V].forEach(b => { b.type = 'button'; });
+    const ps = el('span', 'ps' + (od.length ? ' od' : ''), '未完了 ' + todo.length + (od.length ? ' / 期限切れ ' + od.length : ''));
     if (myPulse) ps.classList.add('pk');
-    pl.append(ps); const rr = el('span', 'pr-r'); rr.append(el('span', 'mu', nt), el('span', 'cv', '\u25BE')); r.append(pl, rr);
-    r.onclick = () => { myOpen = !myOpen; box.classList.toggle('open', myOpen); r.setAttribute('aria-expanded', myOpen ? 'true' : 'false'); if (myOpen) cascade(Array.from(box.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); };
+    L.append(document.createTextNode('MY PLAN ' + up.length + ' '), ps); M.textContent = 'MY COLLECTION ' + COL.length;
+    V.setAttribute('aria-expanded', myOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
+    rr.append(M, V); r.append(L, rr);
+    const setMyOpen = o => { myOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); };
+    const pickMy = md => {   // 文字を押すと、その一覧(予定 / コレクション)に切り替わる。開いている一覧の文字をもう一度押すと閉じる
+      if (myOpen && myMode === md) { setMyOpen(false); return; }
+      const was = myOpen; myMode = md; try { localStorage.setItem('su_my_mode', md); } catch (e) {}
+      myOpen = true; refreshMy(); if (!was) { const nb = document.querySelector('#view > .prog.my'); if (nb) cascade(Array.from(nb.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); }
+    };
+    L.onclick = () => pickMy('plan'); M.onclick = () => pickMy('col'); V.onclick = () => setMyOpen(!myOpen);
     const dw = el('div', 'prog-d'), di = el('div');
-    const row = (x, dim) => { const late = !dim && myEnd(x.d) < t, w = el('div', 'my-r' + (dim ? ' dn' : '') + (late ? ' od' : '')), b = el('button', 'att-r'), ck = el('button', 'my-c' + (x.c ? ' on' : ''), x.c ? '\u2713' : ''); ck.type = 'button'; ck.setAttribute('aria-label', x.c ? '未完了に戻す' : '完了にする'); ck.onclick = () => { if (myBusy) return; const m = MY.find(y => y.k === x.k); if (!m) return; const fin = () => { myBusy = false; m.c = !m.c; saveMy(); myPulse = true; refreshMy(); }; if (!animOK()) { fin(); return; } myBusy = true; ck.classList.add('pk'); setTimeout(() => outThen(w, 'out', 200, fin), 130); }; b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'MY PLANから外す'); c.onclick = () => { if (myBusy) return; myBusy = true; outThen(w, 'out', 200, () => { myBusy = false; const i = MY.findIndex(y => y.k === x.k); if (i >= 0) MY.splice(i, 1); saveMy(); myPulse = true; refreshMy(); }); }; w.append(ck, b, c); if (x.k === myNewK || (dim && myDoneIn)) w.classList.add('in'); return w; };
+    const row = (x, dim) => { const late = !dim && myEnd(x.d) < t, w = el('div', 'my-r' + (dim ? ' dn' : '') + (late ? ' od' : '')), b = el('button', 'att-r'), ck = el('button', 'my-c' + (x.c ? ' on' : ''), x.c ? '\u2713' : ''); ck.type = 'button'; ck.setAttribute('aria-label', x.c ? '未完了に戻す' : '完了にする'); ck.onclick = () => { if (myBusy) return; const m = MY.find(y => y.k === x.k); if (!m) return; const fin = () => { myBusy = false; m.c = !m.c; saveMy(); myPulse = true; refreshMy(); }; if (!animOK()) { fin(); return; } myBusy = true; ck.classList.add('pk'); setTimeout(() => outThen(w, 'out', 200, fin), 130); }; b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'MY PLANから外す'); c.onclick = () => { if (myBusy) return; myBusy = true; outThen(w, 'out', 200, () => { myBusy = false; const i = MY.findIndex(y => y.k === x.k); if (i >= 0) MY.splice(i, 1); saveMy(); myPulse = true; refreshMy(); }); }; w.append(ck, b, c); if (x.k === myNewK || (dim && myDoneIn)) w.classList.add('in'); return w; };
+    if (myMode === 'col') {   // MY COLLECTION: 手元に残るもの(日付の新しい順)。✕で外す
+      const cl = COL.slice().sort((a, b) => String(b.d).localeCompare(String(a.d)));
+      if (!cl.length) di.append(el('div', 'prog-h', 'コレクションはまだありません / カードの + COLLECTION で追加できます'));
+      cl.forEach(x => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'COLLECTIONから外す'); c.onclick = () => outThen(w, 'out', 200, () => { const i = COL.findIndex(y => y.k === x.k); if (i >= 0) COL.splice(i, 1); saveCol(); refreshMy(); }); w.append(b, c); di.append(w); });
+    } else {
+      if (nx) di.append(el('div', 'prog-h', nt));   // 次の予定
     if (!todo.length) di.append(el('div', 'prog-h', MY.length ? '未完了の予定はありません' : '予定はまだありません / カードの + MY PLAN で追加できます'));
     todo.forEach(x => di.append(row(x, false)));
     if (dn.length) { const tb = el('button', 'my-dn', myDone ? '完了済を隠す' : '完了済 ' + dn.length + '件を表示'); tb.type = 'button'; tb.onclick = () => { if (myBusy) return; if (myDone) { Array.from(di.querySelectorAll('.my-r.dn')).forEach(n2 => outThen(n2, 'out', 0, () => {})); myBusy = true; setTimeout(() => { myBusy = false; myDone = false; refreshMy(); }, animOK() ? 200 : 0); } else { myDone = true; myDoneIn = true; refreshMy(); } }; di.append(tb); if (myDone) dn.forEach(x => di.append(row(x, true))); }
+    }
     dw.append(di); const bar = el('div', 'prog-b my'), tot = MY.length;   // ATTENDEDと同じ形のバー: 予定あり(ベースカラー)と期限切れ(アクセントカラー)。予定がなければ色なし
-    if (tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; bar.append(i); }; bi('up', up.length); bi('od', od.length); }
+    if (myMode === 'plan' && tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; bar.append(i); }; bi('up', up.length); bi('od', od.length); }
     myNewK = ''; myDoneIn = false; myPulse = false; box.append(r, bar, dw); return box;   // バーはATTENDEDと同じ高さ(閉じたときのカードの高さがそろう)
   };
   const refreshMy = () => {   // ボタンの表示と、カードを作り直す
-    document.querySelectorAll('.btn.my').forEach(b => b._sync && b._sync());
+    document.querySelectorAll('.btn.my, .btn.col').forEach(b => b._sync && b._sync());
     const old = document.querySelector('#view > .prog.my'), nw = (SET.my !== false && tab !== 'setlist') ? makeMy() : null;
     if (old) { if (nw) old.replaceWith(nw); else outThen(old, 'cout', 240, () => old.remove()); } else if (nw) { cinOnce(nw); $('view').prepend(nw); }
   };
@@ -905,7 +942,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const hm4 = x => /^\d{4}$/.test(x) ? x.slice(0, 2) + ':' + x.slice(2) : x;
   const liveLab = l => l.lkind || 'LIVE';   // ライブの帯の表記(LINKSとLIVESで共通)
   const liveMeta = (c, l) => {   // ライブの会場の行・メンバー・ENCORE/初演のタグ(LINKSとLIVESで共通。曲数が0のときは出さない)
-    const toks = [l.tno ? l.tno + ' / ' + l.tcnt + '公演' : '', l.open ? '開場 ' + hm4(l.open) : '', /^\d{4}$/.test(l.time || '') && l.time !== '0000' ? '開演 ' + hm4(l.time) : '', l.venue ? { v: l.venue } : '', l.area, l.n ? l.n + ' SONGS' : ''].filter(Boolean);
+    const toks = [l.tno ? l.tno + ' / ' + l.tcnt + '公演' : '', l.open ? '開場 ' + hm4(l.open) : '', l.venue ? { v: l.venue } : '', l.n ? l.n + ' SONGS' : ''].filter(Boolean);   // エリアは出さない(タイトルに「○○公演」と入れる)
     if (toks.length) {
       const s = el('div', 'sub');
       toks.forEach((x, ix) => { if (ix) s.append(document.createTextNode(' / ')); if (typeof x === 'string') s.append(document.createTextNode(x)); else { s.append(document.createTextNode(x.v + ' ')); const a = el('a', 'mp', '\u2197'); a.href = mapUrl(l); a.target = '_blank'; a.rel = 'noopener'; a.setAttribute('aria-label', '地図'); s.append(a); } });   // 会場名の右の矢印を押すと地図が開く
@@ -924,7 +961,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const panelBtn = (a, pn, txt, fill) => { const b = el('button', 'btn', txt); b.type = 'button'; b.onclick = () => { const on = pn.dataset.k !== '1'; pn.dataset.k = on ? '1' : ''; b.classList.toggle('on', on); if (!on) { shut(pn, 170); return; } unshut(pn); pn.innerHTML = ''; fill(); }; a.append(b); };
   const openBtn = i => (okUrl(i.url) && i.src === 'YT') ? ytBtn(i.url, '\u25B6 PLAY') : null;   // YouTubeのログだけ再生ボタン
   const botRow = (c, it, sid) => {   // 一番下の行: MY PLAN と ATTEND(ED)。設定でそれぞれのカードを非表示にしているときは、ボタンも出さない
-    const bs = []; if (SET.my !== false) bs.push(myBtn(it)); if (sid && SET.att !== false) bs.push(attBtn(sid, c));
+    const bs = []; if (SET.my !== false) { bs.push(myBtn(it)); if (colTarget(it)) bs.push(colBtn(it)); } if (sid && SET.att !== false) bs.push(attBtn(sid, c));
     if (bs.length) { const r = el('div', 'act'); bs.forEach(x => r.append(x)); c.append(r); }
     if (sid) c.classList.toggle('att', SET.att !== false && att.has(sid));
   };
@@ -1096,7 +1133,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (!inn.children.length) return c;
     Array.from(inn.children).forEach((n, i) => n.style.setProperty('--i', i));
     cx.append(inn); c.append(cx); hd.append(el('span', 'chv'));
-    const tg = () => { const o = !c.classList.contains('open'); if (o) document.querySelectorAll('.card.fold.open').forEach(x => { if (x !== c) setCard(x, false); }); setCard(c, o); };   // 1枚を開くと、ほかの開いているカードは閉じる
+    const tg = () => setCard(c, !c.classList.contains('open'));   // 開いたカードは、自分で閉じるまで開いたまま(ほかのカードは閉じない)
     c.classList.add('fold'); hd.setAttribute('role', 'button'); hd.setAttribute('aria-expanded', 'false'); hd.tabIndex = 0;
     c.onclick = e => { if (e.target.closest('a,button,input,select,textarea')) return; tg(); };
     hd.onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('a')) { e.preventDefault(); tg(); } };
