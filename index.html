@@ -26,7 +26,7 @@ html.fw body{opacity:0}body{transition:opacity .14s ease-out}   /* フォント(
    文字: --soft 明るい補助文字 / --dim 暗い補助文字     状態: --ok 成功・LIVE / --err エラー・日曜
    影:   --shade 影の色 / --bg-rgb 背景(透過用)
    テーマ色(--main・--main2・--on・--acc)は、月・ツアー・リリースに合わせて applyTheme() が差し替える */
-:root{--bg:#0b0b0f;--card:#14141a;--line:#33333f;--fg:#f2f1ea;--mut:#a6a6b2;--card2:#262631;--face:#101016;--face-h:#1c1c25;--face-a:#23232d;--soft:#cfcfd8;--dim:#6d6d79;--ok:#4ade80;--err:#ff5a5a;--shade:0,0,0;--bg-rgb:11,11,15;--main:#00d9e8;--main-rgb:0,217,232;--main2:#00bcd0;--acc:#ff4fc4;--on:#002a30;--grad:linear-gradient(135deg,var(--main),var(--main2));--gx:0px;--tabh:0px;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#0b0b0f;--card:#14141a;--line:#33333f;--fg:#f2f1ea;--mut:#a6a6b2;--card2:#262631;--face:#101016;--face-h:#1c1c25;--face-a:#23232d;--soft:#cfcfd8;--dim:#6d6d79;--ok:#4ade80;--err:#ff5a5a;--shade:0,0,0;--bg-rgb:11,11,15;--main:#00d9e8;--main-rgb:0,217,232;--main2:#00bcd0;--acc:#ff4fc4;--sub:#ffc857;--on:#002a30;--grad:linear-gradient(135deg,var(--main),var(--main2));--gx:0px;--tabh:0px;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 #Blog1>h3{display:none}
 #site{display:block;font:400 30px/1 "Anton",Impact,"Arial Narrow","Hiragino Sans",sans-serif;letter-spacing:.02em;color:var(--fg);text-decoration:none;padding:10px 0 4px}
 @media(max-width:640px){#site{font-size:min(26px,calc((100vw - 181px) / 9.25))}}   /* 右のスイッチ・設定ボタンと同じ行に収まるよう、狭い画面ではタイトルを小さくする */
@@ -123,7 +123,7 @@ dialog li a{margin-left:auto;color:var(--acc);text-decoration:none}
 .day-h::before{content:"";position:absolute;left:-20px;top:0;bottom:0;width:18px;z-index:-1;background:var(--grad);clip-path:polygon(0 0,8px 0,8px 100%,0 100%);transition:clip-path .26s cubic-bezier(.2,.9,.25,1.2)}   /* 太さは最初の8px。縦線の上に重ねる。閉じているときはまっすぐ */
 .day-g:not(.closed)>.day-h::before{clip-path:polygon(10px 0,18px 0,8px 100%,0 100%)}   /* 開くと斜め(見出しの帯と同じ向き・角度)。水平の太さは同じ8px */
 .day-w{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s cubic-bezier(.2,.9,.25,1)}
-.day-i{overflow:hidden;min-height:0;transition:opacity .2s}
+.day-i{overflow:hidden;min-height:0;padding-bottom:2px;transition:opacity .2s}   /* カードの下の枠線が、端数の高さで切れないように余白を足す */
 .day-g.closed .day-w{grid-template-rows:0fr}.day-g.closed .day-i{opacity:0}
 
 .day-h .tag{padding:0 9px;border-radius:99px;font-size:11px;background:var(--grad);color:var(--on)}
@@ -197,7 +197,19 @@ body.tab-setlist #modes{display:none}
 .prog-h{margin-top:6px;color:var(--mut);font-size:11px}
 .prog-r button{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;letter-spacing:inherit;cursor:pointer;text-align:left}
 .prog-r .pr-l:hover,.prog-r .mu:hover{color:var(--acc)}
-.prog.open .prog-r .sel{color:var(--acc)}
+.prog-r .pt{flex:0 1 auto;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:4px 2px 5px;border-bottom:2px solid transparent;color:var(--mut);white-space:nowrap}
+.prog-r .pt .pn{font-weight:700;font-size:12px;letter-spacing:.06em}
+.prog-r .pt .pc{font-size:10px;font-weight:400;letter-spacing:.06em}
+.prog-r .pt.sel{color:var(--fg);border-bottom-color:var(--acc)}   /* 選んでいるタブ(閉じていても分かる) */
+.prog-r .pt:hover{color:var(--acc)}
+.prog-r .cv{margin-left:auto;padding:6px 4px}
+.prog-c{margin-top:4px;color:var(--mut);font-size:10px;letter-spacing:.06em}   /* バーの意味 */
+.prog-c .ps.od{color:var(--acc)}
+.prog-b.my i.col{background:var(--sub)}
+.prog-b.my i.dn{background:var(--sub)}   /* 完了済み */
+.prog-c .ps .dn{color:var(--sub)}
+.prog-b i.lv{background:var(--sub)}
+.prog-c .ps.pk,.prog-r .pc.pk{animation:pPick .26s cubic-bezier(.2,.9,.25,1.1);transform-origin:left center}
 .prog-h .sw{background:none;border:0;padding:0;font:inherit;color:var(--mut);cursor:pointer}
 .prog-h .sw.on{color:var(--acc)}   /* 開いている一覧(曲 / ライブ)の文字を強調 */
 .otd{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;padding:8px 12px;margin:4px 0 10px;background:var(--card)}
@@ -248,7 +260,7 @@ dialog li a + .sm{margin-left:8px}
 .my-r.out{animation:pOut .2s cubic-bezier(.4,0,.8,.2) forwards;pointer-events:none}
 .my-c.pk{animation:pPick .24s cubic-bezier(.2,.9,.25,1.1)}
 .prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk{animation:pPick .26s cubic-bezier(.2,.9,.25,1.1);transform-origin:left center}
-@media (prefers-reduced-motion:reduce){.prog.cin,.prog.cout,.my-r.in,.att-r.in,.my-r.out,.my-c.pk,.prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.prog.cin,.prog.cout,.my-r.in,.att-r.in,.my-r.out,.my-c.pk,.prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk,.prog-c .ps.pk,.prog-r .pc.pk{animation:none!important}}
 .prog-d{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
 .prog.open .prog-d{grid-template-rows:1fr}
 .prog-d>div{overflow:hidden;min-height:0}
@@ -280,7 +292,11 @@ dialog li a + .sm{margin-left:8px}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 @keyframes sheet{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
 .card{}
-.panel[hidden]{display:none}   /* 閉じている一覧が、線だけ残って見えないように */
+.panel[hidden]{display:none}
+.panel .pbd{display:inline-block;margin-right:6px;padding:0 4px;border:1px solid var(--line);border-radius:2px;color:var(--mut);font:700 9px/14px ui-monospace,monospace;letter-spacing:.06em}   /* 種類のバッジ */
+.panel .me{color:var(--mut)}
+.panel button{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.panel button:hover{color:var(--acc)}   /* 閉じている一覧が、線だけ残って見えないように */
 .panel:not([hidden]){}
 .panel.out{}
 #sug.out,.cb-list.out{}   /* 閉じるときは開くときの逆再生 */
@@ -362,7 +378,7 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
 /* ===== 初期表示の4区分: これまで / 本日 / 今月 / これから ===== */
 @keyframes pTab{0%{transform:skewX(-15.5deg) scale(.9)}60%{transform:skewX(-15.5deg) scale(1.06)}100%{transform:skewX(-15.5deg)}}
 .secbar{display:flex;gap:6px;margin:-4px 0 0;padding:0 10px}   /* 上のラインとタブ: 6px(mainの余白10px - 4px) */   /* 斜めの端が切れないよう左右に余白 */.secbar[hidden]{display:none}
-.sec-b{position:relative;flex:1;box-sizing:border-box;height:52px;display:flex;align-items:center;justify-content:center;padding:0 2px;background:none;color:var(--mut);border:0;border-bottom:3px solid transparent;cursor:pointer;font-weight:700;font-size:14px;line-height:1.2;font-family:inherit;transition:color .15s,background .15s,padding .24s cubic-bezier(.2,.9,.25,1),font-size .24s cubic-bezier(.2,.9,.25,1),border-bottom-width .24s,height .24s cubic-bezier(.2,.9,.25,1)}
+.sec-b{position:relative;flex:1;box-sizing:border-box;height:52px;display:flex;align-items:center;justify-content:center;padding:0 2px;background:none;color:var(--mut);border:0;border-bottom:3px solid transparent;cursor:pointer;font-weight:700;font-size:16px;line-height:1.2;font-family:inherit;transition:color .15s,background .15s,padding .24s cubic-bezier(.2,.9,.25,1),font-size .24s cubic-bezier(.2,.9,.25,1),border-bottom-width .24s,height .24s cubic-bezier(.2,.9,.25,1)}
 .sec-b>*{display:block}
 .sec-b::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--card);transform:skewX(-15.5deg)}   /* タブの面(斜め)。文字は傾けない */
 .mstrip{display:flex;gap:8px;overflow-x:auto;margin:2px 0 8px;padding:2px 2px 4px;scrollbar-width:none}.mstrip::-webkit-scrollbar{display:none}
@@ -383,8 +399,10 @@ body.ld #count::after{content:"";position:absolute;top:0;bottom:0;left:-40%;widt
 .sec-ind{position:absolute;top:0;bottom:0;left:0;width:0;background:var(--grad);border-bottom:3px solid var(--acc);transform:skewX(-15.5deg);transition:left .17s cubic-bezier(.2,.9,.25,1.15),width .17s cubic-bezier(.2,.9,.25,1.15);pointer-events:none;z-index:0}
 .sec-b .sec-l{position:relative;z-index:1}
 
-.sec-b small{display:inline-block;max-width:6em;overflow:hidden;white-space:nowrap;vertical-align:bottom;font-size:12px;font-weight:400;margin-left:6px;transition:max-width .24s cubic-bezier(.2,.9,.25,1),margin .24s,opacity .2s}
+.sec-b .sec-l{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;white-space:nowrap}   /* 日本語の表記は、常に英字の下に出す(RESULTS表示中と同じ並び) */
+.sec-b small{display:block;max-width:none;overflow:hidden;white-space:nowrap;font-size:10px;font-weight:400;margin:1px 0 0;opacity:.85}
 .sec-b.rs{flex:0 0 0;min-width:0;padding:0;margin-left:-6px;opacity:0;pointer-events:none;white-space:nowrap;transition:color .15s}   /* RESULTS: 検索・絞り込み中だけ右端に出る(幅は全体の約26%)。幅は即座に切り替え、青い面だけがスライドする(幅の途中で青を追わせるとちらつくため) */
+.secbar.res .sec-b{font-size:15px}   /* RESULTSを出しているときはタブがせまいので、少し小さく(はみ出さない) */
 .secbar.res .sec-b.rs{flex-basis:26%;margin-left:0;opacity:1;pointer-events:auto}
 .secbar.res .sec-b .sec-l{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}   /* RESULTS表示中は、日本語(本日の など)を TODAY / BEFORE / AFTER の下に、小さい文字で出す。英語と日本語は右端をそろえる */
 .secbar.res .sec-b small .no{display:none}
@@ -426,7 +444,7 @@ body.noanim .secbar.zm .sec-b .sec-l{animation:none}
 .tour-g.tclosed .tour-h .chv{transform:rotate(45deg)}
 .tour-h:hover{filter:brightness(1.2)}.tour-h:active{filter:brightness(1.3)}
 .tour-w{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s cubic-bezier(.2,.9,.25,1)}
-.tour-i{position:relative;overflow:hidden;min-height:0;padding:8px 0 0 24px;margin-left:-24px;transition:opacity .2s}
+.tour-i{position:relative;overflow:hidden;min-height:0;padding:8px 0 2px 24px;margin-left:-24px;transition:opacity .2s}
 .agenda:has(>.tour-g)::before{display:none}   /* タイトル枠(ツアー名など)があるときは、タイムラインを枠ごとに分け、枠と枠の間はつなげない */
 .agenda:has(>.tour-g)>.day-g::before{content:"";position:absolute;left:-17px;top:0;bottom:0;width:2px;background:var(--line);transition:bottom .26s cubic-bezier(.2,.9,.25,1)}   /* 枠に入らない日付の帯は、日付の帯が続く間だけ縦線でつなぐ */
 .agenda:has(>.tour-g)>.day-g:has(+.day-g)::before{bottom:-7px}
@@ -670,7 +688,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     data.videos.forEach(v => { if (v && (v.song == null || v.song === '') && okUrl(v.url)) POOL.push({ title: v.title, url: v.url }); });
     const LV = new Map();   // setlistid → ライブ(会場名をログのカードにも出すため)
     LIVES = data.setlist.map(e => ({ kind: 'live', cats: ['LIVE'], ltype: String(e.cat || '').toUpperCase(), lgroup: '', ltitle: '', open: String(e.open || ''), time: String(e.setlistid || '').slice(8, 12), sid: e.setlistid, date: String(e.setlistid || '').slice(0, 8), title: e.title || 'SETLIST', venue: e.venue || '', area: e.area || '', tour: e.tour || '', lkind: lkOf(e), mem: memNames(e.member), yo: [].concat(e.yomi || []).map(String), enc: (e.songs || []).filter(s => s && isEnc(s)).map(s => s.title), fst: (e.songs || []).filter(s => s && isFirst(s)).map(s => s.title), n: (e.songs || []).length, hay: norm([e.title, e.venue, e.area, e.tour, e.cat, e.kind, e.setlistid].concat(memNames(e.member), memYomi(e.member), [].concat(e.yomi || []).map(String), (e.songs || []).some(s => s && isEnc(s)) ? ['encore'] : [], (e.songs || []).some(s => s && isFirst(s)) ? ['初演'] : [], (e.songs || []).map(s => s && s.title)).join(' ')) })); LIVES.forEach(l => LV.set(l.sid, l));
-    const tgs = new Map(); LIVES.forEach(l => { if (l.tour) { const k = norm(l.tour); if (!tgs.has(k)) tgs.set(k, []); tgs.get(k).push(l); } });   // 同じツアー名のライブを日付順に並べ、何公演目かを付ける
+    const tgs = new Map(); LIVES.forEach(l => { if (l.tour && (l.ltype === 'TOUR' || l.lkind === 'RELEASE EVENT')) { const k = norm(l.tour); if (!tgs.has(k)) tgs.set(k, []); tgs.get(k).push(l); } });   // ツアーとリリースイベントだけ、同じ名前のライブを日付順に並べて何公演目かを付ける
     tgs.forEach(a => { a.sort((x, y) => String(x.sid).localeCompare(String(y.sid))); if (a.length > 1) a.forEach((l, n) => { l.tno = n + 1; l.tcnt = a.length; }); });
     const seen = new Set();
     INFOS = [];
@@ -727,7 +745,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     seqN = 0; const f = document.createDocumentFragment(); let c = 0;
     const lim = list.chunk || LOAD; while (shown < list.length && c < lim) { const fn = list[shown++]; f.append(fn()); c += fn.n || 1; }
     if (mode === 'month') cascade(Array.from(f.querySelectorAll('.day-h, .card')), 45, 16);
-    const host = $('view').lastChild, tgt = host.classList && host.classList.contains('hero') ? host.querySelector('.tlv') : host; const gs = Array.from(f.querySelectorAll('.day-g')); tgt.append(f); openSeq(gs);
+    const host = $('view').lastChild, tgt = host.classList && host.classList.contains('hero') ? host.querySelector('.tlv') : host; const gs = Array.from(f.querySelectorAll('.day-g')), tsg = Array.from(f.querySelectorAll('.tour-g')); tgt.append(f); openTour(tsg); openSeq(gs);
     requestAnimationFrame(() => { if (shown < list.length && document.documentElement.scrollHeight < window.innerHeight + 500) more(); });   // 画面が埋まらないときは続けて読む
   };
   const grid = fns => { list = fns; shown = 0; $('view').append(el('div', 'grid')); more(); };
@@ -786,6 +804,9 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     Array.from(attS).forEach(x => { if (x.slice(x.indexOf('|') + 1) === k) attS.delete(x); });
     saveAttX(); saveAttS(); heardSet = null; progUpd();
   };
+  const progTab = (nm, cn, sel) => {   // 見出しのタブ: 名前と、小さい数字。選んでいるタブは、閉じていても色と下線で分かる
+    const b = el('button', 'pt' + (sel ? ' sel' : '')); b.type = 'button'; b.append(el('span', 'pn', nm), el('span', 'pc', cn)); return b;
+  };
   const makeProg = () => {   // ATTENDEDカード: 初期はシンプル(進み具合だけ)、押すと詳細(行ったライブの一覧)が開閉する
     const box = el('div', 'prog' + (attOpen ? ' open' : '')); let prevRows = null, lastPc = 0, lastKey = '';
     if (cardIn === 'att') { cardIn = ''; cinOnce(box); }
@@ -793,20 +814,18 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
       const h = getHeard(); let n = 0; stats().forEach((v, k) => { if (h.has(k)) n++; });
       const td = todayKey(), pastAll = LIVES.filter(l => l.date && l.date <= td).length, pastAtt = Array.from(att).filter(sid => String(sid).slice(0, 8) <= td).length;   // LIVES: 今日までのライブのうち行った数 / 全体
       const tot = stats().size, pcS = tot ? Math.round(n * 100 / tot) : 0, pcL = pastAll ? Math.round(pastAtt * 100 / pastAll) : 0, pc = attMode === 'song' ? pcS : pcL, first = prevRows === null, key = n + '|' + att.size; box.textContent = '';
-      const r = el('div', 'prog-r'), L = el('button', 'pr-l' + (attMode === 'song' ? ' sel' : '')), M = el('button', 'mu' + (attMode === 'live' ? ' sel' : '')), V = el('button', 'cv', '\u25BE'), rr = el('span', 'pr-r');
-      [L, M, V].forEach(b => { b.type = 'button'; });
-      L.textContent = 'HEARD ' + n + ' / ' + tot + ' SONGS'; M.textContent = 'ATTENDED ' + pastAtt + ' / ' + pastAll + ' LIVES';
-      V.setAttribute('aria-expanded', attOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
-      rr.append(M, V); r.append(L, rr);
+      const r = el('div', 'prog-r'), L = progTab('HEARD', n + ' / ' + tot + ' SONGS', attMode === 'song'), M = progTab('ATTENDED', pastAtt + ' / ' + pastAll + ' LIVES', attMode === 'live'), V = el('button', 'cv', '\u25BE');
+      V.type = 'button'; V.setAttribute('aria-expanded', attOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
+      r.append(L, M, V);
       const setOpen = o => { attOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10); };
-      const pick = md => {   // 文字を押すと、その一覧(曲 / ライブ)に切り替わる。開いている一覧の文字をもう一度押すと閉じる
-        if (attOpen && attMode === md) { setOpen(false); return; }
+      const pick = md => {   // タブを押すと、その一覧(曲 / ライブ)に切り替わる(閉じているときは開く)。開閉は右端の矢印だけ
+        if (attMode === md) { if (!attOpen) setOpen(true); return; }
         const was = attOpen; attMode = md; try { localStorage.setItem('su_att_mode', md); } catch (e) {}
         attOpen = true; box.classList.add('open'); fill(); if (!was) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10);
       };
       L.onclick = () => pick('song'); M.onclick = () => pick('live'); V.onclick = () => setOpen(!attOpen);
-      if (!first && key !== lastKey) Array.from(r.querySelectorAll('.pr-l, .mu')).forEach(n2 => n2.classList.add('pk'));
-      const bar = el('div', 'prog-b'), i = el('i'); i.style.width = (first ? pc : lastPc) + '%'; bar.append(i); box.append(r, bar);
+      if (!first && key !== lastKey) Array.from(r.querySelectorAll('.pc')).forEach(n2 => n2.classList.add('pk'));
+      const bar = el('div', 'prog-b'), i = el('i'), cap = el('div', 'prog-c', attMode === 'song' ? '聴いた曲 ' + n + ' / ' + tot + '\uff08' + pcS + '%\uff09' : '行ったライブ ' + pastAtt + ' / ' + pastAll + '\uff08' + pcL + '%\uff09'); if (attMode === 'live') i.classList.add('lv'); i.style.width = (first ? pc : lastPc) + '%'; bar.append(i); box.append(r, bar, cap);   // バーの意味を、下に小さく出す
       if (!first && lastPc !== pc) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = pc + '%'; }));
       lastPc = pc; lastKey = key;
       const dw = el('div', 'prog-d'), di = el('div'), hl = heardList();
@@ -846,7 +865,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     b.onclick = () => { const i = MY.findIndex(x => x.k === k); if (i >= 0) MY.splice(i, 1); else MY.unshift({ k, d: it.date || '', h: String(it.time || ''), t: it.title || '', x: it.kind || '' }); myPulse = true; if (i < 0) myNewK = k; saveMy(); refreshMy(); };
     return b;
   };
-  const COLKEY = 'su_col', COLCATS = ['CD', 'BD', 'DVD', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'];   // 手元に残るもの(cat)
+  const COLKEY = 'su_col', COLCATS = ['RELEASE', 'CD', 'BD', 'DVD', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'];   // 手元に残るもの(cat)
   let COL = (() => { try { const a = JSON.parse(localStorage.getItem(COLKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
   let myMode = (() => { try { return localStorage.getItem('su_my_mode') === 'col' ? 'col' : 'plan'; } catch (e) { return 'plan'; } })();   // MY PLANカードの表示: 予定 / コレクション
   const saveCol = () => { try { localStorage.setItem(COLKEY, JSON.stringify(COL)); } catch (e) {} };
@@ -869,20 +888,20 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (cardIn === 'my') { cardIn = ''; cinOnce(box); }
     const nx = up[0]; let nt = '予定なし';
     if (nx) { const d = nx.d || '', n = d.length === 8 ? Math.round((dayOf(d) - dayOf(t)) / 864e5) : null; nt = '次 ' + (d.length >= 8 ? fmtW(d).slice(5) : myDate(d)) + (n === null ? '' : n === 0 ? ' 本日' : ' あと' + n + '日'); }
-    const L = el('button', 'pr-l' + (myMode === 'plan' ? ' sel' : '')), M = el('button', 'mu' + (myMode === 'col' ? ' sel' : '')), V = el('button', 'cv', '\u25BE'), rr = el('span', 'pr-r');
-    [L, M, V].forEach(b => { b.type = 'button'; });
-    const ps = el('span', 'ps' + (od.length ? ' od' : ''), '未完了 ' + todo.length + (od.length ? ' / 期限切れ ' + od.length : ''));
+    const colAll = INFOS.filter(colTarget), colTot = colAll.length, colN = colAll.filter(i => colHas(myKeyOf(i))).length;   // COLLECTION: 手元に残る対象の総数と、追加した数
+    const L = progTab('MY PLAN', String(up.length), myMode === 'plan'), M = progTab('MY COLLECTION', colN + ' / ' + colTot, myMode === 'col'), V = el('button', 'cv', '\u25BE');
+    V.type = 'button'; V.setAttribute('aria-expanded', myOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
+    const ps = el('span', 'ps' + (od.length ? ' od' : ''), MY.length ? '未完了 ' + todo.length + (od.length ? ' / 期限切れ ' + od.length : '') : '予定なし');
+    if (dn.length) { ps.append(document.createTextNode(' / ')); ps.append(el('span', 'dn', '完了 ' + dn.length)); }   // サブ色の部分: 完了済み   // 予定のバーの意味
     if (myPulse) ps.classList.add('pk');
-    L.append(document.createTextNode('MY PLAN ' + up.length + ' '), ps); M.textContent = 'MY COLLECTION ' + COL.length;
-    V.setAttribute('aria-expanded', myOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
-    rr.append(M, V); r.append(L, rr);
+    r.append(L, M, V);
     const setMyOpen = o => { myOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); };
     const pickMy = md => {   // 文字を押すと、その一覧(予定 / コレクション)に切り替わる。開いている一覧の文字をもう一度押すと閉じる
-      if (myOpen && myMode === md) { setMyOpen(false); return; }
+      if (myMode === md) { if (!myOpen) setMyOpen(true); return; }
       const was = myOpen; myMode = md; try { localStorage.setItem('su_my_mode', md); } catch (e) {}
       myOpen = true; refreshMy(); if (!was) { const nb = document.querySelector('#view > .prog.my'); if (nb) cascade(Array.from(nb.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); }
     };
-    L.onclick = () => pickMy('plan'); M.onclick = () => pickMy('col'); V.onclick = () => setMyOpen(!myOpen);
+    L.onclick = () => pickMy('plan'); M.onclick = () => pickMy('col'); V.onclick = () => setMyOpen(!myOpen);   // タブを押すと切り替え(閉じているときは開く)。開閉は右端の矢印だけ
     const dw = el('div', 'prog-d'), di = el('div');
     const row = (x, dim) => { const late = !dim && myEnd(x.d) < t, w = el('div', 'my-r' + (dim ? ' dn' : '') + (late ? ' od' : '')), b = el('button', 'att-r'), ck = el('button', 'my-c' + (x.c ? ' on' : ''), x.c ? '\u2713' : ''); ck.type = 'button'; ck.setAttribute('aria-label', x.c ? '未完了に戻す' : '完了にする'); ck.onclick = () => { if (myBusy) return; const m = MY.find(y => y.k === x.k); if (!m) return; const fin = () => { myBusy = false; m.c = !m.c; saveMy(); myPulse = true; refreshMy(); }; if (!animOK()) { fin(); return; } myBusy = true; ck.classList.add('pk'); setTimeout(() => outThen(w, 'out', 200, fin), 130); }; b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'MY PLANから外す'); c.onclick = () => { if (myBusy) return; myBusy = true; outThen(w, 'out', 200, () => { myBusy = false; const i = MY.findIndex(y => y.k === x.k); if (i >= 0) MY.splice(i, 1); saveMy(); myPulse = true; refreshMy(); }); }; w.append(ck, b, c); if (x.k === myNewK || (dim && myDoneIn)) w.classList.add('in'); return w; };
     if (myMode === 'col') {   // MY COLLECTION: 手元に残るもの(日付の新しい順)。✕で外す
@@ -896,8 +915,10 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (dn.length) { const tb = el('button', 'my-dn', myDone ? '完了済を隠す' : '完了済 ' + dn.length + '件を表示'); tb.type = 'button'; tb.onclick = () => { if (myBusy) return; if (myDone) { Array.from(di.querySelectorAll('.my-r.dn')).forEach(n2 => outThen(n2, 'out', 0, () => {})); myBusy = true; setTimeout(() => { myBusy = false; myDone = false; refreshMy(); }, animOK() ? 200 : 0); } else { myDone = true; myDoneIn = true; refreshMy(); } }; di.append(tb); if (myDone) dn.forEach(x => di.append(row(x, true))); }
     }
     dw.append(di); const bar = el('div', 'prog-b my'), tot = MY.length;   // ATTENDEDと同じ形のバー: 予定あり(ベースカラー)と期限切れ(アクセントカラー)。予定がなければ色なし
-    if (myMode === 'plan' && tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; bar.append(i); }; bi('up', up.length); bi('od', od.length); }
-    myNewK = ''; myDoneIn = false; myPulse = false; box.append(r, bar, dw); return box;   // バーはATTENDEDと同じ高さ(閉じたときのカードの高さがそろう)
+    if (myMode === 'plan' && tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; bar.append(i); }; bi('up', up.length); bi('od', od.length); bi('dn', dn.length); }
+    if (myMode === 'col' && colTot) { const ci = el('i', 'col'); ci.style.width = (colN * 100 / colTot) + '%'; bar.append(ci); }   // コレクションのバー: 追加した数 / 対象の総数
+    const cap = el('div', 'prog-c'); if (myMode === 'plan') cap.append(ps); else cap.textContent = colTot ? '集めた ' + colN + ' / ' + colTot + '\uff08' + Math.round(colN * 100 / colTot) + '%\uff09' : '対象のものはまだありません';
+    myNewK = ''; myDoneIn = false; myPulse = false; box.append(r, bar, cap, dw); return box;   // バーはATTENDEDと同じ高さ(閉じたときのカードの高さがそろう)
   };
   const refreshMy = () => {   // ボタンの表示と、カードを作り直す
     document.querySelectorAll('.btn.my, .btn.col').forEach(b => b._sync && b._sync());
@@ -967,8 +988,16 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const liveActs = (c, l, it, hits, extra) => {   // ボタン: SETLIST・関連する投稿(LINKSとLIVESで共通)。MY PLAN・ATTENDは一番下
     const a = el('div', 'act'), pn = el('div', 'panel'), b = el('button', 'btn main', 'SETLIST'); pn.hidden = true; b.onclick = () => openSet(l.sid, hits); a.append(b);
-    const rel = INFOS.filter(x => x.sid === l.sid && x !== it).sort((x, y) => (x.date + (x.time || '')).localeCompare(y.date + (y.time || '')));   // 同じライブを指すほかのログ(告知・動画など)
-    if (rel.length) panelBtn(a, pn, 'RELATED ' + rel.length, () => rel.forEach(x => { const ok = okUrl(x.url), r = ok ? el('a', '', fmt(x.date) + '  ' + x.title) : el('div', '', fmt(x.date) + '  ' + x.title); if (ok) { r.href = x.url; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
+    const rel = INFOS.filter(x => x.sid === l.sid).sort((x, y) => (x.date + (x.time || '')).localeCompare(y.date + (y.time || '')));   // 同じライブを指すほかのログ(告知・動画など)
+    if (rel.length) panelBtn(a, pn, 'POSTS ' + rel.length, () => rel.forEach(x => {   // 件数は、そのカード自身のログも含めて数える(LINKSとLIVESで同じ)
+      const ok = okUrl(x.url), me = x === it, go = !ok && !me && tab !== 'setlist';   // URLのないログは、LINKSでは検索で探せる
+      const r = ok && !me ? el('a', '') : go ? el('button', '') : el('div', '');
+      if (ok && !me) { r.href = x.url; r.target = '_blank'; r.rel = 'noopener'; }
+      if (go) { r.type = 'button'; r.onclick = () => qGo(x.title); }
+      if (me) r.classList.add('me');
+      r.append(el('span', 'pbd', String(x.contents || '').toUpperCase() || 'LOG'), document.createTextNode(fmt(x.date) + '  ' + x.title + (me ? '  (このカード)' : '')));
+      pn.append(r);
+    }));
     (extra || []).forEach(x => a.append(x));
     c.append(a, pn); botRow(c, it, l.sid);
   };
@@ -1035,28 +1064,28 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   // ===== 初期表示: 今日の予定 + これから予定のある日(日ごとに線で区切る) =====
   const WDAY = ['日', '月', '火', '水', '木', '金', '土'], p2 = n => String(n).padStart(2, '0');
   const todayKey = () => { const t = new Date(); return '' + t.getFullYear() + p2(t.getMonth() + 1) + p2(t.getDate()); };
-  // ===== 配色: メイン色とアクセント色(ユーザーは変更できない。月ごと・ツアー期間中・リリース日前後で自動的に切り替わる) =====
+  // ===== 配色: メイン色・アクセント色・サブ色(サブ色は、MY PLANなどのカードの完了・コレクションなどに使う。ユーザーは変更できない。月ごと・ツアー期間中・リリース日前後で自動的に切り替わる) =====
   const MONTH_THEME = [   // 1月〜12月。11月だけ元の色。ほかの月はネオンカラー。月ごとに、その月のイメージ・見やすさ(文字との明暗)・隣の月と似ない色相で設定。変えるときはここを書き換える
-    { main: '#ffe51f', main2: '#ffc400', on: '#2a2000', acc: '#ff2d6f' },   // 1月: お正月・初日の出(ネオンゴールド)
-    { main: '#c15bff', main2: '#aa4dff', on: '#1a0538', acc: '#ff3fa4' },   // 2月: 梅・バレンタイン(ネオンバイオレット)
-    { main: '#3dff7e', main2: '#00e65c', on: '#022e10', acc: '#ff4fa8' },   // 3月: 新芽・弥生(ネオングリーン)
-    { main: '#ff6ec7', main2: '#ff3fae', on: '#3a0526', acc: '#2dffd0' },   // 4月: 桜(ネオンピンク)
-    { main: '#b8ff2e', main2: '#8cf000', on: '#1c2c00', acc: '#ff6a3a' },   // 5月: 新緑・皐月(ネオンライム)
-    { main: '#5b86ff', main2: '#4a72ff', on: '#030c33', acc: '#2dffc0' },   // 6月: 梅雨・紫陽花(ネオンブルー)
-    { main: '#00ffc8', main2: '#00e0b0', on: '#00302a', acc: '#ffa31f' },   // 7月: 海・夏空(ネオンアクア)
-    { main: '#ffd200', main2: '#ff9d00', on: '#2a1d00', acc: '#ff3f9a' },   // 8月: 向日葵(ネオンサンフラワー)
-    { main: '#ff47f0', main2: '#e61fd5', on: '#33052e', acc: '#ffee3a' },   // 9月: コスモス・月(ネオンマゼンタ)
-    { main: '#ff7a1a', main2: '#ff5a00', on: '#2a0d00', acc: '#1ff0e0' },   // 10月: 紅葉・ハロウィン(ネオンオレンジ)
-    { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4' },   // 11月: 今の色のまま(シアン+ピンク)
-    { main: '#ff2d55', main2: '#ff0a3c', on: '#2e0210', acc: '#2dff7a' }    // 12月: クリスマス(ネオンレッド)
+    { main: '#ffe51f', main2: '#ffc400', on: '#2a2000', acc: '#ff2d6f', sub: '#38d9ff' },   // 1月: お正月・初日の出(ネオンゴールド)
+    { main: '#c15bff', main2: '#aa4dff', on: '#1a0538', acc: '#ff3fa4', sub: '#5be3ff' },   // 2月: 梅・バレンタイン(ネオンバイオレット)
+    { main: '#3dff7e', main2: '#00e65c', on: '#022e10', acc: '#ff4fa8', sub: '#4fd8ff' },   // 3月: 新芽・弥生(ネオングリーン)
+    { main: '#ff6ec7', main2: '#ff3fae', on: '#3a0526', acc: '#2dffd0', sub: '#ffd966' },   // 4月: 桜(ネオンピンク)
+    { main: '#b8ff2e', main2: '#8cf000', on: '#1c2c00', acc: '#ff6a3a', sub: '#4fd8ff' },   // 5月: 新緑・皐月(ネオンライム)
+    { main: '#5b86ff', main2: '#4a72ff', on: '#030c33', acc: '#2dffc0', sub: '#ff8fd0' },   // 6月: 梅雨・紫陽花(ネオンブルー)
+    { main: '#00ffc8', main2: '#00e0b0', on: '#00302a', acc: '#ffa31f', sub: '#7aa2ff' },   // 7月: 海・夏空(ネオンアクア)
+    { main: '#ffd200', main2: '#ff9d00', on: '#2a1d00', acc: '#ff3f9a', sub: '#46e6ff' },   // 8月: 向日葵(ネオンサンフラワー)
+    { main: '#ff47f0', main2: '#e61fd5', on: '#33052e', acc: '#ffee3a', sub: '#5bffc8' },   // 9月: コスモス・月(ネオンマゼンタ)
+    { main: '#ff7a1a', main2: '#ff5a00', on: '#2a0d00', acc: '#1ff0e0', sub: '#c98bff' },   // 10月: 紅葉・ハロウィン(ネオンオレンジ)
+    { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4', sub: '#ffc857' },   // 11月: 今の色のまま(シアン+ピンク)
+    { main: '#ff2d55', main2: '#ff0a3c', on: '#2e0210', acc: '#2dff7a', sub: '#ffe066' }    // 12月: クリスマス(ネオンレッド)
   ];
-  const TOUR_THEME = { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4' };      // ツアー期間中(今は現在の色)。期間は setlist の同じツアー名の最初の日〜最後の日
-  const RELEASE_THEME = { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4' };   // リリース日の前後(今は現在の色)。優先順位: リリース前後 > ツアー期間中 > 月
+  const TOUR_THEME = { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4', sub: '#ffc857' };      // ツアー期間中(今は現在の色)。期間は setlist の同じツアー名の最初の日〜最後の日
+  const RELEASE_THEME = { main: '#00d9e8', main2: '#00bcd0', on: '#002a30', acc: '#ff4fc4', sub: '#ffc857' };   // リリース日の前後(今は現在の色)。優先順位: リリース前後 > ツアー期間中 > 月
   const RELEASE_DAYS = 7;   // リリース日の前後それぞれ何日間を特別色にするか
   const shiftDay = (k, n) => { const d = new Date(+k.slice(0, 4), +k.slice(4, 6) - 1, +k.slice(6, 8) + n); return '' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()); };
   let themeKey = '', themeInit = false, monthShine = false;
   const shineBars = () => document.querySelectorAll('.sec-ind').forEach(i => { i.classList.remove('shine'); void i.offsetWidth; i.classList.add('shine'); });   // タブの青い面に、光が左から右へ走る
-  const setThemeVars = th => { const st = document.documentElement.style, h = th.main.replace('#', ''), rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)).join(','); st.setProperty('--main', th.main); st.setProperty('--main-rgb', rgb); st.setProperty('--main2', th.main2); st.setProperty('--on', th.on); st.setProperty('--acc', th.acc); };
+  const setThemeVars = th => { const st = document.documentElement.style, h = th.main.replace('#', ''), rgb = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)).join(','); st.setProperty('--main', th.main); st.setProperty('--main-rgb', rgb); st.setProperty('--main2', th.main2); st.setProperty('--on', th.on); st.setProperty('--acc', th.acc); st.setProperty('--sub', th.sub || '#ffc857'); };
   const applyTheme = () => {
     if (!themeInit) { themeInit = true; try { const mk = todayKey().slice(0, 6), last = localStorage.getItem('su_lastmonth'); if (last && last !== mk) { monthShine = true; setTimeout(() => { monthShine = false; shineBars(); }, 700); } localStorage.setItem('su_lastmonth', mk); } catch (e) {} }   // 前に開いたときと月が違うときだけ(初めて開いたときは出さない)
     const t = todayKey(), key = t + '|' + LIVES.length + '|' + SONGS.length, loaded = LIVES.length + SONGS.length > 0;
@@ -1153,6 +1182,10 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     return true;
   };
   const openSeq = nodes => { const fresh = nodes.filter(g => !restoreG(g)); if (keepHead) return; const flat = !!document.querySelector('#view > .hero-h.flat'); fresh.forEach(g => { g.classList.add('closed'); if (flat) { g._user = true; return; } void g.offsetHeight; openIO.observe(g); }); };   // 一覧(BEFORE・AFTER・RESULTS)が全部閉じているときに追加読み込みされた日は、開かずに閉じたまま足す
+  const tIO = new IntersectionObserver(es => {   // LIVESのツアーの枠: 閉じた状態を一度描いてから、画面に入った順に開く(日付の枠と同じ間隔)
+    let n = 0; es.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top).forEach(e => { const s = e.target; tIO.unobserve(s); if (s._user) return; const d = 60 + Math.min(n++, 10) * 90; requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { if (s._user) return; s.classList.remove('tclosed'); const h = s.querySelector(':scope > .tour-h'); if (h) h.setAttribute('aria-expanded', 'true'); }, d))); });
+  }, { rootMargin: '0px 0px -6% 0px' });
+  const openTour = nodes => { if (keepHead) return; const flat = !!document.querySelector('#view > .hero-h.flat'); nodes.forEach(s => { s.classList.add('tclosed'); const h = s.querySelector(':scope > .tour-h'); if (h) h.setAttribute('aria-expanded', 'false'); if (flat) { s._user = true; return; } void s.offsetHeight; tIO.observe(s); }); };
   const foldify = gp => {
     const h = gp.querySelector('.day-h'); if (!h) return gp;
     const w = el('div', 'day-w'), inn = el('div', 'day-i'); Array.from(gp.children).forEach(c => { if (c !== h) inn.append(c); }); w.append(inn); gp.append(w);
@@ -1188,7 +1221,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const o = SECS.map(x => x[0]), m = o.length + 1, n = ((rtab ? o.indexOf(sec) : o.length) + d + m) % m;   // RESULTSも含めて、端からさらに進むと反対の端へ
     if (n === o.length) { rtab = false; animNext = true; render(); window.scrollTo({ top: 0, behavior: 'instant' }); } else goSec(o[n]);
   };
-  const SLT = [['live', 'LIVE', 'ライブの'], ['tour', 'TOUR', 'ツアーの'], ['event', 'EVENT', 'イベントの']]; let slTab = 'tour', slRtab = false;   // SETLIST画面のタブ(LINKSのタブと同じUI。並びはLIVE・TOUR・EVENT、最初はTOUR。RESULTSは右端)
+  const SLT = [['live', 'LIVE', 'ライブ'], ['tour', 'TOUR', 'ツアー'], ['event', 'EVENT', 'イベント']]; let slTab = 'tour', slRtab = false;   // SETLIST画面のタブ(LINKSのタブと同じUI。並びはLIVE・TOUR・EVENT、最初はTOUR。RESULTSは右端)
   const isSlRes = () => tab === 'setlist' && (qs.trim() !== '' || slOn.length > 0);   // 検索・絞り込み中(右端にRESULTSを出す)
   const slView = () => (isSlRes() && !slRtab) ? 'results' : slTab;   // いま出している内容
   const goSl = to => {
@@ -1408,7 +1441,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const sec = el('section', 'tour-g'), h = el('button', 'tour-h'), w = el('div', 'tour-w'), inn = el('div', 'tour-i');
     const byD = {};
     h.type = 'button'; h.setAttribute('aria-expanded', 'true');
-    const bm = String(name).match(/^(.*?)\s*([\[［][^\[\]［］]+[\]］])\s*$/), two = !!(bm && bm[1]), tn = el('span', two ? 'tn' : 'tn solo');   // [ ]がある名前は、上段=名前・下段=[ ]つきの中身の2段。ない名前は最大2行
+    const bm = String(name).match(/^(.*?)\s*([\[\uff3b][^\[\]\uff3b\uff3d]+[\]\uff3d])\s*$/), two = !!(bm && bm[1]), tn = el('span', two ? 'tn' : 'tn solo');   // [ ]がある名前は、上段=名前・下段=[ ]つきの中身の2段。ない名前は最大2行
     tn.append(el('span', 'tn1', two ? bm[1] : name)); if (two) tn.append(el('span', 'tn2', bm[2]));
     h.append(tn);
     h.append(el('span', 'chv'));
@@ -1416,7 +1449,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     Object.keys(byD).filter(Boolean).sort().forEach(k => inn.append(slDay(k, byD[k].sort((a, b) => timeCmp(a.l, b.l)))()));
     if (byD['']) { const g = el('div', 'grid'); byD[''].forEach(x => g.append(railify(slCard(x.l, x.hits, true)(), x.l))); inn.append(g); }
     h.onclick = () => {   // 大分類タイトルを押すたびに、その枠だけ: 日付とカード半分開く(最初)、日付とカード全開、日付のみ、大分類タイトルのみ、最初に戻る
-      const gs = Array.from(sec.querySelectorAll('.day-g')), cards = g => Array.from(g.querySelectorAll('.card.fold'));
+      sec._user = true; const gs = Array.from(sec.querySelectorAll('.day-g')), cards = g => Array.from(g.querySelectorAll('.card.fold'));
       if (sec.classList.contains('tclosed')) { sec.classList.remove('tclosed'); gs.forEach(g => { setDay(g, false); cards(g).forEach(c => setCard(c, false)); }); }
       else if (gs.length && gs.every(g => g.classList.contains('closed'))) sec.classList.add('tclosed');
       else if (gs.every(g => !g.classList.contains('closed') && cards(g).every(c => c.classList.contains('open')))) gs.forEach(g => setDay(g, true));
@@ -1831,8 +1864,8 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     w.append(row('START PAGE', [['search', 'LINKS'], ['setlist', 'SETLIST']], SET.start, v => { SET.start = v; }, 'ページを開いたときに最初に出る画面'),
       row('RECOMMEND', [['show', 'SHOW'], ['hide', 'HIDE']], SET.rec ? 'show' : 'hide', v => { SET.rec = v === 'show'; if (SET.rec) recApi.show(); else recApi.hide(); }, '画面右下のおすすめボタンの表示'),
       row('TODAY CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.today !== false ? 'show' : 'hide', v => { SET.today = v === 'show'; render(); }, '今日にデータがないときのカード(本日の予定はありません)'),
-      row('ATTENDED CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.att !== false ? 'show' : 'hide', v => { SET.att = v === 'show'; if (SET.att) { cardIn = 'att'; render(); } else outThen(document.querySelector('#view > .prog:not(.my)'), 'cout', 240, () => render()); }, 'SETLISTのタブの下の、聴いた曲・行ったライブのカード'),
-      row('MY PLAN CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.my !== false ? 'show' : 'hide', v => { SET.my = v === 'show'; if (SET.my) { cardIn = 'my'; render(); } else outThen(document.querySelector('#view > .prog.my'), 'cout', 240, () => render()); }, 'タブの下の、自分だけの予定のカード(カードの + MY PLAN で追加 / 消えるわけではありません)'));
+      row('ATTENDED CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.att !== false ? 'show' : 'hide', v => { SET.att = v === 'show'; if (SET.att) { cardIn = 'att'; render(); } else outThen(document.querySelector('#view > .prog:not(.my)'), 'cout', 240, () => render()); }, 'SETLISTのタブの下の\u3001聴いた曲・行ったライブのカード'),
+      row('MY PLAN CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.my !== false ? 'show' : 'hide', v => { SET.my = v === 'show'; if (SET.my) { cardIn = 'my'; render(); } else outThen(document.querySelector('#view > .prog.my'), 'cout', 240, () => render()); }, 'タブの下の\u3001自分だけの予定のカード(カードの + MY PLAN で追加 / 消えるわけではありません)'));
     b.append(w);
   };
   (() => {
