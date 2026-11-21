@@ -1334,7 +1334,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
         else b.remove();
       };
       for (; used < Math.min(3, moreUsed) && rest[used]; used++) { const gp = mkDay(rest[used]); tv.append(gp); openSeq([gp]); }   // 前に追加した日を、そのまま出す
-      draw(); tv.append(b);   // ボタンも縦線の中に入れて、線をつなぐ
+      draw(); if (rest[used]) tv.append(b);   // ボタンも縦線の中に入れて、線をつなぐ(追加できる日がもうないときは、ボタンを置かない)
     }
     cascade(Array.from($('view').querySelectorAll('.hero-h, .day-h, .card')), 70, 10);
   };
@@ -1739,6 +1739,19 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if ((tab !== 'search' && tab !== 'setlist') || /^(INPUT|TEXTAREA)$/.test(e.target.tagName || '') || document.querySelector('dialog[open]')) return;
     const d = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (d) { if (mode) shift(d); else if (isRes()) stepRes(d); else if (isHome()) stepSec(d); else if (tab === 'setlist') stepSl(d); }
   });
+  // トラックパッドの二本指の横なぞり(wheelのdeltaX)でも、タッチのスワイプと同じように画面(タブ・月・RESULTSの前後)を移動する
+  let whX = 0, whT = 0, whLock = 0;
+  document.addEventListener('wheel', e => {
+    if ((tab !== 'search' && tab !== 'setlist') || e.ctrlKey || document.querySelector('dialog[open]')) return;
+    const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
+    if (!ax || ax < ay * 1.5) { whX = 0; return; }   // 縦のなぞりが主なときは、ふつうのスクロール
+    if ((e.target.closest && e.target.closest('.cal-pop, input, #rz')) || hScroller(e.target)) return;   // 横に動く場所(年・月のボタンの列など)は、その場所のスクロールを優先
+    e.preventDefault();   // ブラウザの「戻る・進む」の動きが出ないように止める
+    const now = Date.now(); if (now < whLock) return;   // 指を離したあとも続く慣性の分は、移動した直後は無視
+    if (now - whT > 220) whX = 0;
+    whT = now; whX += e.deltaX;
+    if (Math.abs(whX) > 90) { const d = whX > 0 ? 1 : -1; whX = 0; whLock = now + 650; if (mode) shift(d); else if (isRes()) stepRes(d); else if (isHome()) stepSec(d); else if (tab === 'setlist') stepSl(d); }
+  }, { passive: false });
   new IntersectionObserver(es => { const v = $('view').lastChild; if (es[0].isIntersecting && shown < list.length && v && /(^| )(grid|agenda|hero)( |$)/.test(v.className)) more(); }, { rootMargin: '400px' }).observe($('none').parentNode.appendChild(el('div')));
 
   // ===== カレンダー(検索窓の右のアイコンで開くポップアップ。gllogsのカレンダーを踏襲) =====
