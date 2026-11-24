@@ -211,7 +211,20 @@ body.tab-setlist #modes{display:none}
 .prog-b i.lv{background:var(--sub)}
 .prog-c .ps.pk,.prog-r .pc.pk{animation:pPick .26s cubic-bezier(.2,.9,.25,1.1);transform-origin:left center}
 .prog-h .sw{background:none;border:0;padding:0;font:inherit;color:var(--mut);cursor:pointer}
-.prog-h .sw.on{color:var(--acc)}   /* 開いている一覧(曲 / ライブ)の文字を強調 */
+.prog-h .sw.on{color:var(--acc)}
+.acc-r+.acc-r{border-top:1px solid var(--line);margin-top:6px;padding-top:2px}
+.acc-h{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 8px;width:100%;background:none;border:0;padding:6px 0 2px;margin:0;color:var(--fg);font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
+.acc-h .acc-l{display:flex;align-items:baseline;gap:8px;min-width:0}
+.acc-h .pn{font-weight:700;font-size:12px;letter-spacing:.06em}
+.acc-h .pc{font-size:10px;font-weight:400;color:var(--mut);letter-spacing:.06em}
+.acc-h .cv{color:var(--mut);transition:transform .25s}
+.acc-r.open .acc-h .cv{transform:rotate(180deg)}
+.acc-r.open .acc-h .pn{color:var(--acc)}   /* 開いている行 */
+.acc-h:hover .pn{color:var(--acc)}
+.acc-h .prog-b,.acc-h .prog-c{grid-column:1 / -1}
+.acc-h .pc.pk{animation:pPick .26s cubic-bezier(.2,.9,.25,1.1);transform-origin:left center}
+.acc-r>.prog-d{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+.acc-r.open>.prog-d{grid-template-rows:1fr}   /* 開いている一覧(曲 / ライブ)の文字を強調 */
 .otd{border:1px solid var(--line);border-left:3px solid var(--acc);border-radius:8px;padding:8px 12px;margin:4px 0 10px;background:var(--card)}
 .otd-h{display:flex;gap:10px;align-items:baseline;font:700 12px ui-monospace,monospace;letter-spacing:.08em;margin-bottom:2px}
 .otd-h .mut{color:var(--mut)}
@@ -260,7 +273,7 @@ dialog li a + .sm{margin-left:8px}
 .my-r.out{animation:pOut .2s cubic-bezier(.4,0,.8,.2) forwards;pointer-events:none}
 .my-c.pk{animation:pPick .24s cubic-bezier(.2,.9,.25,1.1)}
 .prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk{animation:pPick .26s cubic-bezier(.2,.9,.25,1.1);transform-origin:left center}
-@media (prefers-reduced-motion:reduce){.prog.cin,.prog.cout,.my-r.in,.att-r.in,.my-r.out,.my-c.pk,.prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk,.prog-c .ps.pk,.prog-r .pc.pk{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.prog.cin,.prog.cout,.my-r.in,.att-r.in,.my-r.out,.my-c.pk,.prog-r .ps.pk,.prog-r .pr-l.pk,.prog-r .mu.pk,.prog-c .ps.pk,.prog-r .pc.pk,.acc-h .pc.pk{animation:none!important}}
 .prog-d{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
 .prog.open .prog-d{grid-template-rows:1fr}
 .prog-d>div{overflow:hidden;min-height:0}
@@ -592,6 +605,14 @@ html::-webkit-scrollbar-thumb{background:var(--card2);border-radius:4px}
 html::-webkit-scrollbar-thumb:hover{background:var(--line)}
 
 .btn.col[hidden]{display:none}
+.lpr{position:fixed;z-index:60;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border:3px solid var(--main);border-radius:50%;pointer-events:none;opacity:0}
+.lpr.on{animation:lprIn .45s linear forwards}
+.lpr.go{animation:lprGo .3s ease-out forwards}
+@keyframes lprIn{from{opacity:0;transform:scale(1.7)}to{opacity:.9;transform:scale(1)}}   /* 外から縮んで、指の位置で決まる */
+@keyframes lprGo{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.5)}}
+.lpm{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);z-index:60;padding:6px 14px;background:var(--card);border:1px solid var(--main);color:var(--fg);font:700 12px ui-monospace,monospace;letter-spacing:.12em;pointer-events:none;opacity:0;transition:opacity .2s}
+.lpm.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.lpr.on,.lpr.go{animation:none!important}}
 </style>
 </head>
 <body>
@@ -658,7 +679,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const isFirst = s => /初演|premiere|first/i.test(String(s.type || '') + ' ' + String(s.notes || ''));
   const now = new Date();
   let SONGS = [], LIVES = [], INFOS = [], POOL = [], ALL = [], qs = '', src = 'ALL', mode = '', cur = null, tab = 'search', year = '', slYear = '', PLAYED = new Map(), heardSet = null, att = new Set(), attS = new Set(), attX = new Set(), progUpd = () => {}, slOn = [], slAtt = false, attOpen = false, slV = { album: [], single: [], area: [], venue: [], tour: [], song: [] }, slAll = false, SMAP = new Map(), SLMAP = new Map(), ALBUMS = [], SINGLES = [], AREAS = [], VENUES = [], TOURS = [], SONGOPTS = [], recName = '', recRes = null, shown = 0, list = [], done = false, got = new Set(), recApi = {}, rendered = false, animNext = true, calRefresh = () => {};
-  const SET = { start: 'search', rec: true, today: true, att: true, my: true };   // 設定(ブラウザに保存): 初期表示の画面 / レコメンドの表示 / ATTENDEDカードの表示
+  const SET = { start: 'search', rec: true, today: true, att: true, my: true, lp: true };   // 設定(ブラウザに保存): 初期表示の画面 / レコメンドの表示 / ATTENDEDカードの表示
   const saveSet = () => { try { localStorage.setItem('su_set', JSON.stringify(SET)); } catch (e) {} };
   try { Object.assign(SET, JSON.parse(localStorage.getItem('su_set') || '{}')); } catch (e) {}
   if (SET.start === 'setlist') tab = 'setlist';
@@ -790,6 +811,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     Array.from(attS).forEach(x => { if (x.indexOf(sid + '|') === 0) attS.delete(x); });
     saveAtt(); saveAttX(); saveAttS(); heardSet = null; refreshAttBtns(sid); progUpd();
   };
+  let attOpenK = '';   // ATTENDEDカードで開いている行('song' / 'live' / '')
   let attMode = (() => { try { return localStorage.getItem('su_att_mode') === 'song' ? 'song' : 'live'; } catch (e) { return 'live'; } })();   // ATTENDEDカードの表示: ライブ / 曲
   let attSong = (() => { try { return localStorage.getItem('su_att_song') === 'rest' ? 'rest' : 'heard'; } catch (e) { return 'heard'; } })();   // SONGS表示の中: 聴いた曲 / まだ聴いていない曲
   const titleOfKey = k => { const s = SMAP.get(k); if (s) return s.title; for (const e of data.setlist) { const x = (e.songs || []).find(y => y && y.title && tkey(y.title) === k); if (x) return x.title; } return k; };
@@ -807,52 +829,54 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const progTab = (nm, cn, sel) => {   // 見出しのタブ: 名前と、小さい数字。選んでいるタブは、閉じていても色と下線で分かる
     const b = el('button', 'pt' + (sel ? ' sel' : '')); b.type = 'button'; b.append(el('span', 'pn', nm), el('span', 'pc', cn)); return b;
   };
+  // ===== 進捗カードの共通部品: 行を縦に並べ、押した行の一覧だけが開く(MY PLAN / MY COLLECTION、HEARD / ATTENDED)。行ごとに、名前・数・バー・バーの意味を持つ =====
+  const accSync = (box, k) => box.querySelectorAll('.acc-r').forEach(r => { const on = r.dataset.k === k; r.classList.toggle('open', on); const h = r.querySelector('.acc-h'); if (h) h.setAttribute('aria-expanded', on ? 'true' : 'false'); });
+  const accRow = (key, name, count, bar, cap, open, dw, onTap) => {
+    const row = el('div', 'acc-r' + (open ? ' open' : '')), h = el('button', 'acc-h'), l = el('span', 'acc-l');
+    row.dataset.k = key; h.type = 'button'; h.setAttribute('aria-expanded', open ? 'true' : 'false');
+    l.append(el('span', 'pn', name), el('span', 'pc', count)); h.append(l, el('span', 'cv', '\u25BE'), bar, cap); h.onclick = () => onTap(key); row.append(h, dw); return row;
+  };
   const makeProg = () => {   // ATTENDEDカード: 初期はシンプル(進み具合だけ)、押すと詳細(行ったライブの一覧)が開閉する
-    const box = el('div', 'prog' + (attOpen ? ' open' : '')); let prevRows = null, lastPc = 0, lastKey = '';
+    const box = el('div', 'prog'); let prevRows = null, lastS = 0, lastL = 0, lastKey = '';
     if (cardIn === 'att') { cardIn = ''; cinOnce(box); }
     const fill = () => {
       const h = getHeard(); let n = 0; stats().forEach((v, k) => { if (h.has(k)) n++; });
       const td = todayKey(), pastAll = LIVES.filter(l => l.date && l.date <= td).length, pastAtt = Array.from(att).filter(sid => String(sid).slice(0, 8) <= td).length;   // LIVES: 今日までのライブのうち行った数 / 全体
-      const tot = stats().size, pcS = tot ? Math.round(n * 100 / tot) : 0, pcL = pastAll ? Math.round(pastAtt * 100 / pastAll) : 0, pc = attMode === 'song' ? pcS : pcL, first = prevRows === null, key = n + '|' + att.size; box.textContent = '';
-      const r = el('div', 'prog-r'), L = progTab('HEARD', n + ' / ' + tot + ' SONGS', attMode === 'song'), M = progTab('ATTENDED', pastAtt + ' / ' + pastAll + ' LIVES', attMode === 'live'), V = el('button', 'cv', '\u25BE');
-      V.type = 'button'; V.setAttribute('aria-expanded', attOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
-      r.append(L, M, V);
-      const setOpen = o => { attOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10); };
-      const pick = md => {   // タブを押すと、その一覧(曲 / ライブ)に切り替わる(閉じているときは開く)。開閉は右端の矢印だけ
-        if (attMode === md) { if (!attOpen) setOpen(true); return; }
-        const was = attOpen; attMode = md; try { localStorage.setItem('su_att_mode', md); } catch (e) {}
-        attOpen = true; box.classList.add('open'); fill(); if (!was) cascade(Array.from(box.querySelectorAll('.att-r, .prog-h')), 50, 10);
-      };
-      L.onclick = () => pick('song'); M.onclick = () => pick('live'); V.onclick = () => setOpen(!attOpen);
-      if (!first && key !== lastKey) Array.from(r.querySelectorAll('.pc')).forEach(n2 => n2.classList.add('pk'));
-      const bar = el('div', 'prog-b'), i = el('i'), cap = el('div', 'prog-c', attMode === 'song' ? '聴いた曲 ' + n + ' / ' + tot + '\uff08' + pcS + '%\uff09' : '行ったライブ ' + pastAtt + ' / ' + pastAll + '\uff08' + pcL + '%\uff09'); if (attMode === 'live') i.classList.add('lv'); i.style.width = (first ? pc : lastPc) + '%'; bar.append(i); box.append(r, bar, cap);   // バーの意味を、下に小さく出す
-      if (!first && lastPc !== pc) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = pc + '%'; }));
-      lastPc = pc; lastKey = key;
-      const dw = el('div', 'prog-d'), di = el('div'), hl = heardList();
+      const tot = stats().size, pcS = tot ? Math.round(n * 100 / tot) : 0, pcL = pastAll ? Math.round(pastAtt * 100 / pastAll) : 0, first = prevRows === null, key = n + '|' + att.size; box.textContent = '';
+      const diS = el('div'), diL = el('div'), hl = heardList();
       const part = l => Array.from(attS).filter(x => x.indexOf(l.sid + '|') === 0).length, rows = LIVES.filter(l => att.has(l.sid) || part(l)).sort(byDateDesc);
-      if (attMode === 'song') {
+      {   // 曲の一覧
         const hs = getHeard(), rest = []; stats().forEach((v, k) => { if (!hs.has(k)) rest.push(k); });   // まだ聴いていない曲: 今日までに演奏されたのに、記録がない曲
         const sw = el('div', 'prog-h');
         [['heard', '聴いた曲 ' + hl.length], ['rest', 'まだ聴いていない曲 ' + rest.length]].forEach(([md, txt], ix) => { if (ix) sw.append(document.createTextNode(' / ')); const b = el('button', 'sw' + (attSong === md ? ' on' : ''), txt); b.type = 'button'; b.onclick = () => { if (attSong === md) return; attSong = md; try { localStorage.setItem('su_att_song', md); } catch (e) {} fill(); }; sw.append(b); });
-        di.append(sw);
+        diS.append(sw);
         if (attSong === 'rest') {
-          if (!rest.length) di.append(el('div', 'prog-h', 'まだ聴いていない曲はありません'));
-          rest.map(k => ({ k, title: titleOfKey(k) })).sort((a, b) => String(a.title).localeCompare(String(b.title), 'ja')).forEach(r => { const ds = (PLAYED.get(r.k) || []).slice().sort(), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', ds.length + ' LIVES  LAST ' + fmt(ds[ds.length - 1] || '')), el('span', 't', r.title)); b.onclick = () => qGo(r.title); di.append(b); });
+          if (!rest.length) diS.append(el('div', 'prog-h', 'まだ聴いていない曲はありません'));
+          rest.map(k => ({ k, title: titleOfKey(k) })).sort((a, b) => String(a.title).localeCompare(String(b.title), 'ja')).forEach(r => { const ds = (PLAYED.get(r.k) || []).slice().sort(), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', ds.length + ' LIVES  LAST ' + fmt(ds[ds.length - 1] || '')), el('span', 't', r.title)); b.onclick = () => qGo(r.title); diS.append(b); });
         } else {
-          if (!hl.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
-          hl.forEach(r => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', r.sids.size + ' LIVES'), el('span', 't', r.title)); b.onclick = () => qGo(r.title); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', '聴いた曲から外す'); c.onclick = () => outThen(w, 'out', 200, () => unHear(r.k)); w.append(b, c); di.append(w); });
+          if (!hl.length) diS.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
+          hl.forEach(r => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', r.sids.size + ' LIVES'), el('span', 't', r.title)); b.onclick = () => qGo(r.title); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', '聴いた曲から外す'); c.onclick = () => outThen(w, 'out', 200, () => unHear(r.k)); w.append(b, c); diS.append(w); });
         }
-      } else {
-        if (!rows.length) di.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
-        rows.forEach(l => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'ATTENDから外す'); c.onclick = () => outThen(w, 'out', 200, () => unAtt(l.sid)); w.append(b, c); di.append(w); });
+      }
+      {   // ライブの一覧
+        if (!rows.length) diL.append(el('div', 'prog-h', 'ライブカードの ATTENDED を押すと 聴いた曲が記録されます'));
+        rows.forEach(l => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; if (!first && !prevRows.has(l.sid)) b.classList.add('in'); b.append(el('span', 'dt', fmtW(l.date)), el('span', 't', l.title)); if (!att.has(l.sid)) b.append(el('span', 'y', '(' + part(l) + ' SONGS)')); b.onclick = () => openSet(l.sid); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'ATTENDから外す'); c.onclick = () => outThen(w, 'out', 200, () => unAtt(l.sid)); w.append(b, c); diL.append(w); });
       }
       prevRows = new Set(rows.map(l => l.sid));
-      dw.append(di); box.append(dw);
+      const dS = el('div', 'prog-d'), dL = el('div', 'prog-d'); dS.append(diS); dL.append(diL);
+      const mkBar = (cls, pcv, lastv, setLast) => { const b = el('div', 'prog-b'), i = el('i', cls); i.style.width = (first ? pcv : lastv) + '%'; b.append(i); if (!first && lastv !== pcv) requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = pcv + '%'; })); return b; };
+      const barS = mkBar('', pcS, lastS), barL = mkBar('lv', pcL, lastL);   // 行ごとのバー: 曲(これまでの色)・ライブ(サブカラー)
+      const capS = el('div', 'prog-c', '聴いた曲 ' + n + ' / ' + tot + '\uff08' + pcS + '%\uff09'), capL = el('div', 'prog-c', '行ったライブ ' + pastAtt + ' / ' + pastAll + '\uff08' + pcL + '%\uff09');
+      const togAtt = k => { attOpenK = attOpenK === k ? '' : k; accSync(box, attOpenK); if (attOpenK) cascade(Array.from(box.querySelectorAll('.acc-r.open .att-r, .acc-r.open .prog-h')), 50, 10); };   // 押した行だけ開く(もう一度押すと閉じる。開いている行があれば、ほかの行は閉じる)
+      const rowS = accRow('song', 'HEARD', n + ' / ' + tot + ' SONGS', barS, capS, attOpenK === 'song', dS, togAtt), rowL = accRow('live', 'ATTENDED', pastAtt + ' / ' + pastAll + ' LIVES', barL, capL, attOpenK === 'live', dL, togAtt);
+      if (!first && key !== lastKey) [rowS, rowL].forEach(rw => rw.querySelectorAll('.pc').forEach(x => x.classList.add('pk')));
+      lastS = pcS; lastL = pcL; lastKey = key;
+      box.append(rowS, rowL);
     };
     fill(); progUpd = fill; return box;
   };
   // ===== MY PLAN: 自分だけの予定(カードの「＋ MY PLAN」で追加)。ブラウザ内に保存。日付が過ぎた予定は「済み」として残し、ボタンで一覧に出す =====
-  const MYKEY = 'su_my'; let MY = [], myOpen = false, myDone = false, myNewK = '', myPulse = false, myDoneIn = false, myBusy = false;
+  const MYKEY = 'su_my'; let MY = [], myOpen = false, myOpenK = '', myDone = false, myNewK = '', myPulse = false, myDoneIn = false, myBusy = false;
   try { const a = JSON.parse(localStorage.getItem(MYKEY) || '[]'); if (Array.isArray(a)) MY = a.filter(x => x && typeof x.k === 'string').slice(0, 300); } catch (e) {}
   const saveMy = () => { try { localStorage.setItem(MYKEY, JSON.stringify(MY)); } catch (e) {} };
   const myKeyOf = it => it.sid ? 'live|' + it.sid : (it.kind || 'info') + '|' + (it.date || '') + '|' + (it.title || '');
@@ -884,41 +908,36 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   };
   const makeMy = () => {   // タブと見出しの間のカード。閉じているときは「次の予定」だけ、開くと日付順の一覧
     const t = todayKey(), cmp = (a, b) => myEnd(a.d).localeCompare(myEnd(b.d)), todo = MY.filter(x => !x.c).sort(cmp), up = todo.filter(x => myEnd(x.d) >= t), od = todo.filter(x => myEnd(x.d) < t), dn = MY.filter(x => x.c).sort((a, b) => cmp(b, a));   // 完了(チェック)したものだけが「完了済」。日付が過ぎても完了していないものは未完了のまま(赤字)
-    const box = el('div', 'prog my' + (myOpen ? ' open' : '')), r = el('div', 'prog-r');
+    const box = el('div', 'prog my');
     if (cardIn === 'my') { cardIn = ''; cinOnce(box); }
     const nx = up[0]; let nt = '予定なし';
     if (nx) { const d = nx.d || '', n = d.length === 8 ? Math.round((dayOf(d) - dayOf(t)) / 864e5) : null; nt = '次 ' + (d.length >= 8 ? fmtW(d).slice(5) : myDate(d)) + (n === null ? '' : n === 0 ? ' 本日' : ' あと' + n + '日'); }
     const colAll = INFOS.filter(colTarget), colTot = colAll.length, colN = colAll.filter(i => colHas(myKeyOf(i))).length;   // COLLECTION: 手元に残る対象の総数と、追加した数
-    const L = progTab('MY PLAN', String(up.length), myMode === 'plan'), M = progTab('MY COLLECTION', colN + ' / ' + colTot, myMode === 'col'), V = el('button', 'cv', '\u25BE');
-    V.type = 'button'; V.setAttribute('aria-expanded', myOpen ? 'true' : 'false'); V.setAttribute('aria-label', '開閉');
     const ps = el('span', 'ps' + (od.length ? ' od' : ''), MY.length ? '未完了 ' + todo.length + (od.length ? ' / 期限切れ ' + od.length : '') : '予定なし');
     if (dn.length) { ps.append(document.createTextNode(' / ')); ps.append(el('span', 'dn', '完了 ' + dn.length)); }   // サブ色の部分: 完了済み   // 予定のバーの意味
     if (myPulse) ps.classList.add('pk');
-    r.append(L, M, V);
-    const setMyOpen = o => { myOpen = o; box.classList.toggle('open', o); V.setAttribute('aria-expanded', o ? 'true' : 'false'); if (o) cascade(Array.from(box.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); };
-    const pickMy = md => {   // 文字を押すと、その一覧(予定 / コレクション)に切り替わる。開いている一覧の文字をもう一度押すと閉じる
-      if (myMode === md) { if (!myOpen) setMyOpen(true); return; }
-      const was = myOpen; myMode = md; try { localStorage.setItem('su_my_mode', md); } catch (e) {}
-      myOpen = true; refreshMy(); if (!was) { const nb = document.querySelector('#view > .prog.my'); if (nb) cascade(Array.from(nb.querySelectorAll('.my-r, .my-dn, .prog-h')), 50, 10); }
-    };
-    L.onclick = () => pickMy('plan'); M.onclick = () => pickMy('col'); V.onclick = () => setMyOpen(!myOpen);   // タブを押すと切り替え(閉じているときは開く)。開閉は右端の矢印だけ
-    const dw = el('div', 'prog-d'), di = el('div');
+    const diC = el('div'), diP = el('div');
     const row = (x, dim) => { const late = !dim && myEnd(x.d) < t, w = el('div', 'my-r' + (dim ? ' dn' : '') + (late ? ' od' : '')), b = el('button', 'att-r'), ck = el('button', 'my-c' + (x.c ? ' on' : ''), x.c ? '\u2713' : ''); ck.type = 'button'; ck.setAttribute('aria-label', x.c ? '未完了に戻す' : '完了にする'); ck.onclick = () => { if (myBusy) return; const m = MY.find(y => y.k === x.k); if (!m) return; const fin = () => { myBusy = false; m.c = !m.c; saveMy(); myPulse = true; refreshMy(); }; if (!animOK()) { fin(); return; } myBusy = true; ck.classList.add('pk'); setTimeout(() => outThen(w, 'out', 200, fin), 130); }; b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'MY PLANから外す'); c.onclick = () => { if (myBusy) return; myBusy = true; outThen(w, 'out', 200, () => { myBusy = false; const i = MY.findIndex(y => y.k === x.k); if (i >= 0) MY.splice(i, 1); saveMy(); myPulse = true; refreshMy(); }); }; w.append(ck, b, c); if (x.k === myNewK || (dim && myDoneIn)) w.classList.add('in'); return w; };
-    if (myMode === 'col') {   // MY COLLECTION: 手元に残るもの(日付の新しい順)。✕で外す
+    {   // MY COLLECTION: 手元に残るもの(日付の新しい順)。✕で外す
       const cl = COL.slice().sort((a, b) => String(b.d).localeCompare(String(a.d)));
-      if (!cl.length) di.append(el('div', 'prog-h', 'コレクションはまだありません / カードの + COLLECTION で追加できます'));
-      cl.forEach(x => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'COLLECTIONから外す'); c.onclick = () => outThen(w, 'out', 200, () => { const i = COL.findIndex(y => y.k === x.k); if (i >= 0) COL.splice(i, 1); saveCol(); refreshMy(); }); w.append(b, c); di.append(w); });
-    } else {
-      if (nx) di.append(el('div', 'prog-h', nt));   // 次の予定
-    if (!todo.length) di.append(el('div', 'prog-h', MY.length ? '未完了の予定はありません' : '予定はまだありません / カードの + MY PLAN で追加できます'));
-    todo.forEach(x => di.append(row(x, false)));
-    if (dn.length) { const tb = el('button', 'my-dn', myDone ? '完了済を隠す' : '完了済 ' + dn.length + '件を表示'); tb.type = 'button'; tb.onclick = () => { if (myBusy) return; if (myDone) { Array.from(di.querySelectorAll('.my-r.dn')).forEach(n2 => outThen(n2, 'out', 0, () => {})); myBusy = true; setTimeout(() => { myBusy = false; myDone = false; refreshMy(); }, animOK() ? 200 : 0); } else { myDone = true; myDoneIn = true; refreshMy(); } }; di.append(tb); if (myDone) dn.forEach(x => di.append(row(x, true))); }
+      if (!cl.length) diC.append(el('div', 'prog-h', 'コレクションはまだありません / カードの + COLLECTION で追加できます'));
+      cl.forEach(x => { const w = el('div', 'my-r'), b = el('button', 'att-r'); b.type = 'button'; b.append(el('span', 'dt', myDate(x.d || '') + (myTimeOf(x) ? '  ' + myTimeOf(x) : '')), el('span', 't', x.t || '')); b.onclick = () => qGo(x.t || ''); const c = el('button', 'my-x', '\u2715'); c.type = 'button'; c.setAttribute('aria-label', 'COLLECTIONから外す'); c.onclick = () => outThen(w, 'out', 200, () => { const i = COL.findIndex(y => y.k === x.k); if (i >= 0) COL.splice(i, 1); saveCol(); refreshMy(); }); w.append(b, c); diC.append(w); });
     }
-    dw.append(di); const bar = el('div', 'prog-b my'), tot = MY.length;   // ATTENDEDと同じ形のバー: 予定あり(ベースカラー)と期限切れ(アクセントカラー)。予定がなければ色なし
-    if (myMode === 'plan' && tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; bar.append(i); }; bi('up', up.length); bi('od', od.length); bi('dn', dn.length); }
-    if (myMode === 'col' && colTot) { const ci = el('i', 'col'); ci.style.width = (colN * 100 / colTot) + '%'; bar.append(ci); }   // コレクションのバー: 追加した数 / 対象の総数
-    const cap = el('div', 'prog-c'); if (myMode === 'plan') cap.append(ps); else cap.textContent = colTot ? '集めた ' + colN + ' / ' + colTot + '\uff08' + Math.round(colN * 100 / colTot) + '%\uff09' : '対象のものはまだありません';
-    myNewK = ''; myDoneIn = false; myPulse = false; box.append(r, bar, cap, dw); return box;   // バーはATTENDEDと同じ高さ(閉じたときのカードの高さがそろう)
+    {   // MY PLAN
+      if (nx) diP.append(el('div', 'prog-h', nt));   // 次の予定
+    if (!todo.length) diP.append(el('div', 'prog-h', MY.length ? '未完了の予定はありません' : '予定はまだありません / カードの + MY PLAN で追加できます'));
+    todo.forEach(x => diP.append(row(x, false)));
+    if (dn.length) { const tb = el('button', 'my-dn', myDone ? '完了済を隠す' : '完了済 ' + dn.length + '件を表示'); tb.type = 'button'; tb.onclick = () => { if (myBusy) return; if (myDone) { Array.from(diP.querySelectorAll('.my-r.dn')).forEach(n2 => outThen(n2, 'out', 0, () => {})); myBusy = true; setTimeout(() => { myBusy = false; myDone = false; refreshMy(); }, animOK() ? 200 : 0); } else { myDone = true; myDoneIn = true; refreshMy(); } }; diP.append(tb); if (myDone) dn.forEach(x => diP.append(row(x, true))); }
+    }
+    const dP = el('div', 'prog-d'), dC = el('div', 'prog-d'); dP.append(diP); dC.append(diC);
+    const barP = el('div', 'prog-b my'), tot = MY.length;   // 予定: 予定あり(ベースカラー)・期限切れ(アクセントカラー)・完了済(サブカラー)。予定がなければ色なし
+    if (tot) { const bi = (cls, n) => { if (!n) return; const i = el('i', cls); i.style.width = (n * 100 / tot) + '%'; barP.append(i); }; bi('up', up.length); bi('od', od.length); bi('dn', dn.length); }
+    const barC = el('div', 'prog-b my'); if (colTot) { const ci = el('i', 'col'); ci.style.width = (colN * 100 / colTot) + '%'; barC.append(ci); }   // コレクション: 追加した数 / 対象の総数
+    const capP = el('div', 'prog-c'); capP.append(ps);
+    const capC = el('div', 'prog-c', colTot ? '集めた ' + colN + ' / ' + colTot + '\uff08' + Math.round(colN * 100 / colTot) + '%\uff09' : '対象のものはまだありません');
+    const togMy = k => { myOpenK = myOpenK === k ? '' : k; accSync(box, myOpenK); if (myOpenK) cascade(Array.from(box.querySelectorAll('.acc-r.open .my-r, .acc-r.open .my-dn, .acc-r.open .prog-h')), 50, 10); };   // 押した行だけ開く(もう一度押すと閉じる)
+    const rowP = accRow('plan', 'MY PLAN', String(up.length), barP, capP, myOpenK === 'plan', dP, togMy), rowC = accRow('col', 'MY COLLECTION', colN + ' / ' + colTot, barC, capC, myOpenK === 'col', dC, togMy);
+    myNewK = ''; myDoneIn = false; myPulse = false; box.append(rowP, rowC); return box;
   };
   const refreshMy = () => {   // ボタンの表示と、カードを作り直す
     document.querySelectorAll('.btn.my, .btn.col').forEach(b => b._sync && b._sync());
@@ -1728,6 +1747,33 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { clearTimeout(lpT); lpT = 0; }, { passive: true }));
   document.addEventListener('click', e => { if (lpFired && e.target.closest && e.target.closest('.hero-h')) { e.stopPropagation(); e.preventDefault(); } lpFired = false; }, true);
   document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.hero-h')) e.preventDefault(); });
+  // ----- 余白の長押し(0.7秒): LINKSとSETLISTを切り替える(指・ペンのみ。文字・ボタン・リンクの上、見出しの帯、ポップアップ・入力欄は対象外)
+  const lpM = el('div', 'lpm'), lpR = el('div', 'lpr'); document.body.append(lpM, lpR);
+  let lpT1 = 0, lpT2 = 0, lpTm = 0, lpId = -1, lpSx = 0, lpSy = 0, lpDone = 0;
+  const lpBlank = n => {
+    if (!n || n.nodeType !== 1) return false;
+    if (n.closest('a, button, input, textarea, select, label, summary, [role=button], dialog, .cal-pop, #rz, #sug, .hero-h, .chp, .chip')) return false;
+    return !Array.from(n.childNodes).some(c => c.nodeType === 3 && c.textContent.trim());   // 文字そのものの上ではなく、余白(文字のない場所)だけ
+  };
+  const lpCancel = () => { clearTimeout(lpT1); clearTimeout(lpT2); lpT1 = lpT2 = 0; lpId = -1; if (!lpR.classList.contains('go')) lpR.classList.remove('on'); };
+  document.addEventListener('pointerdown', e => {
+    if (lpId >= 0 && e.pointerId !== lpId) { lpCancel(); return; }   // 2本目の指(つまむ操作など)が来たらやめる
+    if (SET.lp === false || (e.pointerType !== 'touch' && e.pointerType !== 'pen') || !e.isPrimary) return;
+    if ((tab !== 'search' && tab !== 'setlist') || document.querySelector('dialog[open]') || !lpBlank(e.target)) return;
+    lpCancel(); lpId = e.pointerId; lpSx = e.clientX; lpSy = e.clientY;
+    lpT1 = setTimeout(() => { lpR.style.left = lpSx + 'px'; lpR.style.top = lpSy + 'px'; lpR.classList.remove('go'); lpR.classList.add('on'); }, 250);   // 途中から、指のまわりに輪を出す
+    lpT2 = setTimeout(() => {
+      lpT1 = lpT2 = 0; lpId = -1; lpDone = Date.now();
+      lpR.classList.remove('on'); lpR.classList.add('go'); setTimeout(() => lpR.classList.remove('go'), 320);
+      try { if (navigator.vibrate) navigator.vibrate(18); } catch (er) {}
+      const to = tab === 'setlist' ? 'search' : 'setlist'; goTab(to);
+      lpM.textContent = to === 'setlist' ? 'SETLIST' : 'LINKS'; lpM.classList.add('on'); clearTimeout(lpTm); lpTm = setTimeout(() => lpM.classList.remove('on'), 1000);
+    }, 700);
+  }, { passive: true });
+  document.addEventListener('pointermove', e => { if (lpId === e.pointerId && Math.hypot(e.clientX - lpSx, e.clientY - lpSy) > 8) lpCancel(); }, { passive: true });
+  ['pointerup', 'pointercancel'].forEach(n => document.addEventListener(n, e => { if (e.pointerId === lpId) lpCancel(); }, { passive: true }));
+  window.addEventListener('scroll', () => { if (lpId >= 0) lpCancel(); }, { passive: true });
+  document.addEventListener('click', e => { if (Date.now() - lpDone < 600) { e.stopPropagation(); e.preventDefault(); lpDone = 0; } }, true);   // 長押しのあとに、指を離したときの「押した」扱いは、無かったことにする
   const hScroller = n => { for (; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) { const c = getComputedStyle(n); if (/(auto|scroll)/.test(c.overflowX) && n.scrollWidth > n.clientWidth + 1) return true; } return false; };   // 横にスクロールできる場所(年・月のボタンの列など)の上の横なぞりは、画面の移動にしない
   document.addEventListener('touchstart', e => { const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY; st = Date.now(); skip = !!(e.target.closest && e.target.closest('.cal-pop, input, dialog, #rz')) || hScroller(e.target); }, { passive: true });
   document.addEventListener('touchend', e => {
@@ -1740,17 +1786,27 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     const d = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (d) { if (mode) shift(d); else if (isRes()) stepRes(d); else if (isHome()) stepSec(d); else if (tab === 'setlist') stepSl(d); }
   });
   // トラックパッドの二本指の横なぞり(wheelのdeltaX)でも、タッチのスワイプと同じように画面(タブ・月・RESULTSの前後)を移動する
-  let whX = 0, whT = 0, whLock = 0;
+  let whX = 0, whT = 0, whLock = false, whSign = 0, whPeak = 0, whMin = 0, whPrev = 0, whDecay = false, whHold = 0, whUp = 0;
   document.addEventListener('wheel', e => {
-    if ((tab !== 'search' && tab !== 'setlist') || e.ctrlKey || document.querySelector('dialog[open]')) return;
-    const ax = Math.abs(e.deltaX), ay = Math.abs(e.deltaY);
+    if ((tab !== 'search' && tab !== 'setlist') || e.ctrlKey || e.shiftKey || document.querySelector('dialog[open]')) return;
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 600 : 1, dx = e.deltaX * unit, ax = Math.abs(dx), ay = Math.abs(e.deltaY * unit);   // 行・ページ単位の信号も、ピクセルにそろえる
     if (!ax || ax < ay * 1.5) { whX = 0; return; }   // 縦のなぞりが主なときは、ふつうのスクロール
     if ((e.target.closest && e.target.closest('.cal-pop, input, #rz')) || hScroller(e.target)) return;   // 横に動く場所(年・月のボタンの列など)は、その場所のスクロールを優先
     e.preventDefault();   // ブラウザの「戻る・進む」の動きが出ないように止める
-    const now = Date.now(); if (now < whLock) return;   // 指を離したあとも続く慣性の分は、移動した直後は無視
-    if (now - whT > 220) whX = 0;
-    whT = now; whX += e.deltaX;
-    if (Math.abs(whX) > 90) { const d = whX > 0 ? 1 : -1; whX = 0; whLock = now + 650; if (mode) shift(d); else if (isRes()) stepRes(d); else if (isHome()) stepSec(d); else if (tab === 'setlist') stepSl(d); }
+    const ts = e.timeStamp || Date.now(), gap = ts - whT, sg = Math.sign(dx); whT = ts;   // 時刻は、入力された時刻を使う(画面の描き直しで処理が止まった時間を、入力の途切れと見まちがえない)
+    if (gap > 200) { whX = 0; whLock = false; whUp = 0; }   // 200ms以上あいたら、新しいなぞり
+    if (whLock) {   // 移動したなぞりの続き(指の動きの山と、離したあとの慣性)は、無視する
+      if (sg !== whSign) { whLock = false; whX = 0; whUp = 0; }   // 向きが変わった = 新しいなぞり
+      else if (!whDecay) { whPeak = Math.max(whPeak, ax); if (ax < whPeak * 0.6) { whDecay = true; whMin = ax; whUp = 0; } }   // 山を越えて、勢いが落ちはじめた
+      else if (ax < whMin) { whMin = ax; whUp = 0; }
+      else if (ts > whHold && ax > whMin * 1.8 + 20 && ax >= whPrev) { if (++whUp >= 2) { whLock = false; whX = 0; whUp = 0; } }   // 落ちたあとに、強い信号が2回続いた = 新しいなぞり(1回だけの大きな信号は、まとめて届いた慣性の分とみなして無視)
+      else whUp = 0;
+    }
+    whPrev = ax;
+    if (whLock) return;
+    if (whX && Math.sign(whX) !== sg) whX = 0;
+    whX += dx;
+    if (Math.abs(whX) > 90) { const d = whX > 0 ? 1 : -1; whX = 0; whLock = true; whSign = d; whPeak = ax; whMin = 0; whDecay = false; whUp = 0; whHold = ts + 450; if (mode) shift(d); else if (isRes()) stepRes(d); else if (isHome()) stepSec(d); else if (tab === 'setlist') stepSl(d); }
   }, { passive: false });
   new IntersectionObserver(es => { const v = $('view').lastChild; if (es[0].isIntersecting && shown < list.length && v && /(^| )(grid|agenda|hero)( |$)/.test(v.className)) more(); }, { rootMargin: '400px' }).observe($('none').parentNode.appendChild(el('div')));
 
@@ -1878,7 +1934,8 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
       row('RECOMMEND', [['show', 'SHOW'], ['hide', 'HIDE']], SET.rec ? 'show' : 'hide', v => { SET.rec = v === 'show'; if (SET.rec) recApi.show(); else recApi.hide(); }, '画面右下のおすすめボタンの表示'),
       row('TODAY CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.today !== false ? 'show' : 'hide', v => { SET.today = v === 'show'; render(); }, '今日にデータがないときのカード(本日の予定はありません)'),
       row('ATTENDED CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.att !== false ? 'show' : 'hide', v => { SET.att = v === 'show'; if (SET.att) { cardIn = 'att'; render(); } else outThen(document.querySelector('#view > .prog:not(.my)'), 'cout', 240, () => render()); }, 'SETLISTのタブの下の\u3001聴いた曲・行ったライブのカード'),
-      row('MY PLAN CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.my !== false ? 'show' : 'hide', v => { SET.my = v === 'show'; if (SET.my) { cardIn = 'my'; render(); } else outThen(document.querySelector('#view > .prog.my'), 'cout', 240, () => render()); }, 'タブの下の\u3001自分だけの予定のカード(カードの + MY PLAN で追加 / 消えるわけではありません)'));
+      row('MY PLAN CARD', [['show', 'SHOW'], ['hide', 'HIDE']], SET.my !== false ? 'show' : 'hide', v => { SET.my = v === 'show'; if (SET.my) { cardIn = 'my'; render(); } else outThen(document.querySelector('#view > .prog.my'), 'cout', 240, () => render()); }, 'タブの下の\u3001自分だけの予定のカード(カードの + MY PLAN で追加 / 消えるわけではありません)'),
+      row('LONG PRESS', [['on', 'ON'], ['off', 'OFF']], SET.lp !== false ? 'on' : 'off', v => { SET.lp = v === 'on'; }, '余白の長押し(0.7秒)で LINKS と SETLIST を切り替え(スマホ・タブレットのみ)'));
     b.append(w);
   };
   (() => {
