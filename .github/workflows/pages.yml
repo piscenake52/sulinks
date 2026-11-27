@@ -1,0 +1,96 @@
+name: Publish pages
+
+# /                 helper の最新
+# /viewer/preview/  閲覧ページのテスト用(index.html の最新)
+# /viewer/          閲覧ページの本番(viewer_release.txt の版)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'adminhelper.html'
+      - 'scripts/build_viewer.py'
+      - 'tests/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-publish
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.head.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install playwright
+      - run: playwright install --with-deps chromium
+      - name: Tests (original and split version)
+        run: |
+          python -m unittest discover -s tests -v
+          python scripts/build_viewer.py index.html "$RUNNER_TEMP/preview" --preview
+          INDEX_HTML="$RUNNER_TEMP/preview/index.html" python -m unittest tests.test_smoke -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.test.outputs.sha }}
+
+      # helper は外枠のない部品なので、ページの外枠を付ける
+      - name: Build the helper page
+        run: |
+          mkdir -p site
+          {
+            printf '%s\n' '<!doctype html>' '<html lang="ja">' '<head>' '<meta charset="utf-8">'
+            printf '%s\n' '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            printf '%s\n' '<meta name="robots" content="noindex, nofollow">' '<title>helper</title>'
+            printf '%s\n' '<style>body{margin:0;padding:8px}</style>' '</head>' '<body>'
+            cat adminhelper.html
+            printf '%s\n' '</body>' '</html>'
+          } > site/index.html
+
+      - name: Build the viewer
+        env:
+          BASE: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/viewer
+        run: |
+          python3 scripts/build_viewer.py index.html site/viewer/preview --url "$BASE/preview" --preview
+          git fetch -q --depth=1 origin main
+          if git cat-file -e FETCH_HEAD:viewer_release.txt 2>/dev/null; then
+            SHA=$(git show FETCH_HEAD:viewer_release.txt | head -n1)
+            echo "$SHA" | grep -Eq '^[0-9a-f]{40}$'
+            git fetch -q --depth=1 origin "$SHA"
+            git worktree add -q "$RUNNER_TEMP/release" "$SHA"
+            BUILD="$RUNNER_TEMP/release/scripts/build_viewer.py"
+            [ -f "$BUILD" ] || BUILD=scripts/build_viewer.py
+            python3 "$BUILD" "$RUNNER_TEMP/release/index.html" site/viewer --url "$BASE" --preview
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

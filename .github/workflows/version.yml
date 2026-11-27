@@ -2,7 +2,7 @@ name: update version.json
 on:
   push:
     branches: [main]
-    paths: ['data/**']
+    paths: ['data/**', '.github/workflows/version.yml']
   schedule:
     - cron: '17 */6 * * *'   # 自動コミット(GITHUB_TOKEN)でデータが更新され push で動かなかったときの保険。変化がなければ何もしない
   workflow_dispatch:
@@ -24,10 +24,11 @@ jobs:
           ref: main
       - name: generate version.json
         run: |
-          h() { sha1sum "$1" | cut -d' ' -f1; }
-          printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s"}}\n' \
+          # files の中身は process-queue.yml と同じにする(片方だけだと、項目が消える)
+          h() { if [ -f "$1" ]; then sha1sum "$1" | cut -d' ' -f1; fi; }
+          printf '{"commit":"%s","files":{"logs":"%s","songs":"%s","setlist":"%s","videos":"%s"}}\n' \
             "$(git rev-parse HEAD)" \
-            "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" > /tmp/version.json
+            "$(h data/logs/logs.json)" "$(h data/songs/songs.json)" "$(h data/setlist/setlist.json)" "$(h data/videos/videos.json)" > /tmp/version.json
           # データのハッシュが変わっていなければコミットしない(commit欄だけの変化では更新しない)
           if [ -f version.json ] && [ "$(jq -S .files version.json)" = "$(jq -S .files /tmp/version.json)" ] && jq -e '.commit | test("^[0-9a-f]{40}$")' version.json >/dev/null; then echo "no change"; exit 0; fi
           cp /tmp/version.json version.json

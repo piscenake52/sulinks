@@ -1,0 +1,22 @@
+name: Tests
+on:
+  push:
+    paths: ['index.html', 'adminhelper.html', 'scripts/**', 'tests/**', '.github/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: pip install playwright
+      - run: playwright install --with-deps chromium
+      - run: python -m unittest discover -s tests -v
+      - name: Split version
+        run: |
+          python scripts/build_viewer.py index.html "$RUNNER_TEMP/preview" --preview
+          INDEX_HTML="$RUNNER_TEMP/preview/index.html" python -m unittest tests.test_smoke -v
