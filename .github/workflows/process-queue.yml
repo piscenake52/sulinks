@@ -54,6 +54,11 @@ jobs:
               p = f'data/{kind}/{kind}.json'
               return json.load(open(p, encoding='utf-8')) if os.path.exists(p) else []
           D = {k: load(k) for k in KINDS}
+          RES = 'data/results'   # helper が結果を確認するための、1件ごとの結果ファイル(キューと同じファイル名)
+          def result(f, kind, dst, err):
+              os.makedirs(RES, exist_ok=True)
+              out = {'status': 'done' if dst == 'processed' else 'error', 'skipped': False, 'errors': [err] if err else [], 'notes': [] if dst == 'processed' else [f'moved to data/{kind}/failed/']}
+              json.dump(out, open(f'{RES}/' + os.path.basename(f), 'w', encoding='utf-8'), ensure_ascii=False)
           def seq(kind):
               top = 0
               for o in D[kind]:
@@ -107,6 +112,7 @@ jobs:
           changed = False
           for kind in KINDS:
               for f in sorted(glob.glob(f'data/{kind}/queue/*.json')):
+                  err = None
                   try:
                       item = json.load(open(f, encoding='utf-8'))['item']
                       assert isinstance(item, dict) and all(item.get(r) for r in REQ[kind] if r != 'id' or kind == 'setlist')
@@ -122,10 +128,13 @@ jobs:
                           if kind in PFX and not item.get('id'): item = {'id': seq(kind), **item}
                           arr.append(item)
                       dst = 'processed'; changed = True
-                  except Exception:
+                  except Exception as e:
+                      err = (type(e).__name__ + (': ' + str(e) if str(e) else ' (required field missing or bad format)'))[:300]
                       dst = 'failed'                               # 構造不正は failed へ退避(再送しても同じなので止める)
                   os.makedirs(f'data/{kind}/{dst}', exist_ok=True)
                   shutil.move(f, f'data/{kind}/{dst}/' + os.path.basename(f))
+                  result(f, kind, dst, err)
+          for old in sorted(glob.glob(f'{RES}/*.json'))[:-200]: os.remove(old)   # 結果ファイルは新しい200件だけ残す
           if changed:   # setlist の曲名・videos の曲名を songs の id にそろえる(songs に無い曲名は、曲名だけの songs を作る)
               for e in D['setlist']:
                   for x in (e.get('songs') or []):
