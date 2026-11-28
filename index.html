@@ -671,6 +671,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     return out;
   };
   const okUrl = u => /^https?:\/\//i.test(u || '');
+  const ORG = ['OFFICIAL', 'MEMBER', 'MEDIA', 'FAN'];   // 出典の種類(logsのsrc)
   const MEM = { YUA: '神野友亜', IZM: '杉岡泉美', HRM: '坂本ひろ美', MIU: '赤坂美羽', OFFICIAL: 'OFFICIAL' };   // メンバーのコードと表示名(表示順)
   const MEMY = { YUA: 'しんの ゆうあ しんのゆうあ', IZM: 'すぎおか いずみ すぎおかいずみ', HRM: 'さかもと ひろみ さかもとひろみ', MIU: 'あかさか みゆう あかさかみゆう', OFFICIAL: 'official おふぃしゃる' };   // メンバーの読み(ひらがなで検索できるように)
   const memYomi = codes => Object.keys(MEM).filter(k => (codes || []).indexOf(k) >= 0).map(k => MEMY[k]);
@@ -717,7 +718,8 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     data.logs.forEach(o => {
       const k = [o.date, o.time, o.contents, o.title, o.url].join('_'); if (seen.has(k)) return; seen.add(k);
       const title = o.display_pc || o.title || '', mem = memNames([].concat(o.groups || [], o.relations || [])), memr = memYomi([].concat(o.groups || [], o.relations || [])), yo = [].concat(o.yomi || []).map(String);
-      INFOS.push({ kind: 'info', live: LV.get(o.setlistid) || null, rel: String(o.release || ''), mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.relations || [], mem, memr, yo).join(' ')) });
+      const og0 = String(o.origin || '').toUpperCase(), org = ORG.indexOf(og0) >= 0 ? og0 : ([].concat(o.groups || []).indexOf('OFFICIAL') >= 0 ? 'OFFICIAL' : '');   // 出典: srcの値。無くてもmembersにOFFICIALがあればOFFICIAL
+      INFOS.push({ kind: 'info', org, live: LV.get(o.setlistid) || null, rel: String(o.release || ''), mem, yo, venue: (LV.get(o.setlistid) || {}).venue || '', open: String((LV.get(o.setlistid) || {}).open || ''), cats: catOf(o.contents, srcOf(o.url)), date: o.date || '', time: o.time || '', title, url: o.url, src: srcOf(o.url), contents: o.contents || '', sid: o.setlistid, hay: norm([title, o.title, o.contents, o.date].concat(o.tags || [], o.relations || [], mem, memr, yo, org).join(' ')) });
     });
     const used = new Set(data.logs.map(o => o.setlistid).filter(Boolean)); ALL = INFOS;   // LINKSに出す項目は、すべてlogsの行(曲・ライブはSETLIST画面で見る)
     sugDirty = true; statsDirty = true; buildSl(); if (ready()) { render(); calRefresh(); }
@@ -890,7 +892,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     b.onclick = () => { const i = MY.findIndex(x => x.k === k); if (i >= 0) MY.splice(i, 1); else MY.unshift({ k, d: it.date || '', h: String(it.time || ''), t: it.title || '', x: it.kind || '' }); myPulse = true; if (i < 0) myNewK = k; saveMy(); refreshMy(); };
     return b;
   };
-  const COLKEY = 'su_col', COLCATS = ['RELEASE', 'CD', 'BD', 'DVD', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'];   // 手元に残るもの(cat)
+  const COLKEY = 'su_col', COLCATS = ['CD', 'BD', 'DVD', 'MUSICCARD', 'GOODS', 'BOOK', 'MAGAZINE', 'NEWSPAPER'];   // 手元に残るもの(cat)
   let COL = (() => { try { const a = JSON.parse(localStorage.getItem(COLKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
   let myMode = (() => { try { return localStorage.getItem('su_my_mode') === 'col' ? 'col' : 'plan'; } catch (e) { return 'plan'; } })();   // MY PLANカードの表示: 予定 / コレクション
   const saveCol = () => { try { localStorage.setItem(COLKEY, JSON.stringify(COL)); } catch (e) {} };
@@ -1032,6 +1034,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
     if (lv) { liveMeta(c, lv); liveActs(c, lv, i, undefined, ob ? [ob] : []); return c; }
     const cr = []; i.mem.forEach(n => cr.push({ t: n, fn: () => qGo(n) }));
     if (cr.length) c.append(chipRow(cr));
+    if (i.org && !(i.org === 'OFFICIAL' && i.mem.indexOf('OFFICIAL') >= 0)) { const r = chipRow([{ t: i.org, fn: () => qGo(i.org) }]); r.insertBefore(el('span', 'orl', 'SOURCE'), r.firstChild); c.append(r); }   // 出典のチップ(OFFICIALがメンバーのチップで出ているときは重ねない)
     const a = el('div', 'act'), pn = el('div', 'panel'); pn.hidden = true; if (i.sid) { const s = el('button', 'btn', 'SETLIST'); s.onclick = () => openSet(i.sid); a.append(s); }
     const rs = i.rel ? SONGS.filter(s => s.albums.concat(s.singles).some(n => norm(n) === norm(i.rel))) : [];   // releaseのログ: 同じ作品名の収録曲
     if (rs.length) panelBtn(a, pn, 'SONGS ' + rs.length, () => rs.forEach(s => { const ok = okUrl(s.o.link), r = ok ? el('a', '', '\u25B6 ' + s.title) : el('div', '', s.title); if (ok) { r.href = s.o.link; r.target = '_blank'; r.rel = 'noopener'; } pn.append(r); }));
@@ -2083,7 +2086,7 @@ html::-webkit-scrollbar-thumb:hover{background:var(--line)}
   const arr = v => Array.isArray(v) ? v : (v == null || v === '' ? [] : [v]);
   // 英単語キーのJSONを、画面側の内部名に変換する
   const NORM = {
-    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, tags: o.tags, release: o.release, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live }),
+    logs: o => ({ date: o.date, time: o.time, contents: String(o.cat || '').toUpperCase(), title: o.title, url: o.url, groups: o.members, relations: o.relations, tags: o.tags, release: o.release, yomi: o.yomi, display_pc: o.display_pc, setlistid: o.live, origin: o.src }),
     setlist: e => ({ setlistid: e.id, title: e.title, venue: e.venue, area: e.area, cat: e.cat, kind: e.kind, tour: e.tour, member: e.members, open: e.open, yomi: e.yomi, songs: arr(e.songs).map(s => s && typeof s === 'object' ? { order: s.no, song: s.song, title: s.title, type: s.type, notes: s.note } : s) }),
     songs: o => { const rl = arr(o.release), og = o.original || {}; return { id: o.id, title: o.title, yomi: o.yomi, release: o.date, keywords: o.keywords, link: o.url, utanet: o.lyricsid, lyric: o.lyric, album: rl.filter(x => x && x.type === 'album').map(x => x.name), single: rl.filter(x => x && x.type === 'single').map(x => x.name), original: og.name, original_title: og.title, original_year: og.year, original_work: og.work }; },
     videos: o => ({ id: o.id, title: o.title, label: o.label, url: o.url, song: o.song })

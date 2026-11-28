@@ -32,8 +32,8 @@ html,body{background:#000!important}
 <script>
 (function(){
 var LS=localStorage,MEM=['YUA','IZM','HRM','MIU','OFFICIAL'],$=function(s){return document.querySelector(s)};
-var CT=['live','tour','event','release','tv','radio','fanclub','sns','youtube','web','ticket','anniversary','birthday','cd','bd','dvd','musiccard','goods','book','magazine'];
-var F={logs:[['date','DATE YYYYMMDD',1,'d8'],['time','TIME HHMM',0,'t4'],['cat','CAT',1,CT],['title','TITLE',1],['url','URL',0,'url'],['members','MEMBERS\uff08YUA,IZM,HRM,MIU,OFFICIAL\uff09',0,'mem'],['tags','TAGS\uff08\u30ab\u30f3\u30de\u533a\u5207\u308a\uff09',0,'arr'],['live','LIVE\uff08setlist \u306e ID\u3002\u7a7a\u6b04\u306a\u3089 DATE+TIME\uff09',0,'id12'],
+var CT=['live','tour','event','release','tv','radio','fanclub','sns','youtube','web','ticket','anniversary','birthday','cd','bd','dvd','musiccard','goods','book','magazine','newspaper','digital','fanmeeting','stage','debut','formation','campaign'];
+var F={logs:[['date','DATE YYYYMMDD',1,'d8'],['time','TIME HHMM',0,'t4'],['cat','CAT',1,CT],['title','TITLE',1],['url','URL',0,'url'],['members','MEMBERS\uff08YUA,IZM,HRM,MIU,OFFICIAL\uff09',0,'mem'],['src','SRC 出典（OFFICIAL / MEMBER / MEDIA / FAN）',0,['OFFICIAL','MEMBER','MEDIA','FAN']],['tags','TAGS\uff08\u30ab\u30f3\u30de\u533a\u5207\u308a\uff09',0,'arr'],['live','LIVE\uff08setlist \u306e ID\u3002\u7a7a\u6b04\u306a\u3089 DATE+TIME\uff09',0,'id12'],
 ['_live.venue','\u3010LIVE/TOUR/EVENT\u3011VENUE',0,'','live'],['_live.area','\u3010LIVE/TOUR/EVENT\u3011AREA',0,'','live'],['_live.kind','\u3010LIVE/TOUR/EVENT\u3011KIND\uff08CAT \u5185\u306e\u533a\u5206\u3002event \u306a\u3089 releaseevent \u306a\u3069\u3002\u81ea\u7531\u5165\u529b\uff09',0,'','live'],['_live.tour','\u3010LIVE/TOUR/EVENT\u3011TOUR\uff08\u30c4\u30a2\u30fc\u540d\u30fb\u30b7\u30ea\u30fc\u30ba\u540d\uff09',0,'','live'],['_live.open','\u3010LIVE/TOUR/EVENT\u3011OPEN HHMM',0,'t4','live'],['_live.songs','\u3010LIVE/TOUR/EVENT\u3011SONGS\uff081\u884c: \u66f2\u540d | type | note\u3002TIME \u304c\u5fc5\u8981\uff09',0,'sl','live'],
 ['_release.name','\u3010RELEASE\u3011\u4f5c\u54c1\u540d',0,'','release'],['_release.type','\u3010RELEASE\u3011\u7a2e\u5225',0,['album','single'],'release'],['_release.songs','\u3010RELEASE\u3011\u53ce\u9332\u66f2\uff081\u884c1\u66f2\u3002DATE \u304c\u767a\u58f2\u65e5\u306b\u306a\u308a\u307e\u3059\uff09',0,'tl','release'],
 ['_video.label','\u3010YOUTUBE\u3011VIDEO LABEL\uff08MV \u306a\u3069\uff09',0,'','video'],['_video.song','\u3010YOUTUBE\u3011SONG\uff08\u66f2\u540d\uff09',0,'','video']],
@@ -49,14 +49,16 @@ var b64=function(s){return btoa(unescape(encodeURIComponent(s)))};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
 var newPath=function(k){return 'data/'+k+'/queue/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.json'};
 function grp(c){return c==='live'||c==='tour'||c==='event'?'live':c==='release'?'release':c==='youtube'?'video':''}
-function sync(){var c=document.getElementById('f_cat'),g=c?grp(c.value):'';[].forEach.call(document.querySelectorAll('#f [data-g]'),function(w){w.style.display=w.dataset.g===g?'':'none'})}
+var KD={live:['fes','oneman'],event:['releaseevent','talk','fanmeeting','stage'],tour:[]};
+function kfill(){var dl=document.getElementById('kl');if(!dl)return;var c=document.getElementById('f_cat'),v=c?c.value:'',a=KD[v]||(v?[]:[].concat(KD.live,KD.event));dl.innerHTML=a.map(function(o){return'<option value="'+o+'">'}).join('')}
+function sync(){kfill();var c=document.getElementById('f_cat'),g=c?grp(c.value):'';[].forEach.call(document.querySelectorAll('#f [data-g]'),function(w){w.style.display=w.dataset.g===g?'':'none'})}
 function form(){var f=$('#f'),st=kind==='settings';$('#set').hidden=!st;f.style.display=st?'none':'';$('#acts').style.display=st?'none':'';
 document.querySelectorAll('#tabs button').forEach(function(b){b.className=b.dataset.k===kind?'on':''});
 if(st)return;f.innerHTML='';F[kind].forEach(function(d){var l=document.createElement('label');l.textContent=d[1]+(d[2]?' *':'');var e;
 if(Array.isArray(d[3])){e=document.createElement('select');e.innerHTML='<option></option>'+d[3].map(function(o){return'<option>'+o+'</option>'}).join('')}
 else if(d[3]==='rel'||d[3]==='sl'||d[3]==='tl'){e=document.createElement('textarea')}else{e=document.createElement('input');if(d[3]==='chk')e.type='checkbox'}
-e.id='f_'+d[0];var w=document.createElement('div');if(d[4])w.dataset.g=d[4];w.append(l,e);f.append(w)});
-var c=document.getElementById('f_cat');if(c)c.onchange=sync;sync();
+e.id='f_'+d[0];if(d[0]==='_live.kind'||(kind==='setlist'&&d[0]==='kind'))e.setAttribute('list','kl');var w=document.createElement('div');if(d[4])w.dataset.g=d[4];w.append(l,e);f.append(w)});
+var dl=document.createElement('datalist');dl.id='kl';f.append(dl);var c=document.getElementById('f_cat');if(c)c.onchange=sync;sync();
 document.querySelectorAll('#tabs button').forEach(function(b){b.className=b.dataset.k===kind?'on':''})}
 function conv(d,v){var t=d[3];if(t==='chk')return v?true:undefined;v=String(v).trim();if(!v){if(d[2])throw Error(d[1]+' \u306f\u5fc5\u9808');return undefined}
 var csv=function(s){return s.split(/[,\u3001]/).map(function(x){return x.trim()}).filter(Boolean)};
